@@ -1,1 +1,24 @@
-/* Image Manager Plugin Styles */
+.image-manager-managed {
+  max-width: 100%;
+}
+
+.image-manager-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.image-manager-gallery-item {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  padding: 10px;
+  background: var(--background-secondary);
+}
+
+.image-manager-gallery-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 6px;
+}

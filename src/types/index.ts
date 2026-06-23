@@ -38,29 +38,33 @@ export enum PathFormat {
 }
 
 export interface ImageManagerSettings {
-  readonly defaultFormat: ImageFormat;
-  readonly defaultQuality: number;
-  readonly renamePattern: string;
-  readonly outputFolder: string;
-  readonly enableAutoConvert: boolean;
-  readonly enableAutoRename: boolean;
-  readonly enableGallery: boolean;
-  readonly enableContextMenu: boolean;
-  readonly enableDragResize: boolean;
-  readonly enableImageAlign: boolean;
-  readonly imageAlignmentDefaultAlignment: Alignment;
-  readonly disableObsidianImageSelectionOnClick: boolean;
-  readonly dropPasteCursorLocation: 'front' | 'back';
-  readonly showSpaceSavedNotification: boolean;
-  readonly galleryGridSize: GalleryGridSize;
-  readonly gallerySortBy: GallerySortBy;
-  readonly compressionQuality: number;
-  readonly compressionThresholdKB: number;
+  defaultFormat: ImageFormat;
+  defaultQuality: number;
+  defaultLinkFormat: LinkFormat;
+  defaultPathFormat: PathFormat;
+  renamePattern: string;
+  outputFolder: string;
+  enableAutoConvert: boolean;
+  enableAutoRename: boolean;
+  enableGallery: boolean;
+  enableContextMenu: boolean;
+  enableDragResize: boolean;
+  enableImageAlign: boolean;
+  imageAlignmentDefaultAlignment: Alignment;
+  disableObsidianImageSelectionOnClick: boolean;
+  dropPasteCursorLocation: 'front' | 'back';
+  showSpaceSavedNotification: boolean;
+  galleryGridSize: GalleryGridSize;
+  gallerySortBy: GallerySortBy;
+  compressionQuality: number;
+  compressionThresholdKB: number;
 }
 
 export const DEFAULT_SETTINGS: Readonly<ImageManagerSettings> = {
   defaultFormat: ImageFormat.WEBP,
   defaultQuality: 80,
+  defaultLinkFormat: LinkFormat.WIKI,
+  defaultPathFormat: PathFormat.SHORTEST,
   renamePattern: '{noteName}-{date}-{random}',
   outputFolder: '',
   enableAutoConvert: true,
@@ -86,6 +90,40 @@ export interface VariableContext {
   readonly time: string;
   readonly random: string;
   readonly [key: string]: string;
+}
+
+export interface ImageInfo {
+  readonly path: string;
+  readonly name: string;
+  readonly extension: string;
+  readonly size: number;
+  readonly mtime: number;
+  readonly width?: number;
+  readonly height?: number;
+}
+
+export interface ProcessOptions {
+  readonly format?: ImageFormat;
+  readonly quality?: number;
+  readonly maxWidth?: number;
+  readonly maxHeight?: number;
+}
+
+export interface RenameMoveResult {
+  readonly oldPath: string;
+  readonly newPath: string;
+}
+
+export enum BatchScope {
+  CURRENT_NOTE = 'current-note',
+  FOLDER = 'folder',
+  VAULT = 'vault'
+}
+
+export enum BatchOperation {
+  COMPRESS = 'compress',
+  CONVERT = 'convert',
+  RENAME = 'rename'
 }
 
 export interface LinkFormatOptions {
