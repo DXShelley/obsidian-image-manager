@@ -1,6 +1,6 @@
 {
   "name": "obsidian-image-manager",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "A comprehensive image management plugin for Obsidian",
   "main": "main.js",
   "scripts": {
@@ -16,7 +16,12 @@
     "test:coverage": "vitest run --coverage",
     "validate": "npm run type-check && npm run lint && npm run test"
   },
-  "keywords": ["obsidian", "plugin", "image", "management"],
+  "keywords": [
+    "obsidian",
+    "plugin",
+    "image",
+    "management"
+  ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
@@ -34,6 +39,7 @@
     "obsidian": "latest",
     "tslib": "2.4.0",
     "type-coverage": "^2.29.0",
+    "typescript-eslint": "^8.42.0",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
   },
@@ -45,6 +51,9 @@
     "atLeast": 95,
     "strict": true,
     "ignoreCatch": false,
-    "ignoreFiles": ["node_modules/**", "tests/**"]
+    "ignoreFiles": [
+      "node_modules/**",
+      "tests/**"
+    ]
   }
 }

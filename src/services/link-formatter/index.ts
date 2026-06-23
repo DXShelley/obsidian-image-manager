@@ -1,6 +1,8 @@
 import type { App, TFile } from 'obsidian';
 import { LinkFormat, type LinkFormatOptions, type ParsedLink, PathFormat } from '@/types/index';
 
+const MARKDOWN_IMAGE_LINK_REGEX = /!\[([^\]]*)\]\(((?:<[^>]+>|[^)])+)\)/;
+
 export class LinkFormatter {
   constructor(private readonly app: App) {}
 
@@ -12,25 +14,29 @@ export class LinkFormatter {
   }
 
   parseLink(link: string): ParsedLink | null {
-    const wikiMatch = link.match(/!\[\[([^|\]]+)(?:\|([^\]]+))?\]\]/);
+    const wikiMatch = link.match(/!\[\[([^\]]+)\]\]/);
     if (wikiMatch?.[1]) {
-      const params = wikiMatch[2];
-      const sizeMatch = params?.match(/^(\d+)(?:x(\d+))?$/);
+      const [path = '', ...wikiParams] = wikiMatch[1].split('|');
+      const sizeToken = [...wikiParams].reverse().find((part) => /^(\d+)(?:x(\d+))?$/.test(part));
+      const sizeMatch = sizeToken?.match(/^(\d+)(?:x(\d+))?$/);
       return {
-        path: wikiMatch[1],
+        path,
         format: LinkFormat.WIKI,
-        altText: params && !sizeMatch ? params : undefined,
+        altText: wikiParams.find((part) => !/^(\d+)(?:x(\d+))?$/.test(part)),
         width: sizeMatch?.[1] ? Number.parseInt(sizeMatch[1], 10) : undefined,
-        height: sizeMatch?.[2] ? Number.parseInt(sizeMatch[2], 10) : undefined
+        height: sizeMatch?.[2] ? Number.parseInt(sizeMatch[2], 10) : undefined,
+        wikiParams
       };
     }
 
-    const markdownMatch = link.match(/!\[([^\]]*)\]\(([^)]+)\)/);
+    const markdownMatch = link.match(MARKDOWN_IMAGE_LINK_REGEX);
     if (markdownMatch?.[2]) {
+      const { path, title } = this.parseMarkdownTarget(markdownMatch[2]);
       return {
-        path: decodeURI(markdownMatch[2]),
+        path: decodeURI(path),
         format: LinkFormat.MARKDOWN,
-        altText: markdownMatch[1] || undefined
+        altText: markdownMatch[1] || undefined,
+        title
       };
     }
 
@@ -70,16 +76,52 @@ export class LinkFormatter {
 
   private formatWikiLink(path: string, options: LinkFormatOptions): string {
     const parts = [path];
+    if (options.wikiParams && options.wikiParams.length > 0) {
+      parts.push(...options.wikiParams);
+      return `![[${parts.join('|')}]]`;
+    }
+
     if (options.altText) {
       parts.push(options.altText);
     }
     if (options.width) {
       parts.push(options.height ? `${options.width}x${options.height}` : `${options.width}`);
     }
+
     return `![[${parts.join('|')}]]`;
   }
 
   private formatMarkdownLink(path: string, options: LinkFormatOptions): string {
-    return `![${options.altText ?? ''}](${encodeURI(path)})`;
+    const title = options.title ? ` ${options.title}` : '';
+    return `![${options.altText ?? ''}](${encodeURI(path)}${title})`;
+  }
+
+  private parseMarkdownTarget(value: string): { path: string; title?: string } {
+    const trimmed = value.trim();
+    if (!trimmed) {
+      return { path: '' };
+    }
+
+    if (trimmed.startsWith('<')) {
+      const closingIndex = trimmed.indexOf('>');
+      if (closingIndex >= 0) {
+        const path = trimmed.slice(1, closingIndex);
+        const remainder = trimmed.slice(closingIndex + 1).trim();
+        return {
+          path,
+          title: remainder || undefined
+        };
+      }
+    }
+
+    const titleMatch = trimmed.match(/^(.*?)(\s+(".*?"|'.*?'|\(.*?\)))$/);
+    if (titleMatch?.[1] && titleMatch[2]) {
+      return {
+        path: titleMatch[1].trim(),
+        title: titleMatch[2].trim()
+      };
+    }
+
+    return { path: trimmed };
   }
 }

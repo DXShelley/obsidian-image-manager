@@ -1,7 +1,7 @@
 {
   "id": "obsidian-image-manager",
   "name": "Image Manager",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "minAppVersion": "0.15.0",
   "description": "A comprehensive image management plugin for Obsidian. Rename, compress, convert, edit, and organize your images with ease.",
   "author": "",

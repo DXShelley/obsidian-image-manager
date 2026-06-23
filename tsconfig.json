@@ -29,7 +29,10 @@
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
     "paths": {
       "@/*": ["src/*"],
+      "@core/*": ["src/core/*"],
+      "@features/*": ["src/features/*"],
       "@services/*": ["src/services/*"],
+      "@ui/*": ["src/ui/*"],
       "@utils/*": ["src/utils/*"],
       "@types/*": ["src/types/*"]
     },

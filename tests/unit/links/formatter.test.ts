@@ -25,4 +25,28 @@ describe('LinkFormatter', () => {
 
     expect(link).toBe('![Preview](../assets/image.png)');
   });
+
+  it('parses markdown image links with titles', () => {
+    const formatter = new LinkFormatter(mockApp() as never);
+
+    expect(formatter.parseLink('![Preview](<assets/my image.png> "Caption")')).toEqual({
+      path: 'assets/my image.png',
+      format: LinkFormat.MARKDOWN,
+      altText: 'Preview',
+      title: '"Caption"'
+    });
+  });
+
+  it('preserves wiki params when reformatting existing wiki links', () => {
+    const formatter = new LinkFormatter(mockApp() as never);
+    const parsed = formatter.parseLink('![[assets/image.png|封面|320x200]]');
+
+    const link = formatter.formatLink('assets/image.png', mockFile() as never, {
+      format: LinkFormat.WIKI,
+      pathFormat: PathFormat.SHORTEST,
+      wikiParams: parsed?.wikiParams
+    });
+
+    expect(link).toBe('![[assets/image.png|封面|320x200]]');
+  });
 });
