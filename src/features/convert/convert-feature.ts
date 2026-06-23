@@ -23,9 +23,18 @@ export class ConvertFeature implements ImageManagerFeature {
       name: activeCommand.commandName,
       callback: () => {
         void executeLoggedCommand(context, activeCommand, async () => {
-          await this.withActiveNoteFile(context, activeCommand, async (file) => {
-            await this.convertImagesInNote(context, file, context.services.settings.getSettings().defaultFormat);
-          });
+          await context.services.recovery.runTransaction(
+            {
+              label: '转换当前文件引用图片',
+              trigger: 'convert',
+              scope: 'single-note'
+            },
+            async () => {
+              await this.withActiveNoteFile(context, activeCommand, async (file) => {
+                await this.convertImagesInNote(context, file, context.services.settings.getSettings().defaultFormat);
+              });
+            }
+          );
         });
       }
     });
@@ -49,7 +58,16 @@ export class ConvertFeature implements ImageManagerFeature {
             return;
           }
 
-          await this.convertImagesInFolder(context, folder, context.services.settings.getSettings().defaultFormat);
+          await context.services.recovery.runTransaction(
+            {
+              label: `转换文件夹图片 ${folder.path || 'vault root'}`,
+              trigger: 'convert',
+              scope: 'folder'
+            },
+            async () => {
+              await this.convertImagesInFolder(context, folder, context.services.settings.getSettings().defaultFormat);
+            }
+          );
         });
       }
     });
@@ -63,7 +81,16 @@ export class ConvertFeature implements ImageManagerFeature {
       name: vaultCommand.commandName,
       callback: () => {
         void executeLoggedCommand(context, vaultCommand, async () => {
-          await this.convertImagesInVault(context, context.services.settings.getSettings().defaultFormat);
+          await context.services.recovery.runTransaction(
+            {
+              label: '转换整个仓库图片',
+              trigger: 'convert',
+              scope: 'vault'
+            },
+            async () => {
+              await this.convertImagesInVault(context, context.services.settings.getSettings().defaultFormat);
+            }
+          );
         });
       }
     });

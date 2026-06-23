@@ -28,8 +28,18 @@ export class BatchFeature implements ImageManagerFeature {
             showOperationNotice(context.services.settings.getSettings(), 'No active note');
             return;
           }
+          const noteFile = view.file;
 
-          await this.runLinkRewriteBatch(context, BatchScope.CURRENT_NOTE, view.file);
+          await context.services.recovery.runTransaction(
+            {
+              label: `批量更新笔记图片链接 ${noteFile.basename}`,
+              trigger: 'batch',
+              scope: 'single-note'
+            },
+            async () => {
+              await this.runLinkRewriteBatch(context, BatchScope.CURRENT_NOTE, noteFile);
+            }
+          );
         });
       }
     });
@@ -53,7 +63,16 @@ export class BatchFeature implements ImageManagerFeature {
             return;
           }
 
-          await this.runLinkRewriteBatch(context, BatchScope.FOLDER, folder);
+          await context.services.recovery.runTransaction(
+            {
+              label: `批量更新文件夹图片链接 ${folder.path || 'vault root'}`,
+              trigger: 'batch',
+              scope: 'folder'
+            },
+            async () => {
+              await this.runLinkRewriteBatch(context, BatchScope.FOLDER, folder);
+            }
+          );
         });
       }
     });
@@ -67,7 +86,16 @@ export class BatchFeature implements ImageManagerFeature {
       name: vaultCommand.commandName,
       callback: () => {
         void executeLoggedCommand(context, vaultCommand, async () => {
-          await this.runLinkRewriteBatch(context, BatchScope.VAULT);
+          await context.services.recovery.runTransaction(
+            {
+              label: '批量更新整个仓库图片链接',
+              trigger: 'batch',
+              scope: 'vault'
+            },
+            async () => {
+              await this.runLinkRewriteBatch(context, BatchScope.VAULT);
+            }
+          );
         });
       }
     });

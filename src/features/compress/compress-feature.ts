@@ -21,9 +21,18 @@ export class CompressFeature implements ImageManagerFeature {
       name: activeCommand.commandName,
       callback: () => {
         void executeLoggedCommand(context, activeCommand, async () => {
-          await this.withActiveImageFile(context, activeCommand, async (file) => {
-            await this.compressImage(context, file);
-          });
+          await context.services.recovery.runTransaction(
+            {
+              label: '压缩当前图片',
+              trigger: 'compress',
+              scope: 'single-file'
+            },
+            async () => {
+              await this.withActiveImageFile(context, activeCommand, async (file) => {
+                await this.compressImage(context, file);
+              });
+            }
+          );
         });
       }
     });
@@ -47,7 +56,16 @@ export class CompressFeature implements ImageManagerFeature {
             return;
           }
 
-          await this.compressImagesInFolder(context, folder);
+          await context.services.recovery.runTransaction(
+            {
+              label: `压缩文件夹图片 ${folder.path || 'vault root'}`,
+              trigger: 'compress',
+              scope: 'folder'
+            },
+            async () => {
+              await this.compressImagesInFolder(context, folder);
+            }
+          );
         });
       }
     });
@@ -61,7 +79,16 @@ export class CompressFeature implements ImageManagerFeature {
       name: vaultCommand.commandName,
       callback: () => {
         void executeLoggedCommand(context, vaultCommand, async () => {
-          await this.compressImagesInVault(context);
+          await context.services.recovery.runTransaction(
+            {
+              label: '压缩整个仓库图片',
+              trigger: 'compress',
+              scope: 'vault'
+            },
+            async () => {
+              await this.compressImagesInVault(context);
+            }
+          );
         });
       }
     });

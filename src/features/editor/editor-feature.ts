@@ -19,9 +19,18 @@ export class EditorFeature implements ImageManagerFeature {
       name: rotateCommand.commandName,
       callback: () => {
         void executeLoggedCommand(context, rotateCommand, async () => {
-          await this.withActiveImageFile(context, rotateCommand, async (file) => {
-            await this.replaceImage(context, file, () => context.services.imageProcessor.rotate(file, 90), 'Image rotated');
-          });
+          await context.services.recovery.runTransaction(
+            {
+              label: '旋转当前图片 90 度',
+              trigger: 'rotate',
+              scope: 'single-file'
+            },
+            async () => {
+              await this.withActiveImageFile(context, rotateCommand, async (file) => {
+                await this.replaceImage(context, file, () => context.services.imageProcessor.rotate(file, 90), 'Image rotated');
+              });
+            }
+          );
         });
       }
     });
@@ -35,9 +44,18 @@ export class EditorFeature implements ImageManagerFeature {
       name: flipCommand.commandName,
       callback: () => {
         void executeLoggedCommand(context, flipCommand, async () => {
-          await this.withActiveImageFile(context, flipCommand, async (file) => {
-            await this.replaceImage(context, file, () => context.services.imageProcessor.flip(file, 'horizontal'), 'Image flipped horizontally');
-          });
+          await context.services.recovery.runTransaction(
+            {
+              label: '水平翻转当前图片',
+              trigger: 'flip',
+              scope: 'single-file'
+            },
+            async () => {
+              await this.withActiveImageFile(context, flipCommand, async (file) => {
+                await this.replaceImage(context, file, () => context.services.imageProcessor.flip(file, 'horizontal'), 'Image flipped horizontally');
+              });
+            }
+          );
         });
       }
     });

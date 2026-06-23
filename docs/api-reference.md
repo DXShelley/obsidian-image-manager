@@ -40,6 +40,19 @@
 - `getImagesInNote(noteFile, sourcePath?)`
 - `getImagesInFolder(folder)`
 - `syncManagedImagesForNote(noteFile, oldNotePath)`
+- `restoreBinaryFile(path, data)`
+- `restoreTextFile(path, content)`
+
+### `RecoveryManager`
+
+- `initialize()`: load persisted recovery history and prune expired snapshots.
+- `runTransaction(meta, run)`: execute a managed write transaction with persisted rollback data.
+- `captureBinarySnapshot(file)`: store the pre-change binary state once per file per transaction.
+- `captureTextSnapshot(path, content?)`: store the pre-change Markdown/text state once per file per transaction.
+- `recordCreatedFile(path)`: mark a newly created file for deletion during undo.
+- `recordRename(fromPath, toPath)`: track a path move or rename for reverse replay.
+- `recordDeletedFolder(path)`: recreate folders that were removed after managed relocation.
+- `undoLastTransaction()`: restore the latest committed or failed Image Manager transaction.
 
 ### `ImageProcessor`
 

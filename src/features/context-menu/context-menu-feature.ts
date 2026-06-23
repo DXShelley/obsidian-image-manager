@@ -38,31 +38,76 @@ export class ContextMenuFeature implements ImageManagerFeature {
     menu.addItem((item) => {
       item.setTitle('压缩图片').setIcon('archive').onClick(() => {
         context.services.logger.refreshMode('context-menu-compress');
-        void this.compressImage(context, file);
+        void context.services.recovery.runTransaction(
+          {
+            label: `右键压缩图片 ${file.name}`,
+            trigger: 'context-menu',
+            scope: 'single-file'
+          },
+          async () => {
+            await this.compressImage(context, file);
+          }
+        );
       });
     });
     menu.addItem((item) => {
       item.setTitle('转换为默认格式').setIcon('image').onClick(() => {
         context.services.logger.refreshMode('context-menu-convert');
-        void this.convertImage(context, file, context.services.settings.getSettings().defaultFormat);
+        void context.services.recovery.runTransaction(
+          {
+            label: `右键转换图片 ${file.name}`,
+            trigger: 'context-menu',
+            scope: 'single-file'
+          },
+          async () => {
+            await this.convertImage(context, file, context.services.settings.getSettings().defaultFormat);
+          }
+        );
       });
     });
     menu.addItem((item) => {
       item.setTitle('顺时针旋转 90°').setIcon('rotate-cw').onClick(() => {
         context.services.logger.refreshMode('context-menu-rotate');
-        void this.replaceImage(context, file, () => context.services.imageProcessor.rotate(file, 90), 'Image rotated');
+        void context.services.recovery.runTransaction(
+          {
+            label: `右键旋转图片 ${file.name}`,
+            trigger: 'context-menu',
+            scope: 'single-file'
+          },
+          async () => {
+            await this.replaceImage(context, file, () => context.services.imageProcessor.rotate(file, 90), 'Image rotated');
+          }
+        );
       });
     });
     menu.addItem((item) => {
       item.setTitle('水平翻转').setIcon('flip-horizontal').onClick(() => {
         context.services.logger.refreshMode('context-menu-flip');
-        void this.replaceImage(context, file, () => context.services.imageProcessor.flip(file, 'horizontal'), 'Image flipped horizontally');
+        void context.services.recovery.runTransaction(
+          {
+            label: `右键水平翻转图片 ${file.name}`,
+            trigger: 'context-menu',
+            scope: 'single-file'
+          },
+          async () => {
+            await this.replaceImage(context, file, () => context.services.imageProcessor.flip(file, 'horizontal'), 'Image flipped horizontally');
+          }
+        );
       });
     });
     menu.addItem((item) => {
       item.setTitle('垂直翻转').setIcon('flip-vertical').onClick(() => {
         context.services.logger.refreshMode('context-menu-flip');
-        void this.replaceImage(context, file, () => context.services.imageProcessor.flip(file, 'vertical'), 'Image flipped vertically');
+        void context.services.recovery.runTransaction(
+          {
+            label: `右键垂直翻转图片 ${file.name}`,
+            trigger: 'context-menu',
+            scope: 'single-file'
+          },
+          async () => {
+            await this.replaceImage(context, file, () => context.services.imageProcessor.flip(file, 'vertical'), 'Image flipped vertically');
+          }
+        );
       });
     });
   }

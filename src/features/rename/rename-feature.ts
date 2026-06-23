@@ -39,7 +39,14 @@ export class RenameFeature implements ImageManagerFeature {
         notePath: noteFile.path,
         oldPath
       });
-      const movedCount = await context.services.fileManager.syncManagedImagesForNote(noteFile, oldPath);
+      const movedCount = await context.services.recovery.runTransaction(
+        {
+          label: `同步笔记迁移图片 ${noteFile.basename}`,
+          trigger: 'note-rename-sync',
+          scope: 'auto'
+        },
+        async () => context.services.fileManager.syncManagedImagesForNote(noteFile, oldPath)
+      );
       if (movedCount > 0) {
         showOperationNotice(context.services.settings.getSettings(), `Synced ${movedCount} managed image${movedCount === 1 ? '' : 's'}`);
       }

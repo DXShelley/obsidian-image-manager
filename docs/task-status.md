@@ -26,6 +26,7 @@
 - Default rendered-image alignment and optional suppression of Obsidian image selection on click
 - Auto-rename toggle that preserves original filenames when disabled
 - Auto-download for pasted image text sources, including image URLs, `file://` paths, and `data:image/...;base64,...`
+- Persisted recovery transactions for image rewrites, path moves, note link rewrites, and paste/import flows
 
 ## Partially completed
 

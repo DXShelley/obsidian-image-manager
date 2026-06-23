@@ -30,6 +30,7 @@ describe('FeatureRegistry', () => {
         logger: {} as never,
         variableResolver: {} as never,
         fileManager: {} as never,
+        recovery: {} as never,
         imageProcessor: {} as never,
         linkFormatter: {} as never,
         batchProcessor: {} as never

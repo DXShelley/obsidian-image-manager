@@ -46,6 +46,7 @@ export default class ImageManagerPlugin extends Plugin {
   override async onload(): Promise<void> {
     await this.settingsManager.load();
     this.services = createPluginServices(this.app, this.settingsManager);
+    await this.services.recovery.initialize();
     this.featureRegistry = createPluginFeatureRegistry(createBuiltInFeatures());
     this.services.logger.refreshMode('plugin-onload');
 
@@ -153,97 +154,109 @@ export default class ImageManagerPlugin extends Plugin {
     if (!view.file) {
       return;
     }
+    const noteFile = view.file;
 
     this.services.logger.refreshMode('paste-handler');
     this.services.logger.debug('Processing pasted images', {
-      notePath: view.file.path,
+      notePath: noteFile.path,
       itemCount: inputs.length,
       textSourceCount: inputs.filter((input) => input.kind === 'text-image-source').length
     });
 
-    const links: string[] = [];
-    const savedPaths: string[] = [];
-    const failedFiles: string[] = [];
-    const fallbackFiles: string[] = [];
-    for (const input of inputs) {
-      try {
-        const { source, originalName } = await this.readClipboardImageInput(input);
-        const tempFile = await this.services.fileManager.saveImage(source, originalName, view.file);
-        const settings = this.settingsManager.getSettings();
-        let output = tempFile;
+    await this.services.recovery.runTransaction(
+      {
+        label: `粘贴导入 ${view.file.basename}`,
+        trigger: 'paste-import',
+        scope: 'single-note'
+      },
+      async () => {
+        await this.services.recovery.captureTextSnapshot(noteFile.path, view.editor.getValue());
 
-        if (settings.enableAutoConvert && settings.defaultFormat !== this.extensionToImageFormat(tempFile.extension)) {
+        const links: string[] = [];
+        const savedPaths: string[] = [];
+        const failedFiles: string[] = [];
+        const fallbackFiles: string[] = [];
+        for (const input of inputs) {
           try {
-            const ignored = matchRegexIgnorePattern(settings.conversionIgnorePattern, tempFile.path);
-            if (ignored) {
-              this.services.logger.debug('Skipped auto-convert because file matches ignore pattern', {
-                filePath: tempFile.path,
-                pattern: ignored.source
-              });
-              fallbackFiles.push(originalName);
-            } else {
-              output = await this.convertAndReplace(tempFile, settings.defaultFormat);
+            const { source, originalName } = await this.readClipboardImageInput(input);
+            const tempFile = await this.services.fileManager.saveImage(source, originalName, noteFile);
+            const settings = this.settingsManager.getSettings();
+            let output = tempFile;
+
+            if (settings.enableAutoConvert && settings.defaultFormat !== this.extensionToImageFormat(tempFile.extension)) {
+              try {
+                const ignored = matchRegexIgnorePattern(settings.conversionIgnorePattern, tempFile.path);
+                if (ignored) {
+                  this.services.logger.debug('Skipped auto-convert because file matches ignore pattern', {
+                    filePath: tempFile.path,
+                    pattern: ignored.source
+                  });
+                  fallbackFiles.push(originalName);
+                } else {
+                  output = await this.convertAndReplace(tempFile, settings.defaultFormat);
+                }
+              } catch (error: unknown) {
+                console.warn(`Image Manager skipped auto-convert for "${originalName}"`, error);
+                this.services.logger.warn('Auto-convert skipped', {
+                  originalName,
+                  requestedFormat: settings.defaultFormat,
+                  sourceExtension: tempFile.extension
+                });
+                fallbackFiles.push(originalName);
+              }
             }
+
+            links.push(
+              this.services.linkFormatter.formatLink(output.path, noteFile, {
+                format: settings.defaultLinkFormat,
+                pathFormat: settings.defaultPathFormat
+              })
+            );
+            savedPaths.push(output.path);
           } catch (error: unknown) {
-            console.warn(`Image Manager skipped auto-convert for "${originalName}"`, error);
-            this.services.logger.warn('Auto-convert skipped', {
-              originalName,
-              requestedFormat: settings.defaultFormat,
-              sourceExtension: tempFile.extension
+            const failedName = this.getClipboardImageInputLabel(input);
+            console.error(`Image Manager failed to save pasted image "${failedName}"`, error);
+            this.services.logger.error('Failed to save pasted image', error, {
+              originalName: failedName,
+              notePath: noteFile.path
             });
-            fallbackFiles.push(originalName);
+            failedFiles.push(failedName);
           }
         }
 
-        links.push(
-          this.services.linkFormatter.formatLink(output.path, view.file, {
-            format: settings.defaultLinkFormat,
-            pathFormat: settings.defaultPathFormat
-          })
-        );
-        savedPaths.push(output.path);
-      } catch (error: unknown) {
-        const failedName = this.getClipboardImageInputLabel(input);
-        console.error(`Image Manager failed to save pasted image "${failedName}"`, error);
-        this.services.logger.error('Failed to save pasted image', error, {
-          originalName: failedName,
-          notePath: view.file.path
+        if (links.length === 0) {
+          new Notice('Failed to save pasted images');
+          return;
+        }
+
+        const cursor = view.editor.getCursor();
+        const text = links.join('\n');
+        view.editor.replaceRange(text, cursor);
+        if (this.settingsManager.getSettings().dropPasteCursorLocation === 'back') {
+          view.editor.setCursor({ line: cursor.line, ch: cursor.ch + text.length });
+        }
+
+        if (failedFiles.length > 0) {
+          showOperationNotice(this.settingsManager.getSettings(), `Processed ${links.length} pasted image(s), failed ${failedFiles.length}`);
+        } else {
+          showOperationNotice(this.settingsManager.getSettings(), formatSavedLocationNotice(savedPaths));
+        }
+
+        if (fallbackFiles.length > 0) {
+          showOperationNotice(
+            this.settingsManager.getSettings(),
+            `Pasted ${fallbackFiles.length} image(s) without conversion because they were skipped or the current platform does not support the requested format`
+          );
+        }
+
+        this.services.logger.debug('Paste handler completed', {
+          notePath: noteFile.path,
+          insertedLinks: links.length,
+          failedFiles,
+          fallbackFiles
         });
-        failedFiles.push(failedName);
       }
-    }
-
-    if (links.length === 0) {
-      new Notice('Failed to save pasted images');
-      return;
-    }
-
-    const cursor = view.editor.getCursor();
-    const text = links.join('\n');
-    view.editor.replaceRange(text, cursor);
-    if (this.settingsManager.getSettings().dropPasteCursorLocation === 'back') {
-      view.editor.setCursor({ line: cursor.line, ch: cursor.ch + text.length });
-    }
-
-    if (failedFiles.length > 0) {
-      showOperationNotice(this.settingsManager.getSettings(), `Processed ${links.length} pasted image(s), failed ${failedFiles.length}`);
-    } else {
-      showOperationNotice(this.settingsManager.getSettings(), formatSavedLocationNotice(savedPaths));
-    }
-
-    if (fallbackFiles.length > 0) {
-      showOperationNotice(
-        this.settingsManager.getSettings(),
-        `Pasted ${fallbackFiles.length} image(s) without conversion because they were skipped or the current platform does not support the requested format`
-      );
-    }
-
-    this.services.logger.debug('Paste handler completed', {
-      notePath: view.file.path,
-      insertedLinks: links.length,
-      failedFiles,
-      fallbackFiles
-    });
+    );
   }
 
   private async readClipboardImageInput(input: ClipboardImageInput): Promise<{
@@ -304,14 +317,25 @@ export default class ImageManagerPlugin extends Plugin {
     if (!view?.file) {
       return;
     }
+    const noteFile = view.file;
 
-    const result = await this.services.fileManager.rewriteImageLinksInNote(view.file);
-    if (result.replaced > 0 || result.moved > 0) {
-      this.services.logger.debug('Updated active note image links after settings change', {
-        notePath: view.file.path,
-        updatedLinks: result.replaced,
-        movedImages: result.moved
-      });
-    }
+    await this.services.recovery.runTransaction(
+      {
+        label: `重写活动笔记图片链接 ${noteFile.basename}`,
+        trigger: 'settings-rewrite',
+        scope: 'single-note'
+      },
+      async () => {
+        await this.services.recovery.captureTextSnapshot(noteFile.path, view.editor.getValue());
+        const result = await this.services.fileManager.rewriteImageLinksInNote(noteFile);
+        if (result.replaced > 0 || result.moved > 0) {
+          this.services.logger.debug('Updated active note image links after settings change', {
+            notePath: noteFile.path,
+            updatedLinks: result.replaced,
+            movedImages: result.moved
+          });
+        }
+      }
+    );
   }
 }

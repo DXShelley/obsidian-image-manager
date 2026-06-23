@@ -2,6 +2,7 @@ import type { App, Plugin } from 'obsidian';
 import { DebugLogger } from '@/core/debug/debug-logger';
 import { EventBus } from '@/core/events/event-bus';
 import { FeatureRegistry } from '@/core/registry/feature-registry';
+import { RecoveryManager } from '@/core/recovery/recovery-manager';
 import type { SettingsManager } from '@/core/settings/settings-manager';
 import { BatchProcessor } from '@/features/batch';
 import { FileManager } from '@/services/file-manager';
@@ -21,6 +22,9 @@ export function createPluginServices(app: App, settingsManager: SettingsManager)
   const logger = new DebugLogger(app);
   const variableResolver = new VariableResolver();
   const linkFormatter = new LinkFormatter(app);
+  const fileManager = new FileManager(app, () => settingsManager.getSettings(), variableResolver, linkFormatter);
+  const recovery = new RecoveryManager(app, 'obsidian-image-manager', fileManager);
+  fileManager.setRecoveryManager(recovery);
 
   return {
     settings: settingsManager,
@@ -28,7 +32,8 @@ export function createPluginServices(app: App, settingsManager: SettingsManager)
     logger,
     variableResolver,
     linkFormatter,
-    fileManager: new FileManager(app, () => settingsManager.getSettings(), variableResolver, linkFormatter),
+    fileManager,
+    recovery,
     imageProcessor: new ImageProcessor(app, () => settingsManager.getSettings()),
     batchProcessor: new BatchProcessor(eventBus)
   };

@@ -35,6 +35,7 @@ See:
 - Open note and folder galleries with filtering, sorting, and grid/list toggles
 - Sync managed image folders when notes are renamed or moved, with optional image file renaming
 - Use time-based naming safely with collision suffixes such as `-01`, `-02`
+- Persist recovery transactions for image and Markdown changes, and undo the latest Image Manager operation
 
 ## Release
 
@@ -42,6 +43,12 @@ See:
 - Minimum Obsidian version: `0.15.0`
 - Release workflow: push tag `v*` to trigger `.github/workflows/release.yml`
 - Release artifacts: `manifest.json`, `main.js`, `styles.css`
+
+## Recovery
+
+- Recovery snapshots are stored under `.obsidian/plugins/obsidian-image-manager/recovery/`
+- History retention is capped to the newest `10` transactions and transactions newer than `24` hours
+- Use the command `恢复：撤销上一次图片管理修改` to roll back the most recent Image Manager transaction
 
 ## Development
 

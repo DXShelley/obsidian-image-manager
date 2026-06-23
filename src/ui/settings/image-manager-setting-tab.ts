@@ -149,6 +149,7 @@ const FEATURE_LABELS: Readonly<Record<string, string>> = {
   editor: '快速编辑',
   gallery: '图片画廊',
   batch: '批量处理',
+  recovery: '恢复事务',
   resize: '尺寸调整',
   align: '图片对齐',
   'context-menu': '右键菜单'

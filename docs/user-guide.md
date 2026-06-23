@@ -11,6 +11,7 @@
 - `当前笔记：更新图片链接与目录`
 - `当前文件夹：更新图片链接与目录`
 - `整个仓库：更新图片链接与目录`
+- `恢复：撤销上一次图片管理修改`
 - `当前笔记：打开图片画廊`
 - `当前文件夹：打开图片画廊`
 - `图片：顺时针旋转 90°`
@@ -55,6 +56,13 @@ Right-click an image file in the file explorer to access:
 - Rotate, flip, resize, compress, and convert operations update the image file immediately.
 - If the image is embedded in a Markdown note, the plugin attempts to rerender the note preview automatically.
 - Current-file conversion operates on the active Markdown note and processes each referenced image at most once.
+
+## Recovery
+
+- Image Manager records snapshots for file-content changes, path changes, and Markdown rewrites before applying a managed operation.
+- The undo command restores the latest transaction in reverse order, including images, note links, and files created by paste/import flows.
+- Recovery history is stored in `.obsidian/plugins/obsidian-image-manager/recovery/`.
+- To save space, only the newest 10 transactions are retained and transactions older than 24 hours are pruned automatically.
 
 ## Deployment note
 

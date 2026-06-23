@@ -1,5 +1,6 @@
 import { MarkdownView, TFile, TFolder, type App, type WorkspaceLeaf } from 'obsidian';
 import { LinkFormat, type ImageFormat, type ImageManagerSettings, type RenameMoveResult } from '@/types/index';
+import type { RecoveryManager } from '@/core/recovery/recovery-manager';
 import type { LinkFormatter } from '@/services/link-formatter';
 import type { VariableResolver } from '@/services/variable-resolver';
 import { extractImageLinks } from '@/utils/image-links';
@@ -41,12 +42,18 @@ interface NoteImageNormalizationResult {
 }
 
 export class FileManager {
+  private recoveryManager: RecoveryManager | null = null;
+
   constructor(
     private readonly app: App,
     private readonly getSettings: () => ImageManagerSettings,
     private readonly variableResolver: VariableResolver,
     private readonly linkFormatter: LinkFormatter
   ) {}
+
+  setRecoveryManager(recoveryManager: RecoveryManager): void {
+    this.recoveryManager = recoveryManager;
+  }
 
   isImageFile(file: TFile): boolean {
     return IMAGE_EXTENSIONS.has(file.extension.toLowerCase());
@@ -57,7 +64,9 @@ export class FileManager {
     const folder = await this.ensureOutputFolder(noteFile);
     const fileName = this.generateFileName(originalName, noteFile, extensionOverride);
     const path = this.nextAvailablePath(normalizeVaultPath(`${folder}/${fileName}`), this.getRenameCollisionOptions());
-    return this.app.vault.createBinary(path, buffer);
+    const created = await this.app.vault.createBinary(path, buffer);
+    this.recoveryManager?.recordCreatedFile(created.path);
+    return created;
   }
 
   async saveRemoteImage(url: string, noteFile: TFile, fileName?: string): Promise<TFile> {
@@ -80,6 +89,7 @@ export class FileManager {
       newName ? undefined : this.getRenameCollisionOptions()
     );
     await this.app.fileManager.renameFile(file, newPath);
+    this.recoveryManager?.recordRename(oldPath, newPath);
     await this.updateLinks(noteFile, oldPath, newPath, noteFile.path);
     return { oldPath, newPath };
   }
@@ -89,6 +99,7 @@ export class FileManager {
     await this.ensureFolder(targetFolder);
     const newPath = this.nextAvailablePath(normalizeVaultPath(`${targetFolder}/${file.name}`));
     await this.app.fileManager.renameFile(file, newPath);
+    this.recoveryManager?.recordRename(oldPath, newPath);
     if (noteFile) {
       await this.updateLinks(noteFile, oldPath, newPath, noteFile.path);
     }
@@ -98,15 +109,42 @@ export class FileManager {
   async replaceFile(file: TFile, data: ArrayBuffer, targetPath = file.path): Promise<TFile> {
     const originalPath = file.path;
     const normalizedTargetPath = normalizeVaultPath(targetPath);
+    await this.recoveryManager?.captureBinarySnapshot(file);
     await this.app.vault.modifyBinary(file, data, { mtime: Date.now() });
 
     if (normalizedTargetPath !== file.path) {
       await this.app.fileManager.renameFile(file, normalizedTargetPath);
+      this.recoveryManager?.recordRename(originalPath, normalizedTargetPath);
       await this.updateImageLinksAcrossVault(originalPath, normalizedTargetPath);
     }
 
     this.refreshOpenLeaves(file, originalPath, normalizedTargetPath);
     return file;
+  }
+
+  async restoreBinaryFile(path: string, data: ArrayBuffer): Promise<TFile> {
+    const existing = this.app.vault.getAbstractFileByPath(path);
+    if (existing instanceof TFile) {
+      await this.app.vault.modifyBinary(existing, data, { mtime: Date.now() });
+      this.refreshOpenLeaves(existing, path, path);
+      return existing;
+    }
+
+    await this.ensureParentFolder(path);
+    const created = await this.app.vault.createBinary(path, data);
+    this.refreshOpenLeaves(created, path, path);
+    return created;
+  }
+
+  async restoreTextFile(path: string, content: string): Promise<TFile> {
+    const existing = this.app.vault.getAbstractFileByPath(path);
+    if (existing instanceof TFile) {
+      await this.app.vault.modify(existing, content);
+      return existing;
+    }
+
+    await this.ensureParentFolder(path);
+    return this.app.vault.create(path, content);
   }
 
   async getImagesInNote(noteFile: TFile, sourcePath = noteFile.path): Promise<TFile[]> {
@@ -158,6 +196,7 @@ export class FileManager {
     noteFile: TFile,
     allowedNotePaths: ReadonlySet<string> = new Set([noteFile.path])
   ): Promise<NoteImageNormalizationResult> {
+    await this.recoveryManager?.captureTextSnapshot(noteFile.path);
     const content = await this.app.vault.read(noteFile);
     const imported = this.getSettings().enableAutoDownloadImagesFromText
       ? await this.downloadAndRewriteExternalImageLinks(content, noteFile)
@@ -176,6 +215,7 @@ export class FileManager {
         }
 
         await this.app.fileManager.renameFile(move.file, move.newPath);
+        this.recoveryManager?.recordRename(move.oldPath, move.newPath);
       }
     }
 
@@ -242,6 +282,7 @@ export class FileManager {
     }
 
     const movePlans = this.createRelocationPlan([...managedImages.values()], noteFile, newFolderPath);
+    await this.recoveryManager?.captureTextSnapshot(noteFile.path);
     const content = await this.app.vault.read(noteFile);
     const updated = this.rewriteLinksForMoves(content, noteFile, oldNotePath, movePlans).content;
 
@@ -253,6 +294,7 @@ export class FileManager {
       }
 
       await this.app.fileManager.renameFile(move.file, move.newPath);
+      this.recoveryManager?.recordRename(move.oldPath, move.newPath);
     }
 
     if (updated !== content) {
@@ -260,6 +302,7 @@ export class FileManager {
     }
 
     if (this.getSettings().outputFolder.trim() && oldFolder instanceof TFolder) {
+      this.recoveryManager?.recordDeletedFolder(oldFolder.path);
       await this.deleteFolderIfEmpty(oldFolder);
     }
 
@@ -267,6 +310,7 @@ export class FileManager {
   }
 
   private async updateLinks(noteFile: TFile, oldPath: string, newPath: string, sourcePath: string): Promise<void> {
+    await this.recoveryManager?.captureTextSnapshot(noteFile.path);
     const content = await this.app.vault.read(noteFile);
     const updated = this.rewriteLinksForMoves(content, noteFile, sourcePath, [{ oldPath, newPath }]).content;
 
@@ -398,6 +442,13 @@ export class FileManager {
       if (!this.app.vault.getAbstractFileByPath(current)) {
         await this.app.vault.createFolder(current);
       }
+    }
+  }
+
+  private async ensureParentFolder(path: string): Promise<void> {
+    const parentPath = getParentPath(path);
+    if (parentPath) {
+      await this.ensureFolder(parentPath);
     }
   }
 
