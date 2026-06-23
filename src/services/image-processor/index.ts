@@ -1,19 +1,12 @@
 import type { App, TFile } from 'obsidian';
 import { ImageFormat, type ImageInfo, type ImageManagerSettings, type ProcessOptions } from '@/types/index';
-
-const MIME_BY_FORMAT: Record<ImageFormat, string> = {
-  [ImageFormat.WEBP]: 'image/webp',
-  [ImageFormat.JPEG]: 'image/jpeg',
-  [ImageFormat.PNG]: 'image/png',
-  [ImageFormat.GIF]: 'image/gif',
-  [ImageFormat.HEIC]: 'image/heic',
-  [ImageFormat.TIFF]: 'image/tiff'
-};
+import { MIME_BY_FORMAT } from './format-support';
+import { canEncodeCanvasOutputFormat, getSupportedCanvasOutputFormats } from '@/utils/compatibility';
 
 export class ImageProcessor {
   constructor(
     private readonly app: App,
-    private readonly settings: ImageManagerSettings
+    private readonly getSettings: () => ImageManagerSettings
   ) {}
 
   isSupportedImage(file: TFile): boolean {
@@ -30,35 +23,40 @@ export class ImageProcessor {
       extension: file.extension,
       size: file.stat.size,
       mtime: file.stat.mtime,
+      resourcePath: this.app.vault.getResourcePath(file),
       width: dimensions?.width,
       height: dimensions?.height
     };
   }
 
-  async compress(file: TFile, quality = this.settings.compressionQuality): Promise<ArrayBuffer> {
+  async compress(file: TFile, quality = this.getSettings().compressionQuality): Promise<ArrayBuffer> {
+    this.assertOutputFormatSupported(this.extensionToFormat(file.extension));
     return this.process(file, {
       format: this.extensionToFormat(file.extension),
       quality
     });
   }
 
-  async convert(file: TFile, format = this.settings.defaultFormat): Promise<ArrayBuffer> {
+  async convert(file: TFile, format = this.getSettings().defaultFormat): Promise<ArrayBuffer> {
+    this.assertOutputFormatSupported(format);
     return this.process(file, {
       format,
-      quality: this.settings.defaultQuality
+      quality: this.getSettings().defaultQuality
     });
   }
 
   async resize(file: TFile, maxWidth?: number, maxHeight?: number): Promise<ArrayBuffer> {
+    this.assertOutputFormatSupported(this.extensionToFormat(file.extension));
     return this.process(file, {
       format: this.extensionToFormat(file.extension),
-      quality: this.settings.defaultQuality,
+      quality: this.getSettings().defaultQuality,
       maxWidth,
       maxHeight
     });
   }
 
   async rotate(file: TFile, degrees: 90 | 180 | 270): Promise<ArrayBuffer> {
+    this.assertOutputFormatSupported(this.extensionToFormat(file.extension));
     const source = await this.app.vault.readBinary(file);
     const image = await this.loadImage(source, file.extension);
     const canvas = document.createElement('canvas');
@@ -74,10 +72,11 @@ export class ImageProcessor {
     ctx.rotate((degrees * Math.PI) / 180);
     ctx.drawImage(image, -image.width / 2, -image.height / 2);
 
-    return this.canvasToArrayBuffer(canvas, this.extensionToFormat(file.extension), this.settings.defaultQuality);
+    return this.canvasToArrayBuffer(canvas, this.extensionToFormat(file.extension), this.getSettings().defaultQuality);
   }
 
   async flip(file: TFile, direction: 'horizontal' | 'vertical'): Promise<ArrayBuffer> {
+    this.assertOutputFormatSupported(this.extensionToFormat(file.extension));
     const source = await this.app.vault.readBinary(file);
     const image = await this.loadImage(source, file.extension);
     const canvas = document.createElement('canvas');
@@ -88,16 +87,17 @@ export class ImageProcessor {
 
     canvas.width = image.width;
     canvas.height = image.height;
+    ctx.save();
     if (direction === 'horizontal') {
-      ctx.translate(image.width, 0);
       ctx.scale(-1, 1);
+      ctx.drawImage(image, -image.width, 0);
     } else {
-      ctx.translate(0, image.height);
       ctx.scale(1, -1);
+      ctx.drawImage(image, 0, -image.height);
     }
-    ctx.drawImage(image, 0, 0);
+    ctx.restore();
 
-    return this.canvasToArrayBuffer(canvas, this.extensionToFormat(file.extension), this.settings.defaultQuality);
+    return this.canvasToArrayBuffer(canvas, this.extensionToFormat(file.extension), this.getSettings().defaultQuality);
   }
 
   private async process(file: TFile, options: ProcessOptions): Promise<ArrayBuffer> {
@@ -116,8 +116,8 @@ export class ImageProcessor {
 
     return this.canvasToArrayBuffer(
       canvas,
-      options.format ?? this.settings.defaultFormat,
-      options.quality ?? this.settings.defaultQuality
+      options.format ?? this.getSettings().defaultFormat,
+      options.quality ?? this.getSettings().defaultQuality
     );
   }
 
@@ -187,10 +187,21 @@ export class ImageProcessor {
     if (Object.values(ImageFormat).includes(normalized as ImageFormat)) {
       return normalized as ImageFormat;
     }
-    return this.settings.defaultFormat;
+    return this.getSettings().defaultFormat;
   }
 
   private extensionToMime(extension: string): string {
     return MIME_BY_FORMAT[this.extensionToFormat(extension)] ?? `image/${extension}`;
+  }
+
+  private assertOutputFormatSupported(format: ImageFormat): void {
+    if (canEncodeCanvasOutputFormat(format)) {
+      return;
+    }
+
+    const supportedFormats = getSupportedCanvasOutputFormats()
+      .map((item) => item.toUpperCase())
+      .join(', ');
+    throw new Error(`Current platform cannot encode ${format.toUpperCase()} images. Supported outputs: ${supportedFormats}`);
   }
 }

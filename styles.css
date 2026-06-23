@@ -2,10 +2,321 @@
   max-width: 100%;
 }
 
-.image-manager-gallery-grid {
+.image-manager-align-left {
+  display: block;
+  margin-right: auto;
+}
+
+.image-manager-align-center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.image-manager-align-right {
+  display: block;
+  margin-left: auto;
+}
+
+.image-manager-settings {
+  display: grid;
+  gap: 20px;
+}
+
+.image-manager-settings-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 12px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--interactive-accent) 10%, transparent), transparent 60%),
+    var(--background-secondary);
+}
+
+.image-manager-settings-hero__content h2 {
+  margin: 0 0 8px;
+}
+
+.image-manager-settings-hero__content p {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.image-manager-settings-hero__actions {
+  min-width: 152px;
+}
+
+.image-manager-settings-hero__actions .setting-item {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.image-manager-settings-section {
+  padding: 16px 18px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 12px;
+  background: var(--background-primary-alt);
+}
+
+.image-manager-settings-section__header {
+  margin-bottom: 10px;
+}
+
+.image-manager-settings-section__header h3 {
+  margin: 0 0 6px;
+}
+
+.image-manager-settings-section__header p {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.image-manager-settings-section .setting-item:first-of-type {
+  border-top: 0;
+}
+
+.image-manager-settings-code-input {
+  font-family: var(--font-monospace);
+}
+
+.image-manager-settings-textarea {
+  min-height: 56px;
+  resize: vertical;
+}
+
+.image-manager-settings-examples,
+.image-manager-settings-presets,
+.image-manager-settings-variables,
+.image-manager-settings-preview {
+  margin: 10px 0 0;
+}
+
+.image-manager-settings-examples__title,
+.image-manager-settings-preview__label {
+  margin-bottom: 8px;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  font-weight: 600;
+}
+
+.image-manager-settings-examples__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.image-manager-settings-chip,
+.image-manager-settings-preset__button {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 999px;
+  background: var(--background-secondary);
+  color: var(--text-normal);
+  padding: 6px 12px;
+  font-size: var(--font-ui-small);
+  cursor: pointer;
+}
+
+.image-manager-settings-chip:hover,
+.image-manager-settings-preset__button:hover {
+  border-color: var(--interactive-accent);
+  background: color-mix(in srgb, var(--interactive-accent) 10%, var(--background-secondary));
+}
+
+.image-manager-settings-preview {
+  padding: 10px 12px;
+  border: 1px dashed var(--background-modifier-border);
+  border-radius: 10px;
+  background: var(--background-secondary);
+}
+
+.image-manager-settings-preview__value {
+  display: block;
+  min-height: 20px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--background-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--text-normal);
+  font-family: var(--font-monospace);
+  line-height: 1.5;
+}
+
+.image-manager-settings-preview__value:empty::before {
+  content: "（预览将在这里显示）";
+  color: var(--text-faint);
+}
+
+.image-manager-settings-presets__list,
+.image-manager-settings-planned,
+.image-manager-settings-status {
+  display: grid;
+  gap: 12px;
+}
+
+.image-manager-settings-presets__list,
+.image-manager-settings-status {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.image-manager-settings-card,
+.image-manager-settings-preset {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 10px;
+  background: var(--background-secondary);
+}
+
+.image-manager-settings-card p,
+.image-manager-settings-preset p {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.image-manager-settings-preset code,
+.image-manager-settings-card code {
+  font-size: var(--font-ui-smaller);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.image-manager-settings-card--muted {
+  background: color-mix(in srgb, var(--background-secondary) 86%, var(--background-modifier-border));
+}
+
+.image-manager-settings-card__top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.image-manager-settings-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: var(--font-ui-smaller);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.image-manager-settings-badge--implemented {
+  background: color-mix(in srgb, var(--color-green) 18%, transparent);
+  color: var(--color-green);
+}
+
+.image-manager-settings-badge--scaffolded {
+  background: color-mix(in srgb, var(--color-orange) 18%, transparent);
+  color: var(--color-orange);
+}
+
+.image-manager-settings-badge--ok {
+  background: color-mix(in srgb, var(--color-cyan) 18%, transparent);
+  color: var(--color-cyan);
+}
+
+.image-manager-settings-badge--warning {
+  background: color-mix(in srgb, var(--color-orange) 18%, transparent);
+  color: var(--color-orange);
+}
+
+.image-manager-settings-variables__list {
+  display: grid;
+  gap: 8px;
+}
+
+.image-manager-settings-variables__item {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--background-secondary);
+}
+
+.image-manager-settings-variables__item span {
+  color: var(--text-muted);
+}
+
+@media (max-width: 720px) {
+  .image-manager-settings-hero {
+    flex-direction: column;
+  }
+
+  .image-manager-settings-hero__actions {
+    min-width: 0;
+  }
+
+  .image-manager-settings-card__top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.image-manager-gallery-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.image-manager-gallery-search,
+.image-manager-gallery-select {
+  min-width: 180px;
+}
+
+.image-manager-gallery-toggle {
+  display: flex;
+  gap: 8px;
+}
+
+.image-manager-gallery-button {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  background: var(--background-secondary);
+  padding: 6px 10px;
+}
+
+.image-manager-gallery-button.is-active {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.image-manager-gallery-grid,
+.image-manager-gallery-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 12px;
+}
+
+.image-manager-gallery-grid--small {
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+}
+
+.image-manager-gallery-grid--medium {
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+}
+
+.image-manager-gallery-grid--large {
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+
+.image-manager-gallery-list {
+  grid-template-columns: 1fr;
+}
+
+.image-manager-gallery-list--small,
+.image-manager-gallery-list--medium,
+.image-manager-gallery-list--large {
+  grid-template-columns: 1fr;
 }
 
 .image-manager-gallery-item {
@@ -13,6 +324,17 @@
   border-radius: 6px;
   padding: 10px;
   background: var(--background-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.image-manager-gallery-item--clickable {
+  cursor: zoom-in;
+}
+
+.image-manager-gallery-item--clickable:hover {
+  border-color: var(--interactive-accent);
 }
 
 .image-manager-gallery-name {
@@ -20,5 +342,110 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  margin-bottom: 6px;
+}
+
+.image-manager-gallery-thumb {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border-radius: 4px;
+  background: var(--background-primary);
+}
+
+.image-manager-gallery-meta {
+  display: grid;
+  gap: 4px;
+}
+
+.image-manager-gallery-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: color-mix(in srgb, var(--background-primary) 72%, black);
+}
+
+.image-manager-gallery-lightbox.is-open {
+  display: flex;
+}
+
+.image-manager-gallery-lightbox__panel {
+  width: min(1100px, 100%);
+  max-height: 100%;
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  border-radius: 16px;
+  background: var(--background-primary);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
+}
+
+.image-manager-gallery-lightbox__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.image-manager-gallery-lightbox__title {
+  display: grid;
+  gap: 4px;
+}
+
+.image-manager-gallery-lightbox__title span,
+.image-manager-gallery-lightbox__counter {
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+}
+
+.image-manager-gallery-lightbox__close,
+.image-manager-gallery-lightbox__nav {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  background: var(--background-secondary);
+  padding: 8px 12px;
+}
+
+.image-manager-gallery-lightbox__body {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: center;
+}
+
+.image-manager-gallery-lightbox__image {
+  width: 100%;
+  max-height: min(72vh, 900px);
+  object-fit: contain;
+  border-radius: 12px;
+  background:
+    linear-gradient(45deg, var(--background-secondary) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--background-secondary) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--background-secondary) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--background-secondary) 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+}
+
+@media (max-width: 720px) {
+  .image-manager-gallery-lightbox {
+    padding: 12px;
+  }
+
+  .image-manager-gallery-lightbox__panel {
+    padding: 14px;
+  }
+
+  .image-manager-gallery-lightbox__header,
+  .image-manager-gallery-lightbox__body {
+    grid-template-columns: 1fr;
+  }
+}
+
+.image-manager-feature-status {
+  margin: 0;
+  padding-left: 18px;
 }

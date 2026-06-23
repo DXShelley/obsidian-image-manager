@@ -1,0 +1,38 @@
+# Architecture
+
+## Layering
+
+- `src/main.ts`: plugin composition root, service wiring, and feature registry bootstrapping.
+- `src/core`: cross-cutting infrastructure for settings persistence, event dispatch, and feature registration.
+- `src/features`: user-facing behavior modules grouped by business capability.
+- `src/services`: reusable services for file operations, image processing, variable resolution, and link formatting.
+- `src/ui`: settings tab and modal components.
+- `src/types`: shared enums, interfaces, result helpers, batch contracts, and feature metadata.
+- `src/utils`: pure helper functions.
+
+## Implemented flow
+
+1. `main.ts` loads persisted settings into `SettingsManager`.
+2. Core services are instantiated once and exposed through `ImageManagerFeatureContext`.
+3. `FeatureRegistry` activates each feature module.
+4. Features register commands, workspace/vault listeners, post processors, and UI entry points.
+5. Batch work emits progress through `EventBus`.
+
+## Delivered modules
+
+- Rename and relocation sync
+- Compression
+- Format conversion
+- Preview decoration
+- Image editor quick actions
+- Note/folder gallery
+- Batch compression queue
+- Resize preset
+- Context menu integration
+
+## Deferred extension points
+
+- Markdown alignment transforms
+- Interactive canvas editor UI
+- OCR, search, and classification
+- Worker-based off-main-thread processing

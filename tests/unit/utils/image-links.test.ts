@@ -7,8 +7,9 @@ describe('extractImageLinks', () => {
       extractImageLinks([
         '![[photo.png]]',
         '![[folder/image.webp|320]]',
-        '![alt](assets/diagram.jpg)'
+        '![alt](assets/diagram.jpg)',
+        '![caption](<assets/space image.png> "Title")'
       ].join('\n'))
-    ).toEqual(['photo.png', 'folder/image.webp', 'assets/diagram.jpg']);
+    ).toEqual(['photo.png', 'folder/image.webp', 'assets/diagram.jpg', 'assets/space image.png']);
   });
 });

@@ -1,11 +1,3 @@
-main.js
-main.js.map
-node_modules/
-.idea/
-.vscode/
-*.swp
-*.swo
 .DS_Store
-coverage/
-*.log
-npm-debug.log*
+node_modules/
+.obsidian/plugins/obsidian-image-manager/recovery/
