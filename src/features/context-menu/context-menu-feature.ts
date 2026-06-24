@@ -2,7 +2,8 @@ import { TFile } from 'obsidian';
 import type { Menu, TAbstractFile } from 'obsidian';
 import { openSingleImageGallery } from '@/features/gallery/gallery-actions';
 import type { ImageManagerFeature, ImageManagerFeatureContext } from '@/types/index';
-import type { ImageFormat } from '@/types/index';
+import type { ImageFormat, ImageSelection } from '@/types/index';
+import { pickImageSelection } from '@/ui/modals/image-selection-modal';
 import { writeImageFileToClipboard } from '@/utils/clipboard';
 import { canWriteImageToClipboard } from '@/utils/compatibility';
 import { getConvertedTargetPath } from '@/utils/image-manager';
@@ -79,6 +80,18 @@ export class ContextMenuFeature implements ImageManagerFeature {
             await this.convertImage(context, file, context.services.settings.getSettings().defaultFormat);
           }
         );
+      });
+    });
+    menu.addItem((item) => {
+      item.setTitle('拖拽裁剪').setIcon('scissors').onClick(() => {
+        context.services.logger.refreshMode('context-menu-crop');
+        void this.cropImage(context, file);
+      });
+    });
+    menu.addItem((item) => {
+      item.setTitle('框选去水印').setIcon('wand').onClick(() => {
+        context.services.logger.refreshMode('context-menu-watermark');
+        void this.removeWatermark(context, file);
       });
     });
     menu.addItem((item) => {
@@ -167,6 +180,55 @@ export class ContextMenuFeature implements ImageManagerFeature {
       targetPath
     });
     showOperationNotice(context.services.settings.getSettings(), `Converted to ${format}`);
+  }
+
+  private async cropImage(context: ImageManagerFeatureContext, file: TFile): Promise<void> {
+    const selection = await this.pickSelection(context, file, {
+      title: `裁剪图片：${file.name}`,
+      description: '拖拽选择要保留的区域，确认后会按选区裁剪当前图片。',
+      confirmLabel: '裁剪'
+    });
+    if (!selection) {
+      return;
+    }
+
+    await context.services.recovery.runTransaction(
+      {
+        label: `右键裁剪图片 ${file.name}`,
+        trigger: 'context-menu',
+        scope: 'single-file'
+      },
+      async () => {
+        await this.replaceImage(context, file, () => context.services.imageProcessor.crop(file, selection), 'Image cropped');
+      }
+    );
+  }
+
+  private async removeWatermark(context: ImageManagerFeatureContext, file: TFile): Promise<void> {
+    const selection = await this.pickSelection(context, file, {
+      title: `框选去水印：${file.name}`,
+      description: '拖拽框出水印区域，确认后会使用周边像素对选区进行修补。',
+      confirmLabel: '去水印'
+    });
+    if (!selection) {
+      return;
+    }
+
+    await context.services.recovery.runTransaction(
+      {
+        label: `右键去水印 ${file.name}`,
+        trigger: 'context-menu',
+        scope: 'single-file'
+      },
+      async () => {
+        await this.replaceImage(
+          context,
+          file,
+          () => context.services.imageProcessor.removeWatermark(file, selection),
+          'Watermark removed'
+        );
+      }
+    );
   }
 
   private async replaceImage(
@@ -262,5 +324,22 @@ export class ContextMenuFeature implements ImageManagerFeature {
       });
       showOperationNotice(context.services.settings.getSettings(), 'Failed to copy image to clipboard');
     }
+  }
+
+  private async pickSelection(
+    context: ImageManagerFeatureContext,
+    file: TFile,
+    options: {
+      readonly title: string;
+      readonly description: string;
+      readonly confirmLabel: string;
+    }
+  ): Promise<ImageSelection | null> {
+    return pickImageSelection(context.app, {
+      file,
+      title: options.title,
+      description: options.description,
+      confirmLabel: options.confirmLabel
+    });
   }
 }

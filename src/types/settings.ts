@@ -57,7 +57,6 @@ export interface ImageManagerSettings {
   enableAutoRename: boolean;
   enableGallery: boolean;
   enableContextMenu: boolean;
-  enableDragResize: boolean;
   enableImageAlign: boolean;
   imageAlignmentDefaultAlignment: Alignment;
   disableObsidianImageSelectionOnClick: boolean;
@@ -90,7 +89,6 @@ export const DEFAULT_SETTINGS: Readonly<ImageManagerSettings> = {
   enableAutoRename: true,
   enableGallery: true,
   enableContextMenu: true,
-  enableDragResize: true,
   enableImageAlign: true,
   imageAlignmentDefaultAlignment: Alignment.NONE,
   disableObsidianImageSelectionOnClick: false,

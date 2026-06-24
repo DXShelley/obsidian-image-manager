@@ -2,7 +2,7 @@
 
 # Obsidian Image Manager
 
-`Obsidian Image Manager` is an image management plugin for Obsidian. `v2.0.0` is the first major release centered on batch workflows, undo/redo recovery, and richer gallery navigation.
+`Obsidian Image Manager` is an image management plugin for Obsidian. `v3.0.0` focuses on interactive image operations, stronger feature-toggle consistency, and a dedicated release site.
 
 ## Project Overview
 
@@ -22,12 +22,13 @@
 - Generate file names with variables such as `{noteName}`, `{fileName}`, `{date}`, `{time}`, and `{random}`.
 - Insert image links as either Obsidian Wiki links or standard Markdown links.
 - Batch-convert all images referenced by the current note.
-- Run compression and link-update commands against the current file, current folder, or entire vault.
-- Sort scoped commands by the `a1-a3`, `b1-b3`, and `c1-c3` `id` order, while displaying them as `【单文件】`, `【单文件夹】`, and `【整库】` in the command palette.
+- Run link-update, format-conversion, compression, and orphan-image cleanup commands against the current file, current folder, or entire vault.
+- Sort scoped commands by the `a1-a4`, `b1-b4`, and `c1-c4` `id` order, while displaying them as `【单文件】`, `【单文件夹】`, and `【整库】` in the command palette.
 - Prompt for confirmation before any vault-wide command runs.
 - Make current-note conversion and compression commands process every image referenced by the active Markdown note instead of only the active image file.
+- Provide active-image commands for rotate, flip, and resize-to-1920px so the current image can also be processed from the command palette.
 - Pause, resume, or cancel active batch jobs.
-- Use image context-menu actions for copy, compress, convert, rotate, and horizontal or vertical flip.
+- Use image context-menu actions for copy, compress, convert, rotate, horizontal or vertical flip, drag-to-crop, and selection-based watermark removal.
 - Open current-image, note-level, or folder-level galleries with filtering, sorting, grid/list toggles, and reading-view double-click entry points.
 - Sync managed image folders when notes are renamed or moved, with optional image file renaming.
 - During orphan cleanup, relocate images that still have a single external note referrer into that note's managed folder instead of deleting them.
@@ -57,7 +58,7 @@
 
 ## Release
 
-- Version: `2.0.0`
+- Version: `3.0.0`
 - Minimum Obsidian version: `0.15.0`
 - Release workflow: push a `v*` tag to trigger `.github/workflows/release.yml`
 - Release artifacts: `manifest.json`, `main.js`, `styles.css`
