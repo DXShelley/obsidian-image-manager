@@ -1,26 +1,30 @@
-# User Guide
+[中文](user-guide.md) | [English](user-guide.en.md) | [文档索引](README.md)
 
-## Commands
+# 用户指南
 
-- `当前文件：压缩图片`
-- `当前文件夹：压缩图片`
-- `整个仓库：压缩图片`
-- `当前文件：批量转换所有图片为默认格式`
-- `当前文件夹：转换为默认格式`
-- `整个仓库：转换为默认格式`
-- `当前笔记：更新图片链接与目录`
-- `当前文件夹：更新图片链接与目录`
-- `整个仓库：更新图片链接与目录`
-- `恢复：撤销上一次图片管理修改`
-- `当前笔记：打开图片画廊`
-- `当前文件夹：打开图片画廊`
-- `图片：顺时针旋转 90°`
-- `图片：水平翻转`
-- `图片：缩放到 1920px 边界`
+## 命令
 
-## Context menu
+- 所有带范围的命令会按 `id` 中的 `a1-a4`、`b1-b4`、`c1-c4` 顺序显示，分别对应 `【单文件】`、`【单文件夹】`、`【整库】`，组内再按 `更新链接 -> 格式转换 -> 压缩 -> 删除多余图片文件` 排序。
+- `【单文件】更新图片链接与目录`
+- `【单文件】转换图片为默认格式`
+- `【单文件】压缩图片`
+- `【单文件】删除多余图片文件`
+- `【单文件夹】更新图片链接与目录`
+- `【单文件夹】转换图片为默认格式`
+- `【单文件夹】压缩图片`
+- `【单文件夹】删除多余图片文件`
+- `【整库】更新图片链接与目录`
+- `【整库】转换图片为默认格式`
+- `【整库】压缩图片`
+- `【整库】删除多余图片文件`
+- `恢复：撤销上一步图片管理修改`
+- `恢复：重做上一步图片管理修改`
+- `【单文件】打开图片画廊`
+- `【单文件夹】打开图片画廊`
 
-Right-click an image file in the file explorer to access:
+## 右键菜单
+
+在文件管理器中右键图片文件，可使用以下操作：
 
 - Copy image to clipboard
 - Compress image
@@ -29,41 +33,49 @@ Right-click an image file in the file explorer to access:
 - Flip horizontal
 - Flip vertical
 
-## Gallery
+## 画廊
 
-- Open note or folder galleries from the command palette.
-- Use the search box to filter image names.
-- Use the sort dropdown to switch between newest, name, and size order.
-- Use the grid/list toggle to switch presentation.
+- 可通过命令面板打开笔记级或文件夹级画廊。
+- 使用搜索框按图片名称筛选。
+- 使用排序下拉框在最新、名称和大小之间切换排序。
+- 使用网格 / 列表切换按钮切换展示方式。
 
-## Rename and save rules
+## 重命名与保存规则
 
-- `renamePattern` supports variables from `docs/variables.md`.
-- `outputFolder` supports note-scoped templates such as `./assets/${noteFileName}`.
-- `outputFolder` is only used when `enablePasteHandler` is enabled and this plugin is handling the image paste flow.
-- If `{noteName}` and `{date}` resolve to the same value, adjacent duplicates are collapsed automatically.
-- If `renamePattern` contains `{time}`, collision handling uses ordered suffixes such as `-01`, `-02`, and `-03`.
-- If a note is renamed or moved, managed image folders can be synchronized automatically.
+- `renamePattern` 支持 [变量参考](variables.md) 中定义的变量。
+- `outputFolder` 支持 `./assets/${noteFileName}` 这类基于笔记的模板。
+- `outputFolder` 仅在 `enablePasteHandler` 启用且由本插件接管图片粘贴流程时生效。
+- 当 `{noteName}` 与 `{date}` 解析为相同值时，相邻重复片段会自动折叠。
+- 如果 `renamePattern` 包含 `{time}`，重名处理会使用 `-01`、`-02`、`-03` 等有序后缀。
+- 当笔记被重命名或移动时，受管图片目录可以自动同步。
+- `删除空图片文件夹` 默认开启；删除孤立图片后会继续向上清理因此变空的附件目录。
+- `删除孤立图片` 默认关闭；开启后，`更新图片链接与目录` 会在当前受管目录内继续删除未被任何笔记引用的图片。
 
-## Settings page
+## 设置页
 
-- The save-location editor and generated-file-name editor are shown at the top of the settings page.
-- Both fields include a live preview block.
-- On older Obsidian builds, the plugin skips inline field-error rendering instead of crashing the entire settings page.
+- 保存位置编辑器与生成文件名编辑器显示在设置页顶部。
+- 两个字段都带有实时预览块。
+- 在较旧的 Obsidian 版本中，插件会跳过行内字段错误渲染，而不是让整个设置页崩溃。
 
-## Refresh behavior
+## 刷新行为
 
-- Rotate, flip, resize, compress, and convert operations update the image file immediately.
-- If the image is embedded in a Markdown note, the plugin attempts to rerender the note preview automatically.
-- Current-file conversion operates on the active Markdown note and processes each referenced image at most once.
+- 旋转、翻转、缩放、压缩与转换操作会立即更新图片文件。
+- 如果图片嵌入在 Markdown 笔记中，插件会尝试自动刷新该笔记的预览。
+- 范围型命令会延迟合并 Markdown 刷新；一次批量处理结束后只给一条汇总提示，并只执行一次预览刷新。
+- 当前文件转换命令会以当前激活的 Markdown 笔记为范围，每张引用图片最多只处理一次。
+- 如果不同源格式会转换到同一个目标名，例如 `aaa.png` 与 `aaa.jpg` 都转 `webp`，插件会自动追加 `-1`、`-2` 等后缀，避免覆盖既有文件。
+- 所有 `【整库】...` 命令在执行前都会先弹出风险确认。
+- 当配置了自定义 `outputFolder` 但目标目录尚不存在时，当前笔记范围的孤立图片清理不会回退扫描笔记目录，以避免扩大删除范围。
 
-## Recovery
+## 恢复
 
-- Image Manager records snapshots for file-content changes, path changes, and Markdown rewrites before applying a managed operation.
-- The undo command restores the latest transaction in reverse order, including images, note links, and files created by paste/import flows.
-- Recovery history is stored in `.obsidian/plugins/obsidian-image-manager/recovery/`.
-- To save space, only the newest 10 transactions are retained and transactions older than 24 hours are pruned automatically.
+- Image Manager 会在执行受管操作前，为文件内容变更、路径变更与 Markdown 重写记录快照。
+- `撤销` 命令会按逆序恢复最近一次事务，包括图片、笔记链接以及粘贴 / 导入流程中创建的文件。
+- `重做` 命令会重新应用最近一次已撤销事务，因此可以在最近几次操作之间来回切换。
+- 恢复历史保存在 `.obsidian/plugins/obsidian-image-manager/recovery/`。
+- `.gitignore` 默认忽略 `.obsidian/plugins/obsidian-image-manager/recovery/`，避免将本地恢复快照提交到仓库。
+- 为节省空间，仅保留最新 10 笔事务，并自动清理超过 24 小时的事务。
 
-## Deployment note
+## 部署提示
 
-- After rebuilding locally, recopy `manifest.json`, `main.js`, and `styles.css` into `.obsidian/plugins/obsidian-image-manager/` before retesting inside Obsidian.
+- 本地重新构建后，在 Obsidian 中复测前需要重新复制 `manifest.json`、`main.js` 与 `styles.css` 到 `.obsidian/plugins/obsidian-image-manager/`。

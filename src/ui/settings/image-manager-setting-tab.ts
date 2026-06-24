@@ -8,6 +8,7 @@ import {
   GallerySortBy,
   ImageFormat,
   LinkFormat,
+  MarkdownPathEncodingStrategy,
   PathFormat,
   type ImageManagerFeature,
   type ImageManagerSettings
@@ -19,6 +20,7 @@ import {
   getAttachmentFolderSetting,
   getSupportedCanvasOutputFormats
 } from '@/utils/compatibility';
+import { detectPluginConflicts } from '@/utils/plugin-conflicts';
 import { validateRegexIgnorePattern } from '@/utils/regex-ignore';
 import { getParentPath, isRelocatableOutputFolderTemplate, resolveNoteScopedPath } from '@/utils/image-manager';
 
@@ -277,6 +279,22 @@ export class ImageManagerSettingTab extends PluginSettingTab {
           })
       );
 
+    new Setting(namingSection)
+      .setName('Markdown 路径输出策略')
+      .setDesc('仅对 Markdown 图片链接生效。可选择强制 URL 编码、中文可读路径，或自动按需要包裹路径。')
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOption(MarkdownPathEncodingStrategy.ENCODED, '强制编码')
+          .addOption(MarkdownPathEncodingStrategy.READABLE, '中文可读')
+          .addOption(MarkdownPathEncodingStrategy.AUTO, '自动')
+          .setValue(settings.markdownPathEncodingStrategy)
+          .onChange(async (value) => {
+            await this.updateSettings((draft) => {
+              draft.markdownPathEncodingStrategy = value as MarkdownPathEncodingStrategy;
+            });
+          })
+      );
+
     renameSetting = new Setting(namingSection)
       .setName('生成的图片文件名')
       .setDesc('支持变量模板。留空时回退为原始文件名；如果笔记名与日期重复，会自动去重。')
@@ -347,6 +365,28 @@ export class ImageManagerSettingTab extends PluginSettingTab {
         toggle.setValue(settings.renameImagesOnNoteRelocate).onChange(async (value) => {
           await this.updateSettings((draft) => {
             draft.renameImagesOnNoteRelocate = value;
+          });
+        })
+      );
+
+    new Setting(namingSection)
+      .setName('删除空图片文件夹')
+      .setDesc('模仿 Custom Attachment Location 的空附件目录清理行为。关闭后，迁移或清理完成后会保留空目录。')
+      .addToggle((toggle) =>
+        toggle.setValue(settings.deleteEmptyFolders).onChange(async (value) => {
+          await this.updateSettings((draft) => {
+            draft.deleteEmptyFolders = value;
+          });
+        })
+      );
+
+    new Setting(namingSection)
+      .setName('删除孤立图片')
+      .setDesc('模仿 Custom Attachment Location 的孤立附件清理行为。开启后，“更新图片链接与目录”会顺带删除当前范围内未被任何笔记引用的图片。')
+      .addToggle((toggle) =>
+        toggle.setValue(settings.deleteOrphanImages).onChange(async (value) => {
+          await this.updateSettings((draft) => {
+            draft.deleteOrphanImages = value;
           });
         })
       );
@@ -860,6 +900,7 @@ export class ImageManagerSettingTab extends PluginSettingTab {
     const supportedFormats = getSupportedCanvasOutputFormats().map((format) => format.toUpperCase());
     const attachmentFolder = getAttachmentFolderSetting(this.app);
     const debugModeEnabled = detectObsidianDebugMode(this.app);
+    const pluginConflicts = detectPluginConflicts(this.app, settings);
     const cards: CompatibilityCard[] = [
       {
         title: '当前平台',
@@ -903,6 +944,14 @@ export class ImageManagerSettingTab extends PluginSettingTab {
         title: 'Obsidian 原生附件目录',
         tone: 'warning',
         description: `检测到 Obsidian 原生附件目录设置为“${attachmentFolder}”。启用本插件粘贴接管时，将优先使用本插件的输出目录规则。`
+      });
+    }
+
+    for (const conflict of pluginConflicts) {
+      cards.push({
+        title: `${conflict.featureLabel} 与插件冲突`,
+        tone: 'warning',
+        description: `检测到已启用插件“${conflict.pluginName}”（${conflict.pluginId}）。${conflict.description}`
       });
     }
 

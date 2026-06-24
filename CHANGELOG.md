@@ -1,12 +1,26 @@
-# Changelog
+[中文](CHANGELOG.md) | [English](CHANGELOG.en.md)
+
+# 更新日志
+
+## Unreleased
+
+- 调整命令面板中的范围型命令排序，统一按 `单文件`、`单文件夹`、`整库` 分组展示。
+- 范围型命令改为仅在 `id` 中保留 `a/b/c` 排序前缀，命令名称统一显示为 `【单文件】`、`【单文件夹】`、`【整库】`。
+- 范围型批量处理在完成前合并 Markdown 刷新，只保留一条汇总提示。
+- 为所有整库命令增加执行前风险确认。
+- 新增 `删除空图片文件夹`、`删除孤立图片` 设置，以及当前笔记 / 当前文件夹 / 整库三个范围的 `删除多余图片文件` 命令。
+- 孤立图片清理在自定义 `outputFolder` 缺失时不再回退扫描笔记目录，避免扩大删除范围。
+- 格式转换在同名跨格式场景下自动生成唯一目标名，例如 `aaa.webp`、`aaa-1.webp`。
+- 恢复功能扩展为可撤销 / 重做最近事务，并更新命令名称。
+- 文档补充 `.gitignore` 中恢复快照目录忽略规则，以及 `png -> webp`、整库确认与撤销 / 重做的测试说明。
 
 ## 1.0.0
 
-- Initial stable release for Obsidian Image Manager.
-- Modularized the plugin into `app`, `core`, `features`, `services`, `types`, `ui`, and `utils`.
-- Added configurable paste handling, save-path templates, rename templates, and live settings previews.
-- Added scope-based commands for current file, current folder, and entire vault where applicable.
-- Added batch image-link rewrite with managed-folder relocation support.
-- Added image compression, format conversion, resize preset, rotate, and flip commands.
-- Added note and folder gallery views with sort, filter, and grid sizing options.
-- Added context-menu integration, preview refresh after image replacement, and CI/release workflows.
+- `Obsidian Image Manager` 首个稳定版本。
+- 将插件按 `app`、`core`、`features`、`services`、`types`、`ui` 与 `utils` 模块化拆分。
+- 增加可配置的粘贴处理、保存路径模板、重命名模板与实时设置预览。
+- 为适用功能增加当前文件、当前文件夹与整个仓库范围的命令。
+- 增加按受管目录迁移图片并批量更新图片链接的能力。
+- 增加图片压缩、格式转换、缩放预设、旋转与翻转命令。
+- 增加笔记与文件夹画廊视图，支持排序、筛选与网格大小切换。
+- 增加右键菜单集成、图片替换后的预览刷新，以及 CI / 发布工作流。

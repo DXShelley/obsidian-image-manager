@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { TFile } from 'obsidian';
+import { TFile, TFolder } from 'obsidian';
 import { FileManager } from '@/services/file-manager';
 import { LinkFormatter } from '@/services/link-formatter';
 import { VariableResolver } from '@/services/variable-resolver';
@@ -9,6 +9,7 @@ import {
   GallerySortBy,
   ImageFormat,
   LinkFormat,
+  MarkdownPathEncodingStrategy,
   PathFormat,
   type ImageManagerSettings
 } from '@/types/index';
@@ -18,6 +19,7 @@ const settings: ImageManagerSettings = {
   defaultQuality: 80,
   defaultLinkFormat: LinkFormat.WIKI,
   defaultPathFormat: PathFormat.SHORTEST,
+  markdownPathEncodingStrategy: MarkdownPathEncodingStrategy.ENCODED,
   renamePattern: '{noteName}-{date}-{random}',
   outputFolder: '',
   enablePasteHandler: true,
@@ -35,6 +37,8 @@ const settings: ImageManagerSettings = {
   showSpaceSavedNotification: true,
   enableNoteRenameSync: true,
   renameImagesOnNoteRelocate: false,
+  deleteEmptyFolders: true,
+  deleteOrphanImages: false,
   galleryGridSize: GalleryGridSize.MEDIUM,
   gallerySortBy: GallerySortBy.DATE,
   compressionQuality: 80,
@@ -105,6 +109,102 @@ describe('FileManager.replaceFile', () => {
     expect(app.fileManager.renameFile).toHaveBeenCalledWith(file, 'assets/photo.webp');
     expect(file.path).toBe('assets/photo.webp');
   });
+
+  it('defers leaf refresh during bulk updates and flushes once at the end', async () => {
+    const app = {
+      vault: {
+        modifyBinary: vi.fn(async () => undefined)
+      },
+      fileManager: {
+        renameFile: vi.fn(async () => undefined)
+      },
+      workspace: {
+        iterateAllLeaves: vi.fn()
+      }
+    };
+    const manager = new FileManager(
+      app as never,
+      () => settings,
+      {} as never,
+      {} as never
+    );
+    const first = { path: 'assets/one.png', name: 'one.png' };
+    const second = { path: 'assets/two.png', name: 'two.png' };
+
+    await manager.runWithDeferredLeafRefresh(async () => {
+      await manager.replaceFile(first as never, new ArrayBuffer(8));
+      await manager.replaceFile(second as never, new ArrayBuffer(8));
+      expect(app.workspace.iterateAllLeaves).not.toHaveBeenCalled();
+    });
+
+    expect(app.workspace.iterateAllLeaves).toHaveBeenCalledTimes(1);
+  });
+
+  it('preserves literal percent markdown paths when renaming an image file', async () => {
+    const note = Object.assign(new TFile(), {
+      path: 'notes/test.md',
+      name: 'test.md',
+      basename: 'test',
+      extension: 'md'
+    });
+    const file = Object.assign(new TFile(), {
+      path: 'assets/%E6%89%AF%E7%9A%AE/test.png',
+      name: 'test.png',
+      basename: 'test',
+      extension: 'png'
+    });
+    const originalTarget = 'assets/%E6%89%AF%E7%9A%AE/test.png';
+    const app = {
+      vault: {
+        modifyBinary: vi.fn(async () => undefined),
+        read: vi.fn(async () => `![Encoded](${originalTarget})`),
+        modify: vi.fn(async () => undefined),
+        getAbstractFileByPath: vi.fn((path: string) => {
+          if (path === note.path) {
+            return note;
+          }
+          return null;
+        })
+      },
+      metadataCache: {
+        getFirstLinkpathDest: vi.fn((target: string) => {
+          if (target === originalTarget || target === 'assets/%E6%89%AF%E7%9A%AE/test.webp') {
+            return file;
+          }
+          return null;
+        }),
+        resolvedLinks: {
+          'notes/test.md': {
+            [file.path]: 1
+          }
+        }
+      },
+      fileManager: {
+        renameFile: vi.fn(async (_file: typeof file, newPath: string) => {
+          file.path = newPath;
+          file.name = newPath.split('/').pop() ?? newPath;
+          file.extension = newPath.split('.').pop() ?? 'webp';
+        })
+      },
+      workspace: {
+        iterateAllLeaves: vi.fn()
+      }
+    };
+    const manager = new FileManager(
+      app as never,
+      () => ({
+        ...settings,
+        defaultLinkFormat: LinkFormat.MARKDOWN,
+        defaultPathFormat: PathFormat.RELATIVE
+      }),
+      new VariableResolver(),
+      new LinkFormatter(app as never)
+    );
+
+    await manager.replaceFile(file as never, new ArrayBuffer(8), 'assets/%E6%89%AF%E7%9A%AE/test.webp');
+
+    expect(app.vault.modify).toHaveBeenCalledWith(note, '![Encoded](../assets/%E6%89%AF%E7%9A%AE/test.webp)');
+  });
 });
 
 describe('FileManager.syncManagedImagesForNote', () => {
@@ -122,6 +222,83 @@ describe('FileManager.syncManagedImagesForNote', () => {
     const movedCount = await manager.syncManagedImagesForNote({ path: 'note.md', basename: 'note' } as never, 'old-note.md');
 
     expect(movedCount).toBe(0);
+  });
+
+  it('records the original note path and created folder state so undo can restore a moved note cleanly', async () => {
+    const oldNotePath = '00_inbox/fleeting/demo.md';
+    const newNotePath = '04_archived/sunway/demo.md';
+    const note = Object.assign(new TFile(), {
+      path: newNotePath,
+      name: 'demo.md',
+      basename: 'demo',
+      extension: 'md'
+    });
+    const image = Object.assign(new TFile(), {
+      path: '00_inbox/fleeting/assets/demo/image.webp',
+      name: 'image.webp',
+      basename: 'image',
+      extension: 'webp'
+    });
+    const oldFolder = Object.assign(new TFolder(), {
+      path: '00_inbox/fleeting/assets/demo',
+      children: [image]
+    });
+    const createdFolders: string[] = [];
+    const recoveryManager = {
+      captureTextSnapshot: vi.fn(async () => undefined),
+      recordRename: vi.fn(),
+      captureBinarySnapshot: vi.fn(async () => undefined),
+      recordDeletedFolder: vi.fn(),
+      recordCreatedFolder: vi.fn((path: string) => {
+        createdFolders.push(path);
+      })
+    };
+    const app = {
+      vault: {
+        read: vi.fn(async () => '![A](assets/demo/image.webp)'),
+        modify: vi.fn(async () => undefined),
+        getAbstractFileByPath: vi.fn((path: string) => {
+          if (path === oldFolder.path) {
+            return oldFolder;
+          }
+          return null;
+        }),
+        getFiles: vi.fn(() => [note, image]),
+        createFolder: vi.fn(async () => undefined),
+        delete: vi.fn(async () => undefined)
+      },
+      metadataCache: {
+        getFirstLinkpathDest: vi.fn(() => image),
+        resolvedLinks: {
+          [newNotePath]: {
+            [image.path]: 1
+          }
+        }
+      },
+      fileManager: {
+        renameFile: vi.fn(async (file: TFile, targetPath: string) => {
+          file.path = targetPath;
+        })
+      }
+    };
+    const manager = new FileManager(
+      app as never,
+      () => ({
+        ...settings,
+        outputFolder: './assets/${noteFileName}'
+      }),
+      new VariableResolver(),
+      new LinkFormatter(app as never)
+    );
+    manager.setRecoveryManager(recoveryManager as never);
+
+    const movedCount = await manager.syncManagedImagesForNote(note as never, oldNotePath);
+
+    expect(movedCount).toBe(1);
+    expect(recoveryManager.captureTextSnapshot).toHaveBeenCalledWith(oldNotePath, '![A](assets/demo/image.webp)');
+    expect(recoveryManager.recordRename).toHaveBeenCalledWith(oldNotePath, newNotePath);
+    expect(createdFolders).toContain('04_archived');
+    expect(createdFolders).toContain('04_archived/sunway/assets/demo');
   });
 });
 
@@ -215,7 +392,7 @@ describe('FileManager.rewriteImageLinksInNote', () => {
 
     const result = await manager.rewriteImageLinksInNote(note as never);
 
-    expect(result).toEqual({ replaced: 1, moved: 0, downloaded: 0 });
+    expect(result).toEqual({ replaced: 1, moved: 0, downloaded: 0, deleted: 0, foldersDeleted: 0 });
     expect(app.vault.modify).toHaveBeenCalledWith(note, '![[photo.png|Preview]]');
   });
 
@@ -283,8 +460,143 @@ describe('FileManager.rewriteImageLinksInNote', () => {
 
     expect(fetchMock).toHaveBeenCalledWith('https://example.com/photo.png');
     expect(app.vault.createBinary).toHaveBeenCalled();
-    expect(result).toEqual({ replaced: 1, moved: 0, downloaded: 1 });
+    expect(result).toEqual({ replaced: 1, moved: 0, downloaded: 1, deleted: 0, foldersDeleted: 0 });
     expect(app.vault.modify).toHaveBeenCalledWith(note, '![Remote](photo.png)');
+  });
+
+  it('normalizes mixed encoded and unencoded Chinese markdown paths in a single note', async () => {
+    const note = Object.assign(new TFile(), {
+      path: 'notes/test.md',
+      name: 'test.md',
+      basename: 'test',
+      extension: 'md'
+    });
+    const webpImage = Object.assign(new TFile(), {
+      path: 'assets/扯皮留痕-裴-详细记录/扯皮留痕-裴-详细记录-2026-06-23-21-10-30-01.webp',
+      name: '扯皮留痕-裴-详细记录-2026-06-23-21-10-30-01.webp',
+      basename: '扯皮留痕-裴-详细记录-2026-06-23-21-10-30-01',
+      extension: 'webp'
+    });
+    const pngImage = Object.assign(new TFile(), {
+      path: 'assets/扯皮留痕-裴-详细记录/扯皮留痕-裴-详细记录-2026-06-23-21-10-30-02.png',
+      name: '扯皮留痕-裴-详细记录-2026-06-23-21-10-30-02.png',
+      basename: '扯皮留痕-裴-详细记录-2026-06-23-21-10-30-02',
+      extension: 'png'
+    });
+    const encodedPngTarget =
+      'assets/%E6%89%AF%E7%9A%AE%E7%95%99%E7%97%95-%E8%A3%B4-%E8%AF%A6%E7%BB%86%E8%AE%B0%E5%BD%95/%E6%89%AF%E7%9A%AE%E7%95%99%E7%97%95-%E8%A3%B4-%E8%AF%A6%E7%BB%86%E8%AE%B0%E5%BD%95-2026-06-23-21-10-30-02.png';
+    const app = {
+      vault: {
+        read: vi.fn(async () => [
+          '![A](assets/扯皮留痕-裴-详细记录/扯皮留痕-裴-详细记录-2026-06-23-21-10-30-01.webp)',
+          `![B](${encodedPngTarget})`
+        ].join('\n')),
+        modify: vi.fn(async () => undefined),
+        getFiles: vi.fn(() => [note, webpImage, pngImage]),
+        getAbstractFileByPath: vi.fn(() => ({ path: 'assets/扯皮留痕-裴-详细记录' }))
+      },
+      metadataCache: {
+        getFirstLinkpathDest: vi.fn((target: string) => {
+          if (target === webpImage.path) {
+            return webpImage;
+          }
+          if (target === encodedPngTarget) {
+            return null;
+          }
+          if (target === pngImage.path) {
+            return pngImage;
+          }
+          return null;
+        }),
+        resolvedLinks: {
+          'notes/test.md': {
+            [webpImage.path]: 1,
+            [pngImage.path]: 1
+          }
+        }
+      },
+      fileManager: {
+        renameFile: vi.fn(async () => undefined)
+      }
+    };
+    const manager = new FileManager(
+      app as never,
+      () => ({
+        ...settings,
+        outputFolder: 'assets/扯皮留痕-裴-详细记录',
+        defaultLinkFormat: LinkFormat.MARKDOWN,
+        defaultPathFormat: PathFormat.RELATIVE
+      }),
+      new VariableResolver(),
+      new LinkFormatter(app as never)
+    );
+
+    const result = await manager.rewriteImageLinksInNote(note as never);
+
+    expect(result).toEqual({ replaced: 2, moved: 0, downloaded: 0, deleted: 0, foldersDeleted: 0 });
+    expect(app.vault.modify).toHaveBeenCalledWith(
+      note,
+      [
+        '![A](../assets/%E6%89%AF%E7%9A%AE%E7%95%99%E7%97%95-%E8%A3%B4-%E8%AF%A6%E7%BB%86%E8%AE%B0%E5%BD%95/%E6%89%AF%E7%9A%AE%E7%95%99%E7%97%95-%E8%A3%B4-%E8%AF%A6%E7%BB%86%E8%AE%B0%E5%BD%95-2026-06-23-21-10-30-01.webp)',
+        '![B](../assets/%E6%89%AF%E7%9A%AE%E7%95%99%E7%97%95-%E8%A3%B4-%E8%AF%A6%E7%BB%86%E8%AE%B0%E5%BD%95/%E6%89%AF%E7%9A%AE%E7%95%99%E7%97%95-%E8%A3%B4-%E8%AF%A6%E7%BB%86%E8%AE%B0%E5%BD%95-2026-06-23-21-10-30-02.png)'
+      ].join('\n')
+    );
+  });
+
+  it('resolves literal percent paths before decoded paths when rewriting links', async () => {
+    const note = Object.assign(new TFile(), {
+      path: 'notes/test.md',
+      name: 'test.md',
+      basename: 'test',
+      extension: 'md'
+    });
+    const image = Object.assign(new TFile(), {
+      path: 'assets/%E6%89%AF%E7%9A%AE/test.png',
+      name: 'test.png',
+      basename: 'test',
+      extension: 'png'
+    });
+    const encodedTarget = 'assets/%E6%89%AF%E7%9A%AE/test.png';
+    const app = {
+      vault: {
+        read: vi.fn(async () => `![Encoded](${encodedTarget})`),
+        modify: vi.fn(async () => undefined),
+        getFiles: vi.fn(() => [note, image]),
+        getAbstractFileByPath: vi.fn(() => ({ path: 'assets/%E6%89%AF%E7%9A%AE' }))
+      },
+      metadataCache: {
+        getFirstLinkpathDest: vi.fn((target: string) => {
+          if (target === encodedTarget) {
+            return image;
+          }
+          return null;
+        }),
+        resolvedLinks: {
+          'notes/test.md': {
+            [image.path]: 1
+          }
+        }
+      },
+      fileManager: {
+        renameFile: vi.fn(async () => undefined)
+      }
+    };
+    const manager = new FileManager(
+      app as never,
+      () => ({
+        ...settings,
+        outputFolder: 'assets/%E6%89%AF%E7%9A%AE',
+        defaultLinkFormat: LinkFormat.MARKDOWN,
+        defaultPathFormat: PathFormat.RELATIVE
+      }),
+      new VariableResolver(),
+      new LinkFormatter(app as never)
+    );
+
+    const result = await manager.rewriteImageLinksInNote(note as never);
+
+    expect(result).toEqual({ replaced: 1, moved: 0, downloaded: 0, deleted: 0, foldersDeleted: 0 });
+    expect(app.vault.modify).toHaveBeenCalledWith(note, '![Encoded](../assets/%25E6%2589%25AF%25E7%259A%25AE/test.png)');
   });
 
   it('deduplicates repeated references to the same image inside a note', async () => {
@@ -312,11 +624,112 @@ describe('FileManager.rewriteImageLinksInNote', () => {
       app as never,
       () => settings,
       new VariableResolver(),
-      {} as never
+      new LinkFormatter(app as never)
     );
 
     const files = await manager.getImagesInNote(note as never);
 
     expect(files).toEqual([image]);
+  });
+
+  it('deletes orphan images in a folder and removes empty folders when enabled', async () => {
+    const orphan = Object.assign(new TFile(), {
+      path: 'assets/note/orphan.png',
+      name: 'orphan.png',
+      basename: 'orphan',
+      extension: 'png'
+    });
+    const folder = Object.assign(new TFolder(), {
+      path: 'assets/note',
+      parent: Object.assign(new TFolder(), {
+        path: 'assets',
+        children: [],
+        parent: null
+      }),
+      children: [orphan]
+    });
+    (orphan as TFile & { parent: TFolder | null }).parent = folder;
+    (folder.parent as TFolder).children = [folder];
+
+    const folders = new Map<string, TFolder>([
+      [folder.path, folder],
+      [(folder.parent as TFolder).path, folder.parent as TFolder]
+    ]);
+    const app = {
+      vault: {
+        getFiles: vi.fn(() => [orphan]),
+        getAbstractFileByPath: vi.fn((path: string) => folders.get(path) ?? null),
+        delete: vi.fn(async (target: TFile | TFolder) => {
+          if (target instanceof TFile) {
+            const parent = target.parent;
+            if (parent instanceof TFolder) {
+              parent.children = parent.children.filter((child) => child !== target);
+            }
+            return;
+          }
+
+          folders.delete(target.path);
+          const parent = target.parent;
+          if (parent instanceof TFolder) {
+            parent.children = parent.children.filter((child) => child !== target);
+          }
+        })
+      },
+      metadataCache: {
+        resolvedLinks: {}
+      }
+    };
+    const recoveryManager = {
+      captureBinarySnapshot: vi.fn(async () => undefined),
+      recordDeletedFolder: vi.fn()
+    };
+    const manager = new FileManager(
+      app as never,
+      () => ({
+        ...settings,
+        deleteOrphanImages: true,
+        deleteEmptyFolders: true
+      }),
+      new VariableResolver(),
+      {} as never
+    );
+    manager.setRecoveryManager(recoveryManager as never);
+
+    const result = await manager.deleteOrphanImagesInFolder(folder);
+
+    expect(result).toEqual({ deletedImages: 1, deletedFolders: 2 });
+    expect(recoveryManager.captureBinarySnapshot).toHaveBeenCalledWith(orphan);
+    expect(recoveryManager.recordDeletedFolder).toHaveBeenCalledWith('assets/note');
+    expect(recoveryManager.recordDeletedFolder).toHaveBeenCalledWith('assets');
+  });
+
+  it('does not fall back to the note folder when a custom output folder is configured but missing', async () => {
+    const note = Object.assign(new TFile(), {
+      path: 'notes/test.md',
+      name: 'test.md',
+      basename: 'test',
+      extension: 'md',
+      parent: Object.assign(new TFolder(), {
+        path: 'notes',
+        children: []
+      })
+    });
+    const manager = new FileManager(
+      {
+        vault: {
+          getAbstractFileByPath: vi.fn(() => null)
+        }
+      } as never,
+      () => ({
+        ...settings,
+        outputFolder: 'attachments/${noteFileName}'
+      }),
+      new VariableResolver(),
+      {} as never
+    );
+
+    const result = await manager.deleteOrphanImagesForNote(note);
+
+    expect(result).toEqual({ deletedImages: 0, deletedFolders: 0 });
   });
 });
