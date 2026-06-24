@@ -30,6 +30,8 @@ export interface BatchConversionNoticeOptions {
 export interface BatchOrphanCleanupNoticeOptions {
   readonly deletedImages: number;
   readonly deletedFolders: number;
+  readonly relocatedImages: number;
+  readonly preservedImages: number;
   readonly failedCount: number;
 }
 
@@ -79,6 +81,10 @@ export function formatBatchLinkRewriteNotice(options: BatchLinkRewriteNoticeOpti
 
 export function formatBatchCompressionNotice(options: BatchCompressionNoticeOptions): string {
   const { fileCount, beforeBytes, afterBytes, showSpaceSaved } = options;
+  if (fileCount === 0) {
+    return 'No images required compression';
+  }
+
   if (!showSpaceSaved) {
     return `Batch compression finished: ${fileCount} image(s)`;
   }
@@ -93,18 +99,26 @@ export function formatBatchConversionNotice(options: BatchConversionNoticeOption
 }
 
 export function formatBatchOrphanCleanupNotice(options: BatchOrphanCleanupNoticeOptions): string {
-  const { deletedImages, deletedFolders, failedCount } = options;
-  if (deletedImages === 0) {
+  const { deletedImages, deletedFolders, relocatedImages, preservedImages, failedCount } = options;
+  if (deletedImages === 0 && relocatedImages === 0 && preservedImages === 0) {
     return failedCount > 0 ? `Extra image cleanup finished: 0 image(s) removed, ${failedCount} failed` : 'No extra image files found';
   }
 
-  const extras: string[] = [];
+  const segments: string[] = [];
+  if (deletedImages > 0) {
+    segments.push(`removed ${deletedImages} image(s)`);
+  }
+  if (relocatedImages > 0) {
+    segments.push(`moved ${relocatedImages} image(s) to referenced note folder(s)`);
+  }
+  if (preservedImages > 0) {
+    segments.push(`kept ${preservedImages} image(s) still referenced by other notes`);
+  }
   if (deletedFolders > 0) {
-    extras.push(`removed ${deletedFolders} empty folder(s)`);
+    segments.push(`removed ${deletedFolders} empty folder(s)`);
   }
   if (failedCount > 0) {
-    extras.push(`${failedCount} failed`);
+    segments.push(`${failedCount} failed`);
   }
-  const suffix = extras.length > 0 ? `; ${extras.join(', ')}` : '';
-  return `Extra image cleanup finished: removed ${deletedImages} image(s)${suffix}`;
+  return `Extra image cleanup finished: ${segments.join('; ')}`;
 }

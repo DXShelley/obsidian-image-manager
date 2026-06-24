@@ -1,10 +1,20 @@
 import { TFile } from 'obsidian';
 import type { Menu, TAbstractFile } from 'obsidian';
+import { openSingleImageGallery } from '@/features/gallery/gallery-actions';
 import type { ImageManagerFeature, ImageManagerFeatureContext } from '@/types/index';
 import type { ImageFormat } from '@/types/index';
+import { writeImageFileToClipboard } from '@/utils/clipboard';
 import { canWriteImageToClipboard } from '@/utils/compatibility';
 import { getConvertedTargetPath } from '@/utils/image-manager';
-import { formatCompressionSummary, showOperationNotice } from '@/utils/operation-feedback';
+import {
+  formatCompressionBelowThresholdNotice,
+  formatCompressionIgnoredNotice,
+  formatCompressionNoGainNotice,
+  formatCompressionProcessedNotice,
+  formatCompressionSummary,
+  formatConversionIgnoredNotice,
+  showOperationNotice
+} from '@/utils/operation-feedback';
 import { matchRegexIgnorePattern } from '@/utils/regex-ignore';
 
 export class ContextMenuFeature implements ImageManagerFeature {
@@ -27,6 +37,12 @@ export class ContextMenuFeature implements ImageManagerFeature {
 
   private addImageMenuItems(context: ImageManagerFeatureContext, menu: Menu, file: TFile): void {
     menu.addSeparator();
+    menu.addItem((item) => {
+      item.setTitle('在画廊中打开').setIcon('images').onClick(() => {
+        context.services.logger.refreshMode('context-menu-gallery');
+        void this.openImageGallery(context, file);
+      });
+    });
     if (canWriteImageToClipboard()) {
       menu.addItem((item) => {
         item.setTitle('复制图片到剪贴板').setIcon('copy').onClick(() => {
@@ -112,6 +128,15 @@ export class ContextMenuFeature implements ImageManagerFeature {
     });
   }
 
+  private async openImageGallery(context: ImageManagerFeatureContext, file: TFile): Promise<void> {
+    if (!context.services.settings.getSettings().enableGallery) {
+      showOperationNotice(context.services.settings.getSettings(), 'Gallery is disabled in settings');
+      return;
+    }
+
+    await openSingleImageGallery(context, file);
+  }
+
   private async convertImage(context: ImageManagerFeatureContext, file: TFile, format: ImageFormat): Promise<void> {
     context.services.logger.debug('Converting image from context menu', {
       filePath: file.path,
@@ -123,7 +148,10 @@ export class ContextMenuFeature implements ImageManagerFeature {
         filePath: file.path,
         pattern: ignored.source
       });
-      showOperationNotice(context.services.settings.getSettings(), `Skipped conversion for ${file.name}`);
+      showOperationNotice(
+        context.services.settings.getSettings(),
+        formatConversionIgnoredNotice(file.name, ignored.source)
+      );
       return;
     }
 
@@ -161,31 +189,55 @@ export class ContextMenuFeature implements ImageManagerFeature {
   }
 
   private async compressImage(context: ImageManagerFeatureContext, file: TFile): Promise<void> {
-    const thresholdBytes = context.services.settings.getSettings().compressionThresholdKB * 1024;
+    const settings = context.services.settings.getSettings();
+    const thresholdBytes = settings.compressionThresholdKB * 1024;
     if (thresholdBytes > 0 && file.stat.size < thresholdBytes) {
-      showOperationNotice(context.services.settings.getSettings(), `Skipped compression for ${file.name}`);
+      showOperationNotice(settings, formatCompressionBelowThresholdNotice(file.name));
       return;
     }
 
-    const ignored = matchRegexIgnorePattern(context.services.settings.getSettings().compressionIgnorePattern, file.path);
+    const ignored = matchRegexIgnorePattern(settings.compressionIgnorePattern, file.path);
     if (ignored) {
       context.services.logger.debug('Skipping context menu compression because file matches ignore pattern', {
         filePath: file.path,
         pattern: ignored.source
       });
-      showOperationNotice(context.services.settings.getSettings(), `Skipped compression for ${file.name}`);
+      showOperationNotice(settings, formatCompressionIgnoredNotice(file.name, ignored.source));
+      return;
+    }
+
+    const processedStatus = await context.services.compressionTracker.getCurrentStatus(file);
+    if (processedStatus) {
+      context.services.logger.debug('Skipping context menu compression because current file version was already processed', {
+        filePath: file.path,
+        status: processedStatus
+      });
+      showOperationNotice(settings, formatCompressionProcessedNotice(file.name, processedStatus));
       return;
     }
 
     const before = file.stat.size;
     const buffer = await context.services.imageProcessor.compress(file);
-    await context.services.fileManager.replaceFile(file, buffer);
-    if (context.services.settings.getSettings().showSpaceSavedNotification) {
-      showOperationNotice(context.services.settings.getSettings(), formatCompressionSummary(before, buffer.byteLength));
+    if (buffer.byteLength >= before) {
+      context.services.logger.debug('Skipping context menu compression because encoded output is not smaller', {
+        filePath: file.path,
+        beforeBytes: before,
+        afterBytes: buffer.byteLength
+      });
+      await context.services.compressionTracker.markNotBeneficial(file);
+      showOperationNotice(settings, formatCompressionNoGainNotice(file.name));
       return;
     }
 
-    showOperationNotice(context.services.settings.getSettings(), 'Image compressed');
+    const modifiedAt = Date.now();
+    await context.services.fileManager.replaceFile(file, buffer, file.path, modifiedAt);
+    await context.services.compressionTracker.markCompressed(file.path, buffer.byteLength, modifiedAt);
+    if (settings.showSpaceSavedNotification) {
+      showOperationNotice(settings, formatCompressionSummary(before, buffer.byteLength));
+      return;
+    }
+
+    showOperationNotice(settings, 'Image compressed');
   }
 
   private async copyImageToClipboard(context: ImageManagerFeatureContext, file: TFile): Promise<void> {
@@ -197,13 +249,18 @@ export class ContextMenuFeature implements ImageManagerFeature {
       return;
     }
 
-    const buffer = await context.app.vault.readBinary(file);
-    const blob = new Blob([buffer], { type: `image/${file.extension}` });
-    await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
-    context.services.logger.debug('Copied image to clipboard', {
-      filePath: file.path,
-      mimeType: blob.type
-    });
-    showOperationNotice(context.services.settings.getSettings(), 'Image copied');
+    try {
+      const mimeType = await writeImageFileToClipboard(context.app, context.services.imageProcessor, file);
+      context.services.logger.debug('Copied image to clipboard', {
+        filePath: file.path,
+        mimeType
+      });
+      showOperationNotice(context.services.settings.getSettings(), 'Image copied');
+    } catch (error) {
+      context.services.logger.error('Failed to copy image to clipboard', error, {
+        filePath: file.path
+      });
+      showOperationNotice(context.services.settings.getSettings(), 'Failed to copy image to clipboard');
+    }
   }
 }

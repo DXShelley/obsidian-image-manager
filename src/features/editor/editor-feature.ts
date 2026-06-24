@@ -12,7 +12,7 @@ export class EditorFeature implements ImageManagerFeature {
   async register(context: ImageManagerFeatureContext): Promise<void> {
     const rotateCommand = {
       commandId: 'rotate-active-image-90',
-      commandName: '图片：顺时针旋转 90°'
+      commandName: '顺时针旋转图片 90°'
     } as const;
     context.plugin.addCommand({
       id: rotateCommand.commandId,
@@ -37,7 +37,7 @@ export class EditorFeature implements ImageManagerFeature {
 
     const flipCommand = {
       commandId: 'flip-active-image-horizontal',
-      commandName: '图片：水平翻转'
+      commandName: '水平翻转图片'
     } as const;
     context.plugin.addCommand({
       id: flipCommand.commandId,

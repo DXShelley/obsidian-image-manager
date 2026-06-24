@@ -1,4 +1,5 @@
 import type { App, Plugin } from 'obsidian';
+import type { CompressionTracker } from '@/core/compression/compression-tracker';
 import type { DebugLogger } from '@/core/debug/debug-logger';
 import type { EventBus } from '@/core/events/event-bus';
 import type { RecoveryManager } from '@/core/recovery/recovery-manager';
@@ -22,6 +23,7 @@ export interface ImageManagerServices {
   readonly settings: SettingsManager;
   readonly eventBus: EventBus<ImageManagerEventMap>;
   readonly logger: DebugLogger;
+  readonly compressionTracker: CompressionTracker;
   readonly variableResolver: VariableResolver;
   readonly fileManager: FileManager;
   readonly recovery: RecoveryManager;

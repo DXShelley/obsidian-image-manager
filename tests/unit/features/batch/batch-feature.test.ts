@@ -145,7 +145,9 @@ describe('BatchFeature', () => {
         fileManager: {
           deleteOrphanImagesInFolder: vi.fn(async () => ({
             deletedImages: 2,
-            deletedFolders: 1
+            deletedFolders: 1,
+            relocatedImages: 0,
+            preservedImages: 0
           }))
         },
         settings: {

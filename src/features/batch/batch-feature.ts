@@ -321,7 +321,12 @@ export class BatchFeature implements ImageManagerFeature {
     }
 
     try {
-      let result: { deletedImages: number; deletedFolders: number };
+      let result: {
+        deletedImages: number;
+        deletedFolders: number;
+        relocatedImages?: number;
+        preservedImages?: number;
+      };
       switch (scope) {
         case BatchScope.CURRENT_NOTE:
           if (!(source instanceof TFile)) {
@@ -347,13 +352,17 @@ export class BatchFeature implements ImageManagerFeature {
         scope,
         sourcePath: source?.path,
         deletedImages: result.deletedImages,
-        deletedFolders: result.deletedFolders
+        deletedFolders: result.deletedFolders,
+        relocatedImages: result.relocatedImages ?? 0,
+        preservedImages: result.preservedImages ?? 0
       });
       showOperationNotice(
         context.services.settings.getSettings(),
         formatBatchOrphanCleanupNotice({
           deletedImages: result.deletedImages,
           deletedFolders: result.deletedFolders,
+          relocatedImages: result.relocatedImages ?? 0,
+          preservedImages: result.preservedImages ?? 0,
           failedCount: 0
         })
       );

@@ -2,10 +2,12 @@ import { MarkdownView, TFile } from 'obsidian';
 import type { TFolder } from 'obsidian';
 import type { ImageManagerFeature, ImageManagerFeatureContext } from '@/types/index';
 import type { ImageFormat } from '@/types/index';
+import { formatBatchConversionNotice } from '@/utils/batch-operation-feedback';
 import { executeLoggedCommand, logSkippedCommand } from '@/utils/command-logging';
-import { showOperationNotice } from '@/utils/operation-feedback';
+import { formatConversionIgnoredNotice, showOperationNotice } from '@/utils/operation-feedback';
 import { getConvertedTargetPath } from '@/utils/image-manager';
-import { matchRegexIgnorePattern } from '@/utils/regex-ignore';
+import { matchRegexIgnorePattern, type RegexIgnoreMatch } from '@/utils/regex-ignore';
+import { confirmVaultScopeOperation } from '@/utils/vault-operation';
 
 export class ConvertFeature implements ImageManagerFeature {
   readonly id = 'convert';
@@ -15,8 +17,8 @@ export class ConvertFeature implements ImageManagerFeature {
 
   async register(context: ImageManagerFeatureContext): Promise<void> {
     const activeCommand = {
-      commandId: 'convert-active-image-to-default-format',
-      commandName: '当前文件：批量转换所有图片为默认格式'
+      commandId: 'a2-convert-active-image-to-default-format',
+      commandName: '转换图片为默认格式'
     } as const;
     context.plugin.addCommand({
       id: activeCommand.commandId,
@@ -40,8 +42,8 @@ export class ConvertFeature implements ImageManagerFeature {
     });
 
     const folderCommand = {
-      commandId: 'convert-current-folder-images-to-default-format',
-      commandName: '当前文件夹：转换为默认格式'
+      commandId: 'b2-convert-current-folder-images-to-default-format',
+      commandName: '转换图片为默认格式'
     } as const;
     context.plugin.addCommand({
       id: folderCommand.commandId,
@@ -73,14 +75,18 @@ export class ConvertFeature implements ImageManagerFeature {
     });
 
     const vaultCommand = {
-      commandId: 'convert-vault-images-to-default-format',
-      commandName: '整个仓库：转换为默认格式'
+      commandId: 'c2-convert-vault-images-to-default-format',
+      commandName: '转换图片为默认格式'
     } as const;
     context.plugin.addCommand({
       id: vaultCommand.commandId,
       name: vaultCommand.commandName,
       callback: () => {
         void executeLoggedCommand(context, vaultCommand, async () => {
+          if (!(await confirmVaultScopeOperation(context.app, '整库格式转换'))) {
+            return;
+          }
+
           await context.services.recovery.runTransaction(
             {
               label: '转换整个仓库图片',
@@ -105,9 +111,14 @@ export class ConvertFeature implements ImageManagerFeature {
       notifySkip?: boolean;
     } = {}
   ): Promise<TFile> {
-    if (this.shouldSkipConversion(context, file)) {
+    const ignored = this.getConversionIgnoreMatch(context, file);
+    if (ignored) {
+      this.logConversionIgnored(context, file, ignored);
       if (options.notifySkip !== false) {
-        showOperationNotice(context.services.settings.getSettings(), `Skipped conversion for ${file.name}`);
+        showOperationNotice(
+          context.services.settings.getSettings(),
+          formatConversionIgnoredNotice(file.name, ignored.source)
+        );
       }
       return file;
     }
@@ -143,21 +154,35 @@ export class ConvertFeature implements ImageManagerFeature {
 
   private async convertFiles(context: ImageManagerFeatureContext, files: TFile[], format: ImageFormat): Promise<void> {
     let convertedCount = 0;
-    for (const file of files) {
-      if (this.shouldSkipConversion(context, file)) {
-        continue;
-      }
+    const runWithDeferredLeafRefresh =
+      typeof context.services.fileManager.runWithDeferredLeafRefresh === 'function'
+        ? context.services.fileManager.runWithDeferredLeafRefresh.bind(context.services.fileManager)
+        : async <T>(operation: () => Promise<T>) => operation();
+    await runWithDeferredLeafRefresh(async () => {
+      for (const file of files) {
+        const ignored = this.getConversionIgnoreMatch(context, file);
+        if (ignored) {
+          this.logConversionIgnored(context, file, ignored);
+          continue;
+        }
 
-      await this.convertImage(context, file, format, { notify: false, notifySkip: false });
-      convertedCount += 1;
-    }
+        await this.convertImage(context, file, format, { notify: false, notifySkip: false });
+        convertedCount += 1;
+      }
+    });
 
     if (files.length === 0 || convertedCount === 0) {
       showOperationNotice(context.services.settings.getSettings(), 'No images found');
       return;
     }
 
-    showOperationNotice(context.services.settings.getSettings(), `Converted ${convertedCount} image(s) to ${format}`);
+    showOperationNotice(
+      context.services.settings.getSettings(),
+      formatBatchConversionNotice({
+        imageCount: convertedCount,
+        targetFormat: format
+      })
+    );
   }
 
   private async withActiveNoteFile(
@@ -182,16 +207,18 @@ export class ConvertFeature implements ImageManagerFeature {
     await callback(file);
   }
 
-  private shouldSkipConversion(context: ImageManagerFeatureContext, file: TFile): boolean {
-    const ignored = matchRegexIgnorePattern(context.services.settings.getSettings().conversionIgnorePattern, file.path);
-    if (ignored) {
-      context.services.logger.debug('Skipping conversion because file matches ignore pattern', {
-        filePath: file.path,
-        pattern: ignored.source
-      });
-      return true;
-    }
+  private getConversionIgnoreMatch(context: ImageManagerFeatureContext, file: TFile): RegexIgnoreMatch | null {
+    return matchRegexIgnorePattern(context.services.settings.getSettings().conversionIgnorePattern, file.path);
+  }
 
-    return false;
+  private logConversionIgnored(
+    context: ImageManagerFeatureContext,
+    file: TFile,
+    ignored: RegexIgnoreMatch
+  ): void {
+    context.services.logger.debug('Skipping conversion because file matches ignore pattern', {
+      filePath: file.path,
+      pattern: ignored.source
+    });
   }
 }

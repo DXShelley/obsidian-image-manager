@@ -697,10 +697,278 @@ describe('FileManager.rewriteImageLinksInNote', () => {
 
     const result = await manager.deleteOrphanImagesInFolder(folder);
 
-    expect(result).toEqual({ deletedImages: 1, deletedFolders: 2 });
+    expect(result).toEqual({ deletedImages: 1, deletedFolders: 2, relocatedImages: 0, preservedImages: 0 });
     expect(recoveryManager.captureBinarySnapshot).toHaveBeenCalledWith(orphan);
     expect(recoveryManager.recordDeletedFolder).toHaveBeenCalledWith('assets/note');
     expect(recoveryManager.recordDeletedFolder).toHaveBeenCalledWith('assets');
+  });
+
+  it('moves images referenced by one external note into that note folder instead of deleting them', async () => {
+    const currentNote = Object.assign(new TFile(), {
+      path: 'notes/source.md',
+      name: 'source.md',
+      basename: 'source',
+      extension: 'md'
+    });
+    const referencedNote = Object.assign(new TFile(), {
+      path: 'archive/keep.md',
+      name: 'keep.md',
+      basename: 'keep',
+      extension: 'md'
+    });
+    const image = Object.assign(new TFile(), {
+      path: 'notes/attachments/source/orphan.png',
+      name: 'orphan.png',
+      basename: 'orphan',
+      extension: 'png'
+    });
+    const notesFolder = Object.assign(new TFolder(), {
+      path: 'notes',
+      children: [currentNote]
+    });
+    const currentCleanupParent = Object.assign(new TFolder(), {
+      path: 'notes/attachments',
+      parent: notesFolder,
+      children: []
+    });
+    const currentCleanupFolder = Object.assign(new TFolder(), {
+      path: 'notes/attachments/source',
+      parent: currentCleanupParent,
+      children: [image]
+    });
+    const archiveFolder = Object.assign(new TFolder(), {
+      path: 'archive',
+      children: [referencedNote]
+    });
+    (currentNote as TFile & { parent: TFolder | null }).parent = notesFolder;
+    (referencedNote as TFile & { parent: TFolder | null }).parent = archiveFolder;
+    (image as TFile & { parent: TFolder | null }).parent = currentCleanupFolder;
+    currentCleanupParent.children = [currentCleanupFolder];
+    notesFolder.children = [currentNote, currentCleanupParent];
+
+    const folders = new Map<string, TFolder>([
+      [notesFolder.path, notesFolder],
+      [currentCleanupParent.path, currentCleanupParent],
+      [currentCleanupFolder.path, currentCleanupFolder],
+      [archiveFolder.path, archiveFolder]
+    ]);
+    const app = {
+      vault: {
+        read: vi.fn(async (file: TFile) => (file.path === referencedNote.path ? '![Keep](/notes/attachments/source/orphan.png)' : '')),
+        modify: vi.fn(async () => undefined),
+        getFiles: vi.fn(() => [currentNote, referencedNote, image]),
+        getAbstractFileByPath: vi.fn((path: string) => {
+          if (path === currentNote.path) {
+            return currentNote;
+          }
+          if (path === referencedNote.path) {
+            return referencedNote;
+          }
+          return folders.get(path) ?? null;
+        }),
+        createFolder: vi.fn(async (path: string) => {
+          const parentPath = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '';
+          const parent = parentPath ? folders.get(parentPath) ?? null : null;
+          const folder = Object.assign(new TFolder(), {
+            path,
+            parent,
+            children: []
+          });
+          if (parent) {
+            parent.children = [...parent.children, folder];
+          }
+          folders.set(path, folder);
+          return folder;
+        })
+      },
+      metadataCache: {
+        getFirstLinkpathDest: vi.fn((target: string) => {
+          if (target === '/notes/attachments/source/orphan.png' || target === 'notes/attachments/source/orphan.png') {
+            return image;
+          }
+          if (target === '/archive/attachments/keep/orphan.png' || target === 'archive/attachments/keep/orphan.png') {
+            return image;
+          }
+          return null;
+        }),
+        resolvedLinks: {
+          [referencedNote.path]: {
+            [image.path]: 1
+          }
+        }
+      },
+      fileManager: {
+        renameFile: vi.fn(async (file: TFile, targetPath: string) => {
+          const oldParent = file.parent;
+          if (oldParent instanceof TFolder) {
+            oldParent.children = oldParent.children.filter((child) => child !== file);
+          }
+          const parentPath = targetPath.slice(0, targetPath.lastIndexOf('/'));
+          const nextParent = folders.get(parentPath) ?? null;
+          if (nextParent) {
+            nextParent.children = [...nextParent.children, file];
+          }
+          (file as TFile & { parent: TFolder | null }).parent = nextParent;
+          file.path = targetPath;
+          file.name = targetPath.split('/').pop() ?? targetPath;
+        })
+      }
+    };
+    const recoveryManager = {
+      captureBinarySnapshot: vi.fn(async () => undefined),
+      captureTextSnapshot: vi.fn(async () => undefined),
+      recordRename: vi.fn(),
+      recordCreatedFolder: vi.fn()
+    };
+    const manager = new FileManager(
+      app as never,
+      () => ({
+        ...settings,
+        outputFolder: './attachments/${noteFileName}',
+        deleteEmptyFolders: false
+      }),
+      new VariableResolver(),
+      new LinkFormatter(app as never)
+    );
+    manager.setRecoveryManager(recoveryManager as never);
+
+    const result = await manager.deleteOrphanImagesForNote(currentNote);
+
+    expect(result).toEqual({ deletedImages: 0, deletedFolders: 0, relocatedImages: 1, preservedImages: 0 });
+    expect(app.fileManager.renameFile).toHaveBeenCalledWith(image, 'archive/attachments/keep/orphan.png');
+    expect(app.vault.modify).toHaveBeenCalledWith(referencedNote, '![Keep](/archive/attachments/keep/orphan.png)');
+    expect(recoveryManager.recordRename).toHaveBeenCalledWith(
+      'notes/attachments/source/orphan.png',
+      'archive/attachments/keep/orphan.png'
+    );
+  });
+
+  it('keeps images referenced by notes inside the allowed scope during link rewrite cleanup', async () => {
+    const noteA = Object.assign(new TFile(), {
+      path: 'notes/a.md',
+      name: 'a.md',
+      basename: 'a',
+      extension: 'md'
+    });
+    const noteB = Object.assign(new TFile(), {
+      path: 'notes/b.md',
+      name: 'b.md',
+      basename: 'b',
+      extension: 'md'
+    });
+    const image = Object.assign(new TFile(), {
+      path: 'notes/shared.png',
+      name: 'shared.png',
+      basename: 'shared',
+      extension: 'png'
+    });
+    const folder = Object.assign(new TFolder(), {
+      path: 'notes',
+      children: [noteA, noteB, image]
+    });
+    (noteA as TFile & { parent: TFolder | null }).parent = folder;
+    (noteB as TFile & { parent: TFolder | null }).parent = folder;
+    (image as TFile & { parent: TFolder | null }).parent = folder;
+
+    const app = {
+      vault: {
+        read: vi.fn(async () => ''),
+        modify: vi.fn(async () => undefined),
+        getFiles: vi.fn(() => [noteA, noteB, image]),
+        getAbstractFileByPath: vi.fn((path: string) => {
+          if (path === folder.path) {
+            return folder;
+          }
+          return null;
+        }),
+        delete: vi.fn(async () => undefined)
+      },
+      metadataCache: {
+        getFirstLinkpathDest: vi.fn(() => null),
+        resolvedLinks: {
+          [noteB.path]: {
+            [image.path]: 1
+          }
+        }
+      },
+      fileManager: {
+        renameFile: vi.fn(async () => undefined)
+      }
+    };
+    const manager = new FileManager(
+      app as never,
+      () => ({
+        ...settings,
+        deleteOrphanImages: true
+      }),
+      new VariableResolver(),
+      new LinkFormatter(app as never)
+    );
+
+    const result = await manager.rewriteImageLinksInNote(noteA, new Set([noteA.path, noteB.path]));
+
+    expect(result).toEqual({ replaced: 0, moved: 0, downloaded: 0, deleted: 0, foldersDeleted: 0 });
+    expect(app.fileManager.renameFile).not.toHaveBeenCalled();
+    expect(app.vault.delete).not.toHaveBeenCalled();
+  });
+
+  it('keeps images referenced by multiple external notes during folder cleanup', async () => {
+    const image = Object.assign(new TFile(), {
+      path: 'assets/note/shared.png',
+      name: 'shared.png',
+      basename: 'shared',
+      extension: 'png'
+    });
+    const folder = Object.assign(new TFolder(), {
+      path: 'assets/note',
+      children: [image]
+    });
+    const noteA = Object.assign(new TFile(), {
+      path: 'notes/a.md',
+      name: 'a.md',
+      basename: 'a',
+      extension: 'md'
+    });
+    const noteB = Object.assign(new TFile(), {
+      path: 'notes/b.md',
+      name: 'b.md',
+      basename: 'b',
+      extension: 'md'
+    });
+    (image as TFile & { parent: TFolder | null }).parent = folder;
+
+    const app = {
+      vault: {
+        getFiles: vi.fn(() => [image, noteA, noteB]),
+        getAbstractFileByPath: vi.fn(() => null),
+        delete: vi.fn(async () => undefined)
+      },
+      metadataCache: {
+        resolvedLinks: {
+          [noteA.path]: {
+            [image.path]: 1
+          },
+          [noteB.path]: {
+            [image.path]: 1
+          }
+        }
+      },
+      fileManager: {
+        renameFile: vi.fn(async () => undefined)
+      }
+    };
+    const manager = new FileManager(
+      app as never,
+      () => settings,
+      new VariableResolver(),
+      {} as never
+    );
+
+    const result = await manager.deleteOrphanImagesInFolder(folder);
+
+    expect(result).toEqual({ deletedImages: 0, deletedFolders: 0, relocatedImages: 0, preservedImages: 1 });
+    expect(app.fileManager.renameFile).not.toHaveBeenCalled();
+    expect(app.vault.delete).not.toHaveBeenCalled();
   });
 
   it('does not fall back to the note folder when a custom output folder is configured but missing', async () => {
@@ -730,6 +998,6 @@ describe('FileManager.rewriteImageLinksInNote', () => {
 
     const result = await manager.deleteOrphanImagesForNote(note);
 
-    expect(result).toEqual({ deletedImages: 0, deletedFolders: 0 });
+    expect(result).toEqual({ deletedImages: 0, deletedFolders: 0, relocatedImages: 0, preservedImages: 0 });
   });
 });

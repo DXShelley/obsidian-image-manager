@@ -49,8 +49,24 @@ describe('batch operation feedback utilities', () => {
       formatBatchOrphanCleanupNotice({
         deletedImages: 2,
         deletedFolders: 1,
+        relocatedImages: 0,
+        preservedImages: 0,
         failedCount: 0
       })
     ).toBe('Extra image cleanup finished: removed 2 image(s); removed 1 empty folder(s)');
+  });
+
+  it('formats orphan cleanup notices with moved and preserved images', () => {
+    expect(
+      formatBatchOrphanCleanupNotice({
+        deletedImages: 0,
+        deletedFolders: 0,
+        relocatedImages: 1,
+        preservedImages: 2,
+        failedCount: 0
+      })
+    ).toBe(
+      'Extra image cleanup finished: moved 1 image(s) to referenced note folder(s); kept 2 image(s) still referenced by other notes'
+    );
   });
 });

@@ -18,8 +18,13 @@ import {
 } from '@/types/index';
 import { ImageManagerSettingTab } from '@/ui/settings/image-manager-setting-tab';
 import { getConvertedTargetPath } from '@/utils/image-manager';
-import { formatSavedLocationNotice, showOperationNotice } from '@/utils/operation-feedback';
-import { sortCommandsByScope } from '@/utils/command-order';
+import {
+  formatAutoConvertFallbackNotice,
+  formatSavedLocationNotice,
+  showOperationNotice
+} from '@/utils/operation-feedback';
+import { applyScopedCommandSortKey, sortCommandsByScope } from '@/utils/command-order';
+import { detectPluginConflicts, formatPluginConflictNotice } from '@/utils/plugin-conflicts';
 import { parseTextImageSources, resolveTextImageSource, type TextImageSource } from '@/utils/pasted-image-source';
 import { matchRegexIgnorePattern } from '@/utils/regex-ignore';
 
@@ -46,6 +51,7 @@ export default class ImageManagerPlugin extends Plugin {
   override async onload(): Promise<void> {
     await this.settingsManager.load();
     this.services = createPluginServices(this.app, this.settingsManager);
+    await this.services.compressionTracker.initialize();
     await this.services.recovery.initialize();
     this.featureRegistry = createPluginFeatureRegistry(createBuiltInFeatures());
     this.services.logger.refreshMode('plugin-onload');
@@ -59,6 +65,10 @@ export default class ImageManagerPlugin extends Plugin {
     });
 
     showOperationNotice(this.settingsManager.getSettings(), 'Image Manager loaded');
+    const conflictNotice = formatPluginConflictNotice(detectPluginConflicts(this.app, this.settingsManager.getSettings()));
+    if (conflictNotice) {
+      showOperationNotice(this.settingsManager.getSettings(), conflictNotice);
+    }
   }
 
   override onunload(): void {
@@ -117,7 +127,11 @@ export default class ImageManagerPlugin extends Plugin {
       changedKeys,
       settings: updated
     });
-    if (changedKeys.includes('defaultLinkFormat') || changedKeys.includes('defaultPathFormat')) {
+    if (
+      changedKeys.includes('defaultLinkFormat') ||
+      changedKeys.includes('defaultPathFormat') ||
+      changedKeys.includes('markdownPathEncodingStrategy')
+    ) {
       void this.rewriteActiveNoteImageLinks().catch((error: unknown) => {
         console.error('Image Manager failed to update image links after settings change', error);
         this.services.logger.error('Failed to update image links after settings change', error);
@@ -146,7 +160,7 @@ export default class ImageManagerPlugin extends Plugin {
     }
 
     for (const command of sortCommandsByScope(deferredCommands)) {
-      originalAddCommand(command);
+      originalAddCommand(applyScopedCommandSortKey(command));
     }
   }
 
@@ -175,7 +189,8 @@ export default class ImageManagerPlugin extends Plugin {
         const links: string[] = [];
         const savedPaths: string[] = [];
         const failedFiles: string[] = [];
-        const fallbackFiles: string[] = [];
+        const ignoredConversionFiles: string[] = [];
+        const failedConversionFiles: string[] = [];
         for (const input of inputs) {
           try {
             const { source, originalName } = await this.readClipboardImageInput(input);
@@ -191,25 +206,27 @@ export default class ImageManagerPlugin extends Plugin {
                     filePath: tempFile.path,
                     pattern: ignored.source
                   });
-                  fallbackFiles.push(originalName);
+                  ignoredConversionFiles.push(originalName);
                 } else {
                   output = await this.convertAndReplace(tempFile, settings.defaultFormat);
                 }
               } catch (error: unknown) {
                 console.warn(`Image Manager skipped auto-convert for "${originalName}"`, error);
                 this.services.logger.warn('Auto-convert skipped', {
+                  error,
                   originalName,
                   requestedFormat: settings.defaultFormat,
                   sourceExtension: tempFile.extension
                 });
-                fallbackFiles.push(originalName);
+                failedConversionFiles.push(originalName);
               }
             }
 
             links.push(
               this.services.linkFormatter.formatLink(output.path, noteFile, {
                 format: settings.defaultLinkFormat,
-                pathFormat: settings.defaultPathFormat
+                pathFormat: settings.defaultPathFormat,
+                markdownPathEncodingStrategy: settings.markdownPathEncodingStrategy
               })
             );
             savedPaths.push(output.path);
@@ -242,10 +259,10 @@ export default class ImageManagerPlugin extends Plugin {
           showOperationNotice(this.settingsManager.getSettings(), formatSavedLocationNotice(savedPaths));
         }
 
-        if (fallbackFiles.length > 0) {
+        if (ignoredConversionFiles.length > 0 || failedConversionFiles.length > 0) {
           showOperationNotice(
             this.settingsManager.getSettings(),
-            `Pasted ${fallbackFiles.length} image(s) without conversion because they were skipped or the current platform does not support the requested format`
+            formatAutoConvertFallbackNotice(ignoredConversionFiles.length, failedConversionFiles.length)
           );
         }
 
@@ -253,7 +270,8 @@ export default class ImageManagerPlugin extends Plugin {
           notePath: noteFile.path,
           insertedLinks: links.length,
           failedFiles,
-          fallbackFiles
+          ignoredConversionFiles,
+          failedConversionFiles
         });
       }
     );

@@ -12,7 +12,7 @@ export class ResizeFeature implements ImageManagerFeature {
   async register(context: ImageManagerFeatureContext): Promise<void> {
     const resizeCommand = {
       commandId: 'resize-active-image-to-1920px',
-      commandName: '图片：缩放到 1920px 边界'
+      commandName: '缩放图片到 1920px 边界'
     } as const;
     context.plugin.addCommand({
       id: resizeCommand.commandId,

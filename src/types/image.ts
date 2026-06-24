@@ -1,4 +1,4 @@
-import type { ImageFormat, LinkFormat, PathFormat } from './settings';
+import type { ImageFormat, LinkFormat, MarkdownPathEncodingStrategy, PathFormat } from './settings';
 
 export interface VariableContext {
   readonly noteName: string;
@@ -36,6 +36,8 @@ export interface RenameMoveResult {
 export interface LinkFormatOptions {
   readonly format: LinkFormat;
   readonly pathFormat: PathFormat;
+  readonly markdownPathEncodingStrategy?: MarkdownPathEncodingStrategy;
+  readonly markdownPathPresentation?: 'encoded' | 'wrapped' | 'plain' | 'auto';
   readonly altText?: string;
   readonly width?: number;
   readonly height?: number;
@@ -45,7 +47,9 @@ export interface LinkFormatOptions {
 
 export interface ParsedLink {
   readonly path: string;
+  readonly rawPath: string;
   readonly format: LinkFormat;
+  readonly markdownPathPresentation?: 'encoded' | 'wrapped' | 'plain';
   readonly altText?: string;
   readonly width?: number;
   readonly height?: number;

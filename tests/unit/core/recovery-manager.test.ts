@@ -167,7 +167,35 @@ describe('RecoveryManager', () => {
           path: `notes/${index}.md`,
           snapshotPath: `.obsidian/plugins/obsidian-image-manager/recovery/snapshots/tx-${index}.txt`
         }
-      ]
+      ],
+      beforeState:
+        index === 0
+          ? {
+              files: [
+                {
+                  path: 'assets/before.png',
+                  kind: 'binary',
+                  exists: true,
+                  snapshotPath: '.obsidian/plugins/obsidian-image-manager/recovery/snapshots/tx-0-before.bin'
+                }
+              ],
+              folders: []
+            }
+          : undefined,
+      afterState:
+        index === 0
+          ? {
+              files: [
+                {
+                  path: 'assets/after.webp',
+                  kind: 'binary',
+                  exists: true,
+                  snapshotPath: '.obsidian/plugins/obsidian-image-manager/recovery/snapshots/tx-0-after.bin'
+                }
+              ],
+              folders: []
+            }
+          : undefined
     }));
     recoveryFiles.set(
       '.obsidian/plugins/obsidian-image-manager/recovery/history.json',
@@ -179,6 +207,14 @@ describe('RecoveryManager', () => {
         transaction.id
       );
     }
+    recoveryFiles.set(
+      '.obsidian/plugins/obsidian-image-manager/recovery/snapshots/tx-0-before.bin',
+      new Uint8Array([1, 2, 3]).buffer
+    );
+    recoveryFiles.set(
+      '.obsidian/plugins/obsidian-image-manager/recovery/snapshots/tx-0-after.bin',
+      new Uint8Array([4, 5, 6]).buffer
+    );
 
     await manager.initialize();
 
@@ -186,5 +222,73 @@ describe('RecoveryManager', () => {
     expect(retained).toHaveLength(10);
     expect(retained.some((transaction) => transaction.id === 'tx-0')).toBe(false);
     expect(recoveryFiles.has('.obsidian/plugins/obsidian-image-manager/recovery/snapshots/tx-0.txt')).toBe(false);
+    expect(recoveryFiles.has('.obsidian/plugins/obsidian-image-manager/recovery/snapshots/tx-0-before.bin')).toBe(false);
+    expect(recoveryFiles.has('.obsidian/plugins/obsidian-image-manager/recovery/snapshots/tx-0-after.bin')).toBe(false);
+  });
+
+  it('redoes the earliest undone transaction after the current history boundary', async () => {
+    const { app, fileManager, recoveryFiles, vaultFiles } = createApp();
+    const manager = new RecoveryManager(app as never, 'obsidian-image-manager', fileManager as never);
+
+    recoveryFiles.set(
+      '.obsidian/plugins/obsidian-image-manager/recovery/history.json',
+      JSON.stringify({
+        transactions: [
+          {
+            id: 'tx-1',
+            label: '转换图片',
+            trigger: 'convert',
+            scope: 'single-file',
+            status: 'undone',
+            redoable: true,
+            createdAt: Date.now(),
+            entries: [],
+            beforeState: {
+              files: [
+                {
+                  path: 'assets/photo.png',
+                  kind: 'binary',
+                  exists: true,
+                  snapshotPath: '.obsidian/plugins/obsidian-image-manager/recovery/snapshots/tx-1-before.bin'
+                },
+                {
+                  path: 'assets/photo.webp',
+                  kind: 'binary',
+                  exists: false
+                }
+              ],
+              folders: []
+            },
+            afterState: {
+              files: [
+                {
+                  path: 'assets/photo.png',
+                  kind: 'binary',
+                  exists: false
+                },
+                {
+                  path: 'assets/photo.webp',
+                  kind: 'binary',
+                  exists: true,
+                  snapshotPath: '.obsidian/plugins/obsidian-image-manager/recovery/snapshots/tx-1-after.bin'
+                }
+              ],
+              folders: []
+            }
+          }
+        ]
+      })
+    );
+    recoveryFiles.set(
+      '.obsidian/plugins/obsidian-image-manager/recovery/snapshots/tx-1-after.bin',
+      new Uint8Array([4, 5, 6]).buffer
+    );
+    vaultFiles.set('assets/photo.png', new TFile('assets/photo.png'));
+
+    const restored = await manager.redoLastUndoneTransaction();
+
+    expect(restored?.status).toBe('committed');
+    expect(fileManager.restoreBinaryFile).toHaveBeenCalledWith('assets/photo.webp', expect.any(ArrayBuffer));
+    expect(app.vault.delete).toHaveBeenCalledWith(expect.objectContaining({ path: 'assets/photo.png' }), true);
   });
 });

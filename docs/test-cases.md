@@ -591,12 +591,14 @@
 #### TC-COMP-001 当前笔记批量压缩命令
 
 - 状态: `Implemented`
+- 前置条件:
+  - 当前活动视图为 Markdown 笔记
 - 步骤:
   1. 在当前笔记中引用 3 张图片
-  2. 执行 `Process images in current note`
+  2. 执行 `【单文件】压缩图片`
 - 预期:
   - 3 张图片均被处理
-  - 出现 `Processed 3 images`
+  - 出现批量压缩汇总提示
 
 #### TC-COMP-002 单图右键压缩
 
@@ -654,13 +656,15 @@
 
 - 状态: `Implemented`
 - 前置条件:
-  - 活动文件为图片
+  - 当前活动视图为 Markdown 笔记
+  - 当前笔记至少引用 2 张图片
   - `defaultFormat = png`
 - 步骤:
-  1. 执行 `Convert active image to default format`
+  1. 执行 `【单文件】转换图片为默认格式`
 - 预期:
-  - 输出文件扩展名变为 `.png`
-  - 成功通知显示
+  - 当前笔记引用的图片会批量转换为 `.png`
+  - 每张引用图片最多只处理一次
+  - 成功通知显示批量转换汇总
 
 #### TC-CONV-002 命令转换为 WebP
 
@@ -697,14 +701,14 @@
   - 结果类似 `aaa.webp` 与 `aaa-1.webp`
   - 当前活动文件被替换为转换后的文件，不残留未引用的旧格式副本
 
-#### TC-CONV-005 非图片活动文件
+#### TC-CONV-005 非笔记活动文件
 
 - 状态: `Implemented`
 - 步骤:
-  1. 激活 Markdown 文件
+  1. 激活一张图片或其他非 Markdown 文件
   2. 执行转换命令
 - 预期:
-  - 提示 `Open an image file first`
+  - 提示 `Open a note file first`
 
 #### TC-CONV-006 整库转换风险确认
 

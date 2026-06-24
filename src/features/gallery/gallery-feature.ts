@@ -1,10 +1,9 @@
-import { MarkdownView } from 'obsidian';
-import type { TFile, TFolder } from 'obsidian';
+import { MarkdownView, TFile } from 'obsidian';
+import type { TFolder } from 'obsidian';
 import type { ImageManagerFeature, ImageManagerFeatureContext } from '@/types/index';
-import { ImageGalleryModal } from '@/ui/modals/image-gallery-modal';
+import { openGalleryForFiles, openSingleImageGallery } from '@/features/gallery/gallery-actions';
 import { executeLoggedCommand, logSkippedCommand } from '@/utils/command-logging';
 import { showOperationNotice } from '@/utils/operation-feedback';
-import { sortImages } from '@/utils/image-manager';
 
 export class GalleryFeature implements ImageManagerFeature {
   readonly id = 'gallery';
@@ -13,9 +12,37 @@ export class GalleryFeature implements ImageManagerFeature {
   readonly state = 'implemented' as const;
 
   async register(context: ImageManagerFeatureContext): Promise<void> {
+    const imageCommand = {
+      commandId: 'open-active-image-gallery',
+      commandName: '打开当前图片画廊'
+    } as const;
+    context.plugin.addCommand({
+      id: imageCommand.commandId,
+      name: imageCommand.commandName,
+      callback: () => {
+        void executeLoggedCommand(context, imageCommand, async () => {
+          if (!this.ensureGalleryEnabled(context, imageCommand)) {
+            return;
+          }
+
+          const file = context.app.workspace.getActiveFile();
+          if (!(file instanceof TFile) || !context.services.fileManager.isImageFile(file)) {
+            logSkippedCommand(context, {
+              ...imageCommand,
+              reason: 'No active image file'
+            });
+            showOperationNotice(context.services.settings.getSettings(), 'Open an image file first');
+            return;
+          }
+
+          await openSingleImageGallery(context, file);
+        });
+      }
+    });
+
     const noteCommand = {
       commandId: 'open-current-note-gallery',
-      commandName: '当前笔记：打开图片画廊'
+      commandName: '打开图片画廊'
     } as const;
     context.plugin.addCommand({
       id: noteCommand.commandId,
@@ -43,7 +70,7 @@ export class GalleryFeature implements ImageManagerFeature {
 
     const folderCommand = {
       commandId: 'open-current-folder-gallery',
-      commandName: '当前文件夹：打开图片画廊'
+      commandName: '打开图片画廊'
     } as const;
     context.plugin.addCommand({
       id: folderCommand.commandId,
@@ -72,26 +99,19 @@ export class GalleryFeature implements ImageManagerFeature {
 
   async openNoteGallery(context: ImageManagerFeatureContext, noteFile: TFile): Promise<void> {
     const files = await context.services.fileManager.getImagesInNote(noteFile);
-    await this.openGallery(context, `Images in ${noteFile.basename}`, files);
+    await openGalleryForFiles(context, {
+      title: `Images in ${noteFile.basename}`,
+      files,
+      linkSourceFile: noteFile
+    });
   }
 
   async openFolderGallery(context: ImageManagerFeatureContext, folder: TFolder): Promise<void> {
-    await this.openGallery(context, `Images in ${folder.path || 'vault root'}`, context.services.fileManager.getImagesInFolder(folder));
-  }
-
-  private async openGallery(
-    context: ImageManagerFeatureContext,
-    title: string,
-    files: TFile[]
-  ): Promise<void> {
-    const settings = context.services.settings.getSettings();
-    const images = await Promise.all(files.map((file) => context.services.imageProcessor.getImageInfo(file)));
-    new ImageGalleryModal(context.app, {
-      title,
-      images: sortImages(images, settings.gallerySortBy),
-      defaultSortBy: settings.gallerySortBy,
-      defaultGridSize: settings.galleryGridSize
-    }).open();
+    await openGalleryForFiles(context, {
+      title: `Images in ${folder.path || 'vault root'}`,
+      files: context.services.fileManager.getImagesInFolder(folder),
+      linkSourceFile: this.getActiveMarkdownFile(context)
+    });
   }
 
   private ensureGalleryEnabled(
@@ -111,5 +131,10 @@ export class GalleryFeature implements ImageManagerFeature {
     });
     showOperationNotice(context.services.settings.getSettings(), 'Gallery is disabled in settings');
     return false;
+  }
+
+  private getActiveMarkdownFile(context: ImageManagerFeatureContext): TFile | null {
+    const view = context.app.workspace.getActiveViewOfType(MarkdownView);
+    return view?.file instanceof TFile ? view.file : null;
   }
 }

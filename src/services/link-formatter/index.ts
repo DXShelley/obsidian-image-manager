@@ -1,5 +1,5 @@
 import type { App, TFile } from 'obsidian';
-import { LinkFormat, type LinkFormatOptions, type ParsedLink, PathFormat } from '@/types/index';
+import { LinkFormat, MarkdownPathEncodingStrategy, type LinkFormatOptions, type ParsedLink, PathFormat } from '@/types/index';
 
 const MARKDOWN_IMAGE_LINK_REGEX = /!\[([^\]]*)\]\(((?:<[^>]+>|[^)])+)\)/;
 
@@ -20,7 +20,8 @@ export class LinkFormatter {
       const sizeToken = [...wikiParams].reverse().find((part) => /^(\d+)(?:x(\d+))?$/.test(part));
       const sizeMatch = sizeToken?.match(/^(\d+)(?:x(\d+))?$/);
       return {
-        path,
+        path: this.decodePathSafely(path),
+        rawPath: path,
         format: LinkFormat.WIKI,
         altText: wikiParams.find((part) => !/^(\d+)(?:x(\d+))?$/.test(part)),
         width: sizeMatch?.[1] ? Number.parseInt(sizeMatch[1], 10) : undefined,
@@ -31,10 +32,12 @@ export class LinkFormatter {
 
     const markdownMatch = link.match(MARKDOWN_IMAGE_LINK_REGEX);
     if (markdownMatch?.[2]) {
-      const { path, title } = this.parseMarkdownTarget(markdownMatch[2]);
+      const { path, title, wrapped } = this.parseMarkdownTarget(markdownMatch[2]);
       return {
-        path: decodeURI(path),
+        path: this.decodePathSafely(path),
+        rawPath: path,
         format: LinkFormat.MARKDOWN,
+        markdownPathPresentation: this.classifyMarkdownPathPresentation(path, wrapped),
         altText: markdownMatch[1] || undefined,
         title
       };
@@ -93,13 +96,26 @@ export class LinkFormatter {
 
   private formatMarkdownLink(path: string, options: LinkFormatOptions): string {
     const title = options.title ? ` ${options.title}` : '';
-    return `![${options.altText ?? ''}](${encodeURI(path)}${title})`;
+    const presentation = options.markdownPathPresentation ?? this.strategyToPresentation(
+      options.markdownPathEncodingStrategy ?? MarkdownPathEncodingStrategy.ENCODED
+    );
+    switch (presentation) {
+      case 'wrapped':
+        return `![${options.altText ?? ''}](${this.wrapMarkdownPath(path)}${title})`;
+      case 'plain':
+        return `![${options.altText ?? ''}](${path}${title})`;
+      case 'auto':
+        return `![${options.altText ?? ''}](${this.formatAutoMarkdownPath(path)}${title})`;
+      case 'encoded':
+      default:
+        return `![${options.altText ?? ''}](${encodeURI(path)}${title})`;
+    }
   }
 
-  private parseMarkdownTarget(value: string): { path: string; title?: string } {
+  private parseMarkdownTarget(value: string): { path: string; title?: string; wrapped: boolean } {
     const trimmed = value.trim();
     if (!trimmed) {
-      return { path: '' };
+      return { path: '', wrapped: false };
     }
 
     if (trimmed.startsWith('<')) {
@@ -109,7 +125,8 @@ export class LinkFormatter {
         const remainder = trimmed.slice(closingIndex + 1).trim();
         return {
           path,
-          title: remainder || undefined
+          title: remainder || undefined,
+          wrapped: true
         };
       }
     }
@@ -118,10 +135,51 @@ export class LinkFormatter {
     if (titleMatch?.[1] && titleMatch[2]) {
       return {
         path: titleMatch[1].trim(),
-        title: titleMatch[2].trim()
+        title: titleMatch[2].trim(),
+        wrapped: false
       };
     }
 
-    return { path: trimmed };
+    return { path: trimmed, wrapped: false };
+  }
+
+  private decodePathSafely(path: string): string {
+    try {
+      return decodeURI(path);
+    } catch {
+      return path;
+    }
+  }
+
+  private formatAutoMarkdownPath(path: string): string {
+    if (/^[A-Za-z0-9._/-]+$/.test(path)) {
+      return path;
+    }
+
+    return this.wrapMarkdownPath(path);
+  }
+
+  private wrapMarkdownPath(path: string): string {
+    return `<${path}>`;
+  }
+
+  private strategyToPresentation(strategy: MarkdownPathEncodingStrategy): 'encoded' | 'wrapped' | 'auto' {
+    switch (strategy) {
+      case MarkdownPathEncodingStrategy.READABLE:
+        return 'wrapped';
+      case MarkdownPathEncodingStrategy.AUTO:
+        return 'auto';
+      case MarkdownPathEncodingStrategy.ENCODED:
+      default:
+        return 'encoded';
+    }
+  }
+
+  private classifyMarkdownPathPresentation(path: string, wrapped: boolean): 'encoded' | 'wrapped' | 'plain' {
+    if (wrapped) {
+      return 'wrapped';
+    }
+
+    return path !== this.decodePathSafely(path) ? 'encoded' : 'plain';
   }
 }
