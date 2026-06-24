@@ -113,7 +113,7 @@
   - 显示 `Convert and compress`
   - 显示 `Editor and paste behavior`
   - 显示 `Gallery`
-  - 显示 `Feature delivery status`
+  - 显示 `功能状态`
   - 显示 `图片文件保存位置`
   - 显示 `生成的图片文件名`
   - 显示两个预览块
@@ -870,12 +870,14 @@
 - 步骤:
   1. 右键图片文件
 - 预期:
-  - 出现 `Copy image to clipboard`
-  - 出现 `Compress image`
-  - 出现 `Convert to WebP`
-  - 出现 `Rotate 90 degrees`
-  - 出现 `Flip horizontal`
-  - 出现 `Flip vertical`
+  - 出现 `复制图片到剪贴板`
+  - 出现 `压缩图片`
+  - 出现 `转换为默认格式`
+  - 出现 `拖拽裁剪`
+  - 出现 `框选去水印`
+  - 出现 `顺时针旋转 90°`
+  - 出现 `水平翻转`
+  - 出现 `垂直翻转`
   - 不额外出现插件自带的重复删除项
 
 #### TC-MENU-003 复制到剪贴板
@@ -1157,7 +1159,7 @@
 
 - 状态: `Implemented`
 - 步骤:
-  1. 对照设置页 `Feature delivery status`
+  1. 对照设置页 `功能状态`
   2. 对照 `docs/task-status.md`
 - 预期:
   - 已实现和部分实现描述基本一致
@@ -1174,7 +1176,7 @@
 
 ## 延后测试用例
 
-### TC-DEFER-001 Markdown 图片对齐
+### TC-DEFER-001 编辑器内交互式拖拽缩放
 
 - 状态: `Deferred`
 - 预期:

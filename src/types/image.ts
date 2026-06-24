@@ -21,6 +21,13 @@ export interface ImageInfo {
   readonly height?: number;
 }
 
+export interface ImageSelection {
+  readonly x: number;
+  readonly y: number;
+  readonly width: number;
+  readonly height: number;
+}
+
 export interface ProcessOptions {
   readonly format?: ImageFormat;
   readonly quality?: number;

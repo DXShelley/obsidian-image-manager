@@ -61,6 +61,10 @@ interface OrphanImageCleanupResult {
   readonly preservedImages: number;
 }
 
+interface DeleteEmptyFolderOptions {
+  readonly preservePath?: string;
+}
+
 export class FileManager {
   private recoveryManager: RecoveryManager | null = null;
   private deferredLeafRefreshDepth = 0;
@@ -355,7 +359,9 @@ export class FileManager {
       if (this.getSettings().deleteOrphanImages) {
         await this.deleteOrphanImagesInFolder(oldFolder);
       }
-      await this.deleteFolderIfEmpty(oldFolder);
+      await this.deleteFolderIfEmpty(oldFolder, {
+        preservePath: this.resolveManagedFolderCleanupBoundary(oldNotePath)
+      });
     }
 
     return movePlans.filter((move) => move.oldPath !== move.newPath).length;
@@ -790,15 +796,45 @@ export class FileManager {
     return fallbackFolder instanceof TFolder ? fallbackFolder : null;
   }
 
-  private async deleteFolderIfEmpty(folder: TFolder): Promise<number> {
-    if (!this.getSettings().deleteEmptyFolders || folder.children.length > 0) {
+  private resolveManagedFolderCleanupBoundary(notePath: string): string | undefined {
+    const template = this.getSettings().outputFolder.trim();
+    if (!template) {
+      return getParentPath(notePath) || undefined;
+    }
+
+    const noteName = getFileStem(notePath);
+    const resolvedTemplate = normalizeVaultPath(
+      this.variableResolver.resolvePath(template, this.variableResolver.createContext(noteName, noteName))
+    );
+    const resolvedFolder = this.resolveOutputFolderPath(notePath);
+    if (!resolvedTemplate || !resolvedFolder) {
+      return undefined;
+    }
+
+    const templateSegments = resolvedTemplate.split('/').filter(Boolean);
+    const resolvedSegments = normalizeVaultPath(resolvedFolder).split('/').filter(Boolean);
+    if (templateSegments.length === 0 || resolvedSegments.length < templateSegments.length) {
+      return undefined;
+    }
+
+    const managedRootSegmentCount = resolvedSegments.length - templateSegments.length + 1;
+    const managedRootPath = resolvedSegments.slice(0, managedRootSegmentCount).join('/');
+    return getParentPath(managedRootPath) || undefined;
+  }
+
+  private async deleteFolderIfEmpty(folder: TFolder, options: DeleteEmptyFolderOptions = {}): Promise<number> {
+    if (
+      !this.getSettings().deleteEmptyFolders ||
+      folder.children.length > 0 ||
+      folder.path === options.preservePath
+    ) {
       return 0;
     }
 
     const parent = folder.parent instanceof TFolder ? folder.parent : null;
     this.recoveryManager?.recordDeletedFolder(folder.path);
     await this.app.vault.delete(folder, true);
-    const parentDeleted = parent ? await this.deleteFolderIfEmpty(parent) : 0;
+    const parentDeleted = parent ? await this.deleteFolderIfEmpty(parent, options) : 0;
     return 1 + parentDeleted;
   }
 

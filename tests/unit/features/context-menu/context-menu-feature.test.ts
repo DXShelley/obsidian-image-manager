@@ -5,6 +5,10 @@ const { openSingleImageGalleryMock } = vi.hoisted(() => ({
   openSingleImageGalleryMock: vi.fn(async () => undefined)
 }));
 
+const { pickImageSelectionMock } = vi.hoisted(() => ({
+  pickImageSelectionMock: vi.fn(async () => null)
+}));
+
 const noticeMock = vi.fn();
 
 vi.mock('obsidian', () => ({
@@ -26,6 +30,10 @@ vi.mock('obsidian', () => ({
 
 vi.mock('@/features/gallery/gallery-actions', () => ({
   openSingleImageGallery: openSingleImageGalleryMock
+}));
+
+vi.mock('@/ui/modals/image-selection-modal', () => ({
+  pickImageSelection: pickImageSelectionMock
 }));
 
 vi.mock('@/utils/compatibility', () => ({
@@ -75,6 +83,58 @@ function createMenuSpy() {
 }
 
 describe('ContextMenuFeature', () => {
+  it('does not add image actions when the context-menu setting is disabled', async () => {
+    const { TFile } = await import('obsidian');
+    const feature = new ContextMenuFeature();
+    let fileMenuHandler:
+      | ((menu: unknown, file: InstanceType<typeof TFile>) => void)
+      | undefined;
+    const file = Object.assign(new TFile(), {
+      path: 'assets/photo.png',
+      name: 'photo.png',
+      extension: 'png'
+    });
+    const { menu, addedItems } = createMenuSpy();
+    const context = {
+      app: {
+        workspace: {
+          on: vi.fn((_event: string, callback: typeof fileMenuHandler) => {
+            fileMenuHandler = callback;
+            return { event: 'file-menu' };
+          })
+        }
+      },
+      plugin: {
+        registerEvent: vi.fn()
+      },
+      services: {
+        fileManager: {
+          isImageFile: vi.fn(() => true)
+        },
+        settings: {
+          getSettings: vi.fn(() => ({
+            enableContextMenu: false,
+            enableGallery: true,
+            showOperationNotifications: true
+          }))
+        },
+        logger: {
+          refreshMode: vi.fn(),
+          debug: vi.fn(),
+          warn: vi.fn(),
+          error: vi.fn()
+        }
+      }
+    };
+
+    await feature.register(context as never);
+
+    fileMenuHandler?.(menu as never, file);
+
+    expect(menu.addSeparator).not.toHaveBeenCalled();
+    expect(addedItems).toHaveLength(0);
+  });
+
   it('adds a gallery entry to the image file context menu and opens the single-image gallery', async () => {
     const { TFile } = await import('obsidian');
     const feature = new ContextMenuFeature();
@@ -132,6 +192,113 @@ describe('ContextMenuFeature', () => {
 
     await vi.waitFor(() => {
       expect(openSingleImageGalleryMock).toHaveBeenCalledWith(context, file);
+    });
+  });
+
+  it('adds crop and watermark actions that run through selection and recovery', async () => {
+    const { TFile } = await import('obsidian');
+    const feature = new ContextMenuFeature();
+    let fileMenuHandler:
+      | ((menu: unknown, file: InstanceType<typeof TFile>) => void)
+      | undefined;
+    const file = Object.assign(new TFile(), {
+      path: 'assets/photo.png',
+      name: 'photo.png',
+      extension: 'png'
+    });
+    const { menu, addedItems } = createMenuSpy();
+    const recoveryRunTransaction = vi.fn(async (_meta: unknown, run: () => Promise<void>) => run());
+    const cropMock = vi.fn(async () => new ArrayBuffer(4));
+    const removeWatermarkMock = vi.fn(async () => new ArrayBuffer(4));
+    const replaceFileMock = vi.fn(async () => file);
+    vi.mocked(pickImageSelectionMock).mockResolvedValue({
+      x: 8,
+      y: 6,
+      width: 40,
+      height: 20
+    });
+    const context = {
+      app: {
+        workspace: {
+          on: vi.fn((_event: string, callback: typeof fileMenuHandler) => {
+            fileMenuHandler = callback;
+            return { event: 'file-menu' };
+          })
+        }
+      },
+      plugin: {
+        registerEvent: vi.fn()
+      },
+      services: {
+        fileManager: {
+          isImageFile: vi.fn(() => true),
+          replaceFile: replaceFileMock
+        },
+        imageProcessor: {
+          crop: cropMock,
+          removeWatermark: removeWatermarkMock
+        },
+        recovery: {
+          runTransaction: recoveryRunTransaction
+        },
+        settings: {
+          getSettings: vi.fn(() => ({
+            enableContextMenu: true,
+            enableGallery: true,
+            showOperationNotifications: true
+          }))
+        },
+        logger: {
+          refreshMode: vi.fn(),
+          debug: vi.fn(),
+          warn: vi.fn(),
+          error: vi.fn()
+        }
+      }
+    };
+
+    await feature.register(context as never);
+    fileMenuHandler?.(menu as never, file);
+
+    const cropItem = addedItems.find((item) => item.title === '拖拽裁剪');
+    const watermarkItem = addedItems.find((item) => item.title === '框选去水印');
+    expect(cropItem).toBeDefined();
+    expect(watermarkItem).toBeDefined();
+
+    cropItem?.onClick?.();
+    await vi.waitFor(() => {
+      expect(pickImageSelectionMock).toHaveBeenCalled();
+      expect(recoveryRunTransaction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          label: '右键裁剪图片 photo.png',
+          trigger: 'context-menu',
+          scope: 'single-file'
+        }),
+        expect.any(Function)
+      );
+      expect(cropMock).toHaveBeenCalledWith(file, {
+        x: 8,
+        y: 6,
+        width: 40,
+        height: 20
+      });
+      expect(replaceFileMock).toHaveBeenCalledWith(file, expect.any(ArrayBuffer));
+    });
+
+    vi.mocked(pickImageSelectionMock).mockResolvedValue({
+      x: 4,
+      y: 2,
+      width: 16,
+      height: 10
+    });
+    watermarkItem?.onClick?.();
+    await vi.waitFor(() => {
+      expect(removeWatermarkMock).toHaveBeenCalledWith(file, {
+        x: 4,
+        y: 2,
+        width: 16,
+        height: 10
+      });
     });
   });
 });

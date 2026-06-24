@@ -16,7 +16,6 @@ const settings: ImageManagerSettings = {
   enableAutoRename: true,
   enableGallery: true,
   enableContextMenu: true,
-  enableDragResize: true,
   enableImageAlign: true,
   imageAlignmentDefaultAlignment: Alignment.NONE,
   disableObsidianImageSelectionOnClick: false,

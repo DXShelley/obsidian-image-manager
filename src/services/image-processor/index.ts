@@ -1,7 +1,14 @@
 import type { App, TFile } from 'obsidian';
-import { ImageFormat, type ImageInfo, type ImageManagerSettings, type ProcessOptions } from '@/types/index';
+import {
+  ImageFormat,
+  type ImageInfo,
+  type ImageManagerSettings,
+  type ImageSelection,
+  type ProcessOptions
+} from '@/types/index';
 import { MIME_BY_FORMAT } from './format-support';
 import { canEncodeCanvasOutputFormat, getSupportedCanvasOutputFormats } from '@/utils/compatibility';
+import { fillWatermarkSelection, normalizeImageSelection } from '@/utils/image-edit';
 
 export class ImageProcessor {
   constructor(
@@ -97,6 +104,61 @@ export class ImageProcessor {
     }
     ctx.restore();
 
+    return this.canvasToArrayBuffer(canvas, this.extensionToFormat(file.extension), this.getSettings().defaultQuality);
+  }
+
+  async crop(file: TFile, selection: ImageSelection): Promise<ArrayBuffer> {
+    this.assertOutputFormatSupported(this.extensionToFormat(file.extension));
+    const source = await this.app.vault.readBinary(file);
+    const image = await this.loadImage(source, file.extension);
+    const region = normalizeImageSelection(selection, image.width, image.height);
+    if (!region) {
+      throw new Error('Crop selection is empty');
+    }
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      throw new Error('Canvas context is unavailable');
+    }
+
+    canvas.width = region.width;
+    canvas.height = region.height;
+    ctx.drawImage(
+      image,
+      region.x,
+      region.y,
+      region.width,
+      region.height,
+      0,
+      0,
+      region.width,
+      region.height
+    );
+    return this.canvasToArrayBuffer(canvas, this.extensionToFormat(file.extension), this.getSettings().defaultQuality);
+  }
+
+  async removeWatermark(file: TFile, selection: ImageSelection): Promise<ArrayBuffer> {
+    this.assertOutputFormatSupported(this.extensionToFormat(file.extension));
+    const source = await this.app.vault.readBinary(file);
+    const image = await this.loadImage(source, file.extension);
+    const region = normalizeImageSelection(selection, image.width, image.height);
+    if (!region) {
+      throw new Error('Watermark selection is empty');
+    }
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      throw new Error('Canvas context is unavailable');
+    }
+
+    canvas.width = image.width;
+    canvas.height = image.height;
+    ctx.drawImage(image, 0, 0, image.width, image.height);
+    const imageData = ctx.getImageData(0, 0, image.width, image.height);
+    fillWatermarkSelection(imageData.data, image.width, image.height, region);
+    ctx.putImageData(imageData, 0, 0);
     return this.canvasToArrayBuffer(canvas, this.extensionToFormat(file.extension), this.getSettings().defaultQuality);
   }
 

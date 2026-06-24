@@ -4,6 +4,14 @@
 
 ## Unreleased
 
+## 3.0.0
+
+- Added context-menu driven drag-to-crop and selection-based watermark removal, both wrapped in recovery transactions so edits can be undone and redone safely.
+- Tightened gallery and directory-management details, including reading-view double-click entry, current-image preselection inside the source-note gallery, and empty-folder cleanup that stays within image attachment branches.
+- Restored registration for the active-image rotate, flip, and resize-to-1920px commands, fixing mismatches between feature status, toggle semantics, and actual delivered capabilities.
+- Added unit coverage for crop, watermark removal, feature-catalog registration, and toggle-driven context-menu visibility, while cleaning up outdated docs and test descriptions.
+- Added a standalone `website/` marketing site that presents shipped features, planned items, and release-facing product messaging.
+
 ## 2.0.0
 
 - Changed current-note conversion and compression commands to process every image referenced by the active Markdown note, with deferred preview rerenders for scoped batch-style runs.
