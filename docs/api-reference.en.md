@@ -67,6 +67,8 @@
 - `resize(file, maxWidth?, maxHeight?)`
 - `rotate(file, degrees)`
 - `flip(file, direction)`
+- `crop(file, selection)`
+- `removeWatermark(file, selection)`
 
 ### `LinkFormatter`
 

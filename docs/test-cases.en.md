@@ -113,7 +113,7 @@ Status mapping:
   - `Convert and compress` is shown.
   - `Editor and paste behavior` is shown.
   - `Gallery` is shown.
-  - `Feature delivery status` is shown.
+  - `功能状态` is shown.
   - `图片文件保存位置` is shown.
   - `生成的图片文件名` is shown.
   - Two preview blocks are shown.
@@ -872,7 +872,9 @@ Status mapping:
 - Expected:
   - `Copy image to clipboard` appears.
   - `Compress image` appears.
-  - `Convert to WebP` appears.
+  - `Convert to default format` appears.
+  - `Drag-to-crop` appears.
+  - `Remove watermark from selection` appears.
   - `Rotate 90 degrees` appears.
   - `Flip horizontal` appears.
   - `Flip vertical` appears.
@@ -1157,7 +1159,7 @@ Status mapping:
 
 - Status: `Implemented`
 - Steps:
-  1. Compare against `Feature delivery status` in the settings page.
+  1. Compare against `功能状态` in the settings page.
   2. Compare against `docs/task-status.md`.
 - Expected:
   - The implemented and partial descriptions are broadly consistent.
@@ -1174,7 +1176,7 @@ Status mapping:
 
 ## Deferred Test Cases
 
-### TC-DEFER-001 Markdown Image Alignment
+### TC-DEFER-001 Interactive Drag-To-Resize In The Editor
 
 - Status: `Deferred`
 - Expected:

@@ -28,7 +28,6 @@ const settings: ImageManagerSettings = {
   enableAutoRename: true,
   enableGallery: true,
   enableContextMenu: true,
-  enableDragResize: true,
   enableImageAlign: true,
   imageAlignmentDefaultAlignment: Alignment.NONE,
   disableObsidianImageSelectionOnClick: false,
@@ -299,6 +298,106 @@ describe('FileManager.syncManagedImagesForNote', () => {
     expect(recoveryManager.recordRename).toHaveBeenCalledWith(oldNotePath, newNotePath);
     expect(createdFolders).toContain('04_archived');
     expect(createdFolders).toContain('04_archived/sunway/assets/demo');
+  });
+
+  it('only removes empty managed image folders after note relocation', async () => {
+    const oldNotePath = '00_inbox/fleeting/demo.md';
+    const newNotePath = '04_archived/sunway/demo.md';
+    const note = Object.assign(new TFile(), {
+      path: newNotePath,
+      name: 'demo.md',
+      basename: 'demo',
+      extension: 'md'
+    });
+    const oldNoteFolder = Object.assign(new TFolder(), {
+      path: '00_inbox/fleeting',
+      children: [] as Array<TFolder | TFile>
+    });
+    const assetsFolder = Object.assign(new TFolder(), {
+      path: '00_inbox/fleeting/assets',
+      parent: oldNoteFolder,
+      children: [] as Array<TFolder | TFile>
+    });
+    const oldImageFolder = Object.assign(new TFolder(), {
+      path: '00_inbox/fleeting/assets/demo',
+      parent: assetsFolder,
+      children: [] as Array<TFolder | TFile>
+    });
+    const image = Object.assign(new TFile(), {
+      path: '00_inbox/fleeting/assets/demo/image.webp',
+      name: 'image.webp',
+      basename: 'image',
+      extension: 'webp',
+      parent: oldImageFolder
+    });
+    oldNoteFolder.children = [assetsFolder];
+    assetsFolder.children = [oldImageFolder];
+    oldImageFolder.children = [image];
+
+    const objects = new Map<string, TFolder | TFile>([
+      [oldNoteFolder.path, oldNoteFolder],
+      [assetsFolder.path, assetsFolder],
+      [oldImageFolder.path, oldImageFolder],
+      [image.path, image]
+    ]);
+    const deletedFolders: string[] = [];
+    const app = {
+      vault: {
+        read: vi.fn(async () => '![A](assets/demo/image.webp)'),
+        modify: vi.fn(async () => undefined),
+        getAbstractFileByPath: vi.fn((path: string) => objects.get(path) ?? null),
+        getFiles: vi.fn(() => [note, image]),
+        createFolder: vi.fn(async () => undefined),
+        delete: vi.fn(async (target: TFolder | TFile) => {
+          objects.delete(target.path);
+          if (target instanceof TFolder) {
+            deletedFolders.push(target.path);
+          }
+          const parent = target.parent instanceof TFolder ? target.parent : null;
+          if (parent) {
+            parent.children = parent.children.filter((child) => child !== target);
+          }
+        })
+      },
+      metadataCache: {
+        getFirstLinkpathDest: vi.fn(() => image),
+        resolvedLinks: {
+          [newNotePath]: {
+            [image.path]: 1
+          }
+        }
+      },
+      fileManager: {
+        renameFile: vi.fn(async (file: TFile, targetPath: string) => {
+          const parent = file.parent instanceof TFolder ? file.parent : null;
+          if (parent) {
+            parent.children = parent.children.filter((child) => child !== file);
+          }
+          objects.delete(file.path);
+          file.path = targetPath;
+          file.parent = null;
+          objects.set(file.path, file);
+        })
+      }
+    };
+    const manager = new FileManager(
+      app as never,
+      () => ({
+        ...settings,
+        outputFolder: './assets/${noteFileName}'
+      }),
+      new VariableResolver(),
+      new LinkFormatter(app as never)
+    );
+
+    const movedCount = await manager.syncManagedImagesForNote(note as never, oldNotePath);
+
+    expect(movedCount).toBe(1);
+    expect(deletedFolders).toEqual([
+      '00_inbox/fleeting/assets/demo',
+      '00_inbox/fleeting/assets'
+    ]);
+    expect(objects.get('00_inbox/fleeting')).toBe(oldNoteFolder);
   });
 });
 

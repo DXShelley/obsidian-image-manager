@@ -153,6 +153,7 @@ const FEATURE_LABELS: Readonly<Record<string, string>> = {
   batch: '批量处理',
   recovery: '恢复事务',
   resize: '尺寸调整',
+  'drag-resize': '拖拽调整尺寸',
   align: '图片对齐',
   'context-menu': '右键菜单'
 } as const;
@@ -371,7 +372,7 @@ export class ImageManagerSettingTab extends PluginSettingTab {
 
     new Setting(namingSection)
       .setName('删除空图片文件夹')
-      .setDesc('模仿 Custom Attachment Location 的空附件目录清理行为。关闭后，迁移或清理完成后会保留空目录。')
+      .setDesc('仅清理图片附件目录下因图片迁移或清理产生的空目录，不会删除笔记移动后留下的原始笔记目录。')
       .addToggle((toggle) =>
         toggle.setValue(settings.deleteEmptyFolders).onChange(async (value) => {
           await this.updateSettings((draft) => {
@@ -382,7 +383,7 @@ export class ImageManagerSettingTab extends PluginSettingTab {
 
     new Setting(namingSection)
       .setName('删除孤立图片')
-      .setDesc('模仿 Custom Attachment Location 的孤立附件清理行为。开启后，“更新图片链接与目录”会顺带删除当前范围内未被任何笔记引用的图片。')
+      .setDesc('开启后，“更新图片链接与目录”会顺带删除当前处理范围内未被任何笔记引用的图片，并清理它们所在的空图片附件目录。')
       .addToggle((toggle) =>
         toggle.setValue(settings.deleteOrphanImages).onChange(async (value) => {
           await this.updateSettings((draft) => {
@@ -562,7 +563,7 @@ export class ImageManagerSettingTab extends PluginSettingTab {
 
     new Setting(editorSection)
       .setName('启用文件右键菜单操作')
-      .setDesc('在文件管理器中右键图片时，显示压缩、转换、旋转、翻转等操作。')
+      .setDesc('在文件管理器中右键图片时，显示复制、画廊、压缩、转换、裁剪、去水印、旋转和翻转等操作。')
       .addToggle((toggle) =>
         toggle.setValue(settings.enableContextMenu).onChange(async (value) => {
           await this.updateSettings((draft) => {
@@ -619,7 +620,7 @@ export class ImageManagerSettingTab extends PluginSettingTab {
 
     new Setting(gallerySection)
       .setName('启用图片画廊')
-      .setDesc('控制“当前笔记画廊”和“当前文件夹画廊”命令是否可用。')
+      .setDesc('控制画廊命令、右键“在画廊中打开”以及阅读视图双击图片打开画廊是否可用。')
       .addToggle((toggle) =>
         toggle.setValue(settings.enableGallery).onChange(async (value) => {
           await this.updateSettings((draft) => {
@@ -661,7 +662,6 @@ export class ImageManagerSettingTab extends PluginSettingTab {
       );
 
     this.renderCompatibilitySection(containerEl, settings);
-    this.renderPlannedSettings(containerEl, settings);
     this.renderFeatureStatus(containerEl);
   }
 
@@ -670,7 +670,7 @@ export class ImageManagerSettingTab extends PluginSettingTab {
     const content = hero.createDiv({ cls: 'image-manager-settings-hero__content' });
     content.createEl('h2', { text: 'Image Manager 设置' });
     content.createEl('p', {
-      text: '统一管理图片的保存、命名、转换、链接和浏览行为。设置项只展示当前版本已生效的能力，未接入功能会单独标记。'
+      text: '统一管理图片的保存、命名、转换、链接和浏览行为。未接入的能力会在“功能状态”中统一标记为规划中。'
     });
 
     const actionWrap = hero.createDiv({ cls: 'image-manager-settings-hero__actions' });
@@ -821,31 +821,6 @@ export class ImageManagerSettingTab extends PluginSettingTab {
     }
   }
 
-  private renderPlannedSettings(containerEl: HTMLElement, settings: ImageManagerSettings): void {
-    const section = this.createSection(
-      containerEl,
-      '规划中能力',
-      '以下配置字段已经在数据结构中预留，但当前版本尚未接入实际交互逻辑，因此不提供可编辑开关。这样可以避免出现“能配置但不生效”的设置项。'
-    );
-
-    const items: readonly { readonly label: string; readonly value: string; readonly description: string }[] = [
-      {
-        label: '拖拽调整图片尺寸',
-        value: settings.enableDragResize ? 'true' : 'false',
-        description: '尺寸调整命令已可用，但编辑器内拖拽交互仍未实现。'
-      }
-    ];
-
-    const list = section.createDiv({ cls: 'image-manager-settings-planned' });
-    for (const item of items) {
-      const card = list.createDiv({ cls: 'image-manager-settings-card image-manager-settings-card--muted' });
-      const top = card.createDiv({ cls: 'image-manager-settings-card__top' });
-      top.createEl('strong', { text: item.label });
-      top.createEl('code', { text: item.value });
-      card.createEl('p', { text: item.description });
-    }
-  }
-
   private renderFeatureStatus(containerEl: HTMLElement): void {
     const section = this.createSection(
       containerEl,
@@ -872,12 +847,13 @@ export class ImageManagerSettingTab extends PluginSettingTab {
       compress: '提供单图与批量压缩，并可提示节省的空间大小。',
       convert: '支持将图片转换为默认格式或指定格式。',
       preview: '提供图片预览入口和相关浏览能力。',
-      editor: '提供快速旋转和水平翻转等轻量编辑命令。',
+      editor: '提供旋转、翻转等轻量编辑能力；更复杂的交互式裁剪与去水印入口放在右键菜单中。',
       gallery: '提供当前笔记和当前文件夹的图片画廊视图。',
       batch: '支持按笔记、文件夹或整个仓库执行批量任务。',
       resize: '支持将图片缩放到指定边界尺寸。',
+      'drag-resize': '后续会补上编辑器内直接拖拽调整图片显示尺寸的交互。',
       align: '支持为渲染后的图片附加默认对齐样式，并配合预览行为一起生效。',
-      'context-menu': '为文件管理器中的图片提供右键快捷操作。'
+      'context-menu': '为文件管理器中的图片提供复制、压缩、转换、裁剪、去水印和画廊等右键快捷操作。'
     };
     return summaryMap[feature.id] ?? feature.summary;
   }

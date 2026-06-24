@@ -4,18 +4,24 @@
 
 ## Commands
 
-- Scoped commands are ordered by the `a1-a3`, `b1-b3`, and `c1-c3` `id` groups for `【单文件】`, `【单文件夹】`, and `【整库】`, with `update links -> convert format -> compress` inside each scope.
+- Scoped commands are ordered by the `a1-a4`, `b1-b4`, and `c1-c4` `id` groups for `【单文件】`, `【单文件夹】`, and `【整库】`, with `update links -> convert format -> compress -> delete extra image files` inside each scope.
 - `【单文件】更新图片链接与目录`
 - `【单文件】转换图片为默认格式`
 - `【单文件】压缩图片`
+- `【单文件】删除多余图片文件`
 - `【单文件夹】更新图片链接与目录`
 - `【单文件夹】转换图片为默认格式`
 - `【单文件夹】压缩图片`
+- `【单文件夹】删除多余图片文件`
 - `【整库】更新图片链接与目录`
 - `【整库】转换图片为默认格式`
 - `【整库】压缩图片`
+- `【整库】删除多余图片文件`
 - `恢复：撤销上一步图片管理修改`
 - `恢复：重做上一步图片管理修改`
+- `顺时针旋转图片 90°`
+- `水平翻转图片`
+- `缩放图片到 1920px 边界`
 - `打开当前图片画廊`
 - `【单文件】打开图片画廊`
 - `【单文件夹】打开图片画廊`
@@ -26,7 +32,9 @@ Right-click an image file in the file explorer to access:
 
 - Copy image to clipboard
 - Compress image
-- Convert to WebP
+- Convert to default format
+- Drag-to-crop
+- Remove watermark from selection
 - Rotate 90 degrees
 - Flip horizontal
 - Flip vertical
@@ -57,7 +65,7 @@ Right-click an image file in the file explorer to access:
 
 ## Refresh Behavior
 
-- Rotate, flip, resize, compress, and convert operations update the image file immediately.
+- Rotate, flip, resize, crop, watermark removal, compress, and convert operations update the image file immediately.
 - If the image is embedded in a Markdown note, the plugin attempts to rerender that note preview automatically.
 - Scoped batch-style commands defer Markdown rerenders so a run ends with one summary notice and one preview refresh.
 - The current-file conversion command operates on the active Markdown note and processes each referenced image at most once.

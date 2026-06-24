@@ -4,8 +4,8 @@
 
 ## Release
 
-- `v2.0.0` is the first major release centered on batch workflows, undo/redo recovery, and richer gallery navigation.
-- Package metadata, manifest metadata, release workflow, and user-facing documentation are aligned for the 2.0.0 release.
+- `v3.0.0` brings interactive image operations, feature-consistency fixes, and a standalone marketing site into the formal release scope.
+- Package metadata, manifest metadata, release workflow, marketing site, and user-facing documentation are aligned for the 3.0.0 release.
 
 ## Completed
 
