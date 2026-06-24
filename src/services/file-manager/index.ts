@@ -1,8 +1,8 @@
 import { MarkdownView, TFile, TFolder, type App, type WorkspaceLeaf } from 'obsidian';
 import { LinkFormat, type ImageFormat, type ImageManagerSettings, type RenameMoveResult } from '@/types/index';
+import type { RecoveryManager } from '@/core/recovery/recovery-manager';
 import type { LinkFormatter } from '@/services/link-formatter';
 import type { VariableResolver } from '@/services/variable-resolver';
-import { extractImageLinks } from '@/utils/image-links';
 import {
   getFileStem,
   getParentPath,
@@ -14,6 +14,7 @@ import {
   normalizeVaultPath,
   resolveNoteScopedPath
 } from '@/utils/image-manager';
+import { getParsedLinkResolutionCandidates } from '@/utils/link-resolution';
 import { parseTextImageSources, resolveTextImageSource } from '@/utils/pasted-image-source';
 
 const IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg', 'tif', 'tiff', 'heic']);
@@ -38,15 +39,55 @@ interface NoteImageNormalizationResult {
   replaced: number;
   moved: number;
   downloaded: number;
+  deleted: number;
+  foldersDeleted: number;
+}
+
+interface ResolvedLinkedImageFile {
+  readonly file: TFile;
+  readonly matchedTarget: string;
+}
+
+interface PendingLeafRefresh {
+  readonly file: TFile;
+  readonly originalPath: string;
+  readonly targetPath: string;
+}
+
+interface OrphanImageCleanupResult {
+  readonly deletedImages: number;
+  readonly deletedFolders: number;
+  readonly relocatedImages: number;
+  readonly preservedImages: number;
 }
 
 export class FileManager {
+  private recoveryManager: RecoveryManager | null = null;
+  private deferredLeafRefreshDepth = 0;
+  private pendingLeafRefreshes: PendingLeafRefresh[] = [];
+
   constructor(
     private readonly app: App,
     private readonly getSettings: () => ImageManagerSettings,
     private readonly variableResolver: VariableResolver,
     private readonly linkFormatter: LinkFormatter
   ) {}
+
+  setRecoveryManager(recoveryManager: RecoveryManager): void {
+    this.recoveryManager = recoveryManager;
+  }
+
+  async runWithDeferredLeafRefresh<T>(operation: () => Promise<T>): Promise<T> {
+    this.deferredLeafRefreshDepth += 1;
+    try {
+      return await operation();
+    } finally {
+      this.deferredLeafRefreshDepth = Math.max(0, this.deferredLeafRefreshDepth - 1);
+      if (this.deferredLeafRefreshDepth === 0) {
+        await this.flushPendingLeafRefreshes();
+      }
+    }
+  }
 
   isImageFile(file: TFile): boolean {
     return IMAGE_EXTENSIONS.has(file.extension.toLowerCase());
@@ -57,7 +98,9 @@ export class FileManager {
     const folder = await this.ensureOutputFolder(noteFile);
     const fileName = this.generateFileName(originalName, noteFile, extensionOverride);
     const path = this.nextAvailablePath(normalizeVaultPath(`${folder}/${fileName}`), this.getRenameCollisionOptions());
-    return this.app.vault.createBinary(path, buffer);
+    const created = await this.app.vault.createBinary(path, buffer);
+    this.recoveryManager?.recordCreatedFile(created.path);
+    return created;
   }
 
   async saveRemoteImage(url: string, noteFile: TFile, fileName?: string): Promise<TFile> {
@@ -79,7 +122,9 @@ export class FileManager {
       normalizeVaultPath(`${folder}/${targetName}`),
       newName ? undefined : this.getRenameCollisionOptions()
     );
+    await this.recoveryManager?.captureBinarySnapshot(file);
     await this.app.fileManager.renameFile(file, newPath);
+    this.recoveryManager?.recordRename(oldPath, newPath);
     await this.updateLinks(noteFile, oldPath, newPath, noteFile.path);
     return { oldPath, newPath };
   }
@@ -88,34 +133,64 @@ export class FileManager {
     const oldPath = file.path;
     await this.ensureFolder(targetFolder);
     const newPath = this.nextAvailablePath(normalizeVaultPath(`${targetFolder}/${file.name}`));
+    await this.recoveryManager?.captureBinarySnapshot(file);
     await this.app.fileManager.renameFile(file, newPath);
+    this.recoveryManager?.recordRename(oldPath, newPath);
     if (noteFile) {
       await this.updateLinks(noteFile, oldPath, newPath, noteFile.path);
     }
     return { oldPath, newPath };
   }
 
-  async replaceFile(file: TFile, data: ArrayBuffer, targetPath = file.path): Promise<TFile> {
+  async replaceFile(file: TFile, data: ArrayBuffer, targetPath = file.path, modifiedAt = Date.now()): Promise<TFile> {
     const originalPath = file.path;
     const normalizedTargetPath = normalizeVaultPath(targetPath);
-    await this.app.vault.modifyBinary(file, data, { mtime: Date.now() });
+    await this.recoveryManager?.captureBinarySnapshot(file);
+    await this.app.vault.modifyBinary(file, data, { mtime: modifiedAt });
 
     if (normalizedTargetPath !== file.path) {
       await this.app.fileManager.renameFile(file, normalizedTargetPath);
+      this.recoveryManager?.recordRename(originalPath, normalizedTargetPath);
       await this.updateImageLinksAcrossVault(originalPath, normalizedTargetPath);
     }
 
-    this.refreshOpenLeaves(file, originalPath, normalizedTargetPath);
+    await this.refreshOpenLeaves(file, originalPath, normalizedTargetPath);
     return file;
+  }
+
+  async restoreBinaryFile(path: string, data: ArrayBuffer): Promise<TFile> {
+    const existing = this.app.vault.getAbstractFileByPath(path);
+    if (existing instanceof TFile) {
+      await this.app.vault.modifyBinary(existing, data, { mtime: Date.now() });
+      await this.refreshOpenLeaves(existing, path, path);
+      return existing;
+    }
+
+    await this.ensureParentFolder(path);
+    const created = await this.app.vault.createBinary(path, data);
+    await this.refreshOpenLeaves(created, path, path);
+    return created;
+  }
+
+  async restoreTextFile(path: string, content: string): Promise<TFile> {
+    const existing = this.app.vault.getAbstractFileByPath(path);
+    if (existing instanceof TFile) {
+      await this.app.vault.modify(existing, content);
+      return existing;
+    }
+
+    await this.ensureParentFolder(path);
+    return this.app.vault.create(path, content);
   }
 
   async getImagesInNote(noteFile: TFile, sourcePath = noteFile.path): Promise<TFile[]> {
     const content = await this.app.vault.read(noteFile);
-    const links = extractImageLinks(content);
     const seenPaths = new Set<string>();
     const files: TFile[] = [];
-    for (const link of links) {
-      const file = this.app.metadataCache.getFirstLinkpathDest(link, sourcePath);
+    const imageLinkRegex = /!\[\[[^\]]+\]\]|!\[[^\]]*]\(((?:<[^>]+>|[^)])+)\)/g;
+    for (const match of content.matchAll(imageLinkRegex)) {
+      const parsed = this.linkFormatter.parseLink(match[0]);
+      const file = this.resolveLinkedImageFile(parsed, sourcePath)?.file;
       if (file instanceof TFile && this.isImageFile(file) && !seenPaths.has(file.path)) {
         seenPaths.add(file.path);
         files.push(file);
@@ -154,10 +229,15 @@ export class FileManager {
     return this.app.vault.getFiles().filter((file) => file.extension.toLowerCase() === 'md');
   }
 
+  getImagesInVault(): TFile[] {
+    return this.app.vault.getFiles().filter((file) => this.isImageFile(file));
+  }
+
   async rewriteImageLinksInNote(
     noteFile: TFile,
     allowedNotePaths: ReadonlySet<string> = new Set([noteFile.path])
   ): Promise<NoteImageNormalizationResult> {
+    await this.recoveryManager?.captureTextSnapshot(noteFile.path);
     const content = await this.app.vault.read(noteFile);
     const imported = this.getSettings().enableAutoDownloadImagesFromText
       ? await this.downloadAndRewriteExternalImageLinks(content, noteFile)
@@ -175,7 +255,9 @@ export class FileManager {
           continue;
         }
 
+        await this.recoveryManager?.captureBinarySnapshot(move.file);
         await this.app.fileManager.renameFile(move.file, move.newPath);
+        this.recoveryManager?.recordRename(move.oldPath, move.newPath);
       }
     }
 
@@ -183,10 +265,16 @@ export class FileManager {
       await this.app.vault.modify(noteFile, movedResult.content);
     }
 
+    const cleanupResult = this.getSettings().deleteOrphanImages
+      ? await this.deleteOrphanImagesForNote(noteFile, allowedNotePaths)
+      : { deletedImages: 0, deletedFolders: 0, relocatedImages: 0, preservedImages: 0 };
+
     return {
       replaced: imported.replaced + normalized.replaced + movedResult.replaced,
       downloaded: imported.downloaded,
-      moved: movePlans.filter((move) => move.oldPath !== move.newPath).length
+      moved: movePlans.filter((move) => move.oldPath !== move.newPath).length,
+      deleted: cleanupResult.deletedImages,
+      foldersDeleted: cleanupResult.deletedFolders
     };
   }
 
@@ -243,6 +331,8 @@ export class FileManager {
 
     const movePlans = this.createRelocationPlan([...managedImages.values()], noteFile, newFolderPath);
     const content = await this.app.vault.read(noteFile);
+    await this.recoveryManager?.captureTextSnapshot(oldNotePath, content);
+    this.recoveryManager?.recordRename(oldNotePath, noteFile.path);
     const updated = this.rewriteLinksForMoves(content, noteFile, oldNotePath, movePlans).content;
 
     await this.ensureFolder(newFolderPath);
@@ -252,21 +342,58 @@ export class FileManager {
         continue;
       }
 
+      await this.recoveryManager?.captureBinarySnapshot(move.file);
       await this.app.fileManager.renameFile(move.file, move.newPath);
+      this.recoveryManager?.recordRename(move.oldPath, move.newPath);
     }
 
     if (updated !== content) {
       await this.app.vault.modify(noteFile, updated);
     }
 
-    if (this.getSettings().outputFolder.trim() && oldFolder instanceof TFolder) {
+    if (oldFolder instanceof TFolder) {
+      if (this.getSettings().deleteOrphanImages) {
+        await this.deleteOrphanImagesInFolder(oldFolder);
+      }
       await this.deleteFolderIfEmpty(oldFolder);
     }
 
     return movePlans.filter((move) => move.oldPath !== move.newPath).length;
   }
 
+  async deleteOrphanImagesForNote(
+    noteFile: TFile,
+    scopeNotePaths: ReadonlySet<string> = new Set([noteFile.path])
+  ): Promise<OrphanImageCleanupResult> {
+    const cleanupFolder = this.resolveOrphanCleanupFolderForNote(noteFile);
+    if (!(cleanupFolder instanceof TFolder)) {
+      return {
+        deletedImages: 0,
+        deletedFolders: 0,
+        relocatedImages: 0,
+        preservedImages: 0
+      };
+    }
+
+    return this.deleteOrphanImages(this.getImagesInFolder(cleanupFolder), scopeNotePaths);
+  }
+
+  async deleteOrphanImagesInFolder(folder: TFolder): Promise<OrphanImageCleanupResult> {
+    return this.deleteOrphanImages(
+      this.getImagesInFolder(folder),
+      new Set(this.getMarkdownFilesInFolder(folder).map((file) => file.path))
+    );
+  }
+
+  async deleteOrphanImagesInVault(): Promise<OrphanImageCleanupResult> {
+    return this.deleteOrphanImages(
+      this.getImagesInVault(),
+      new Set(this.getMarkdownFilesInVault().map((file) => file.path))
+    );
+  }
+
   private async updateLinks(noteFile: TFile, oldPath: string, newPath: string, sourcePath: string): Promise<void> {
+    await this.recoveryManager?.captureTextSnapshot(noteFile.path);
     const content = await this.app.vault.read(noteFile);
     const updated = this.rewriteLinksForMoves(content, noteFile, sourcePath, [{ oldPath, newPath }]).content;
 
@@ -302,7 +429,7 @@ export class FileManager {
       }
 
       const parsed = this.linkFormatter.parseLink(fullMatch);
-      const rawTarget = parsed?.path ? decodeURIComponent(parsed.path) : '';
+      const rawTarget = parsed?.rawPath ?? parsed?.path ?? '';
       const source = this.parseExternalImageSource(rawTarget);
       if (!parsed || !source) {
         continue;
@@ -320,6 +447,7 @@ export class FileManager {
         const replacement = this.linkFormatter.formatLink(importedFile.path, noteFile, {
           format: settings.defaultLinkFormat,
           pathFormat: settings.defaultPathFormat,
+          markdownPathEncodingStrategy: settings.markdownPathEncodingStrategy,
           altText: parsed.altText,
           width: parsed.width,
           height: parsed.height,
@@ -396,8 +524,16 @@ export class FileManager {
     for (const part of parts) {
       current = current ? `${current}/${part}` : part;
       if (!this.app.vault.getAbstractFileByPath(current)) {
+        this.recoveryManager?.recordCreatedFolder(current);
         await this.app.vault.createFolder(current);
       }
+    }
+  }
+
+  private async ensureParentFolder(path: string): Promise<void> {
+    const parentPath = getParentPath(path);
+    if (parentPath) {
+      await this.ensureFolder(parentPath);
     }
   }
 
@@ -442,9 +578,23 @@ export class FileManager {
 
     const planByOldPath = new Map(movePlans.map((move) => [move.oldPath, move.newPath]));
     return this.rewriteImageLinks(content, (match, rawTarget, parsed, format) => {
-      const resolved = this.app.metadataCache.getFirstLinkpathDest(rawTarget, sourcePath);
-      const newPath = resolved ? planByOldPath.get(resolved.path) : undefined;
-      if (!newPath) {
+      const resolved = this.resolveLinkedImageFile(parsed, sourcePath);
+      const directMatch = parsed
+        ? getParsedLinkResolutionCandidates(parsed).find(
+            (candidate) => planByOldPath.has(candidate) || planByOldPath.has(candidate.replace(/^\//, ''))
+          )
+        : undefined;
+      const directMatchPath = directMatch
+        ? planByOldPath.has(directMatch)
+          ? directMatch
+          : directMatch.replace(/^\//, '')
+        : undefined;
+      const newPath = directMatchPath
+        ? planByOldPath.get(directMatchPath)
+        : resolved
+          ? planByOldPath.get(resolved.file.path)
+          : undefined;
+      if (!resolved || !newPath) {
         return match;
       }
 
@@ -452,6 +602,10 @@ export class FileManager {
       return this.linkFormatter.formatLink(newPath, noteFile, {
         format: options.preserveOriginalFormat ? format : settings.defaultLinkFormat,
         pathFormat: options.preserveOriginalFormat ? inferPathFormat(rawTarget) : settings.defaultPathFormat,
+        markdownPathEncodingStrategy: settings.markdownPathEncodingStrategy,
+        markdownPathPresentation: options.preserveOriginalFormat
+          ? this.getPreservedMarkdownPathPresentation(parsed, resolved.matchedTarget)
+          : undefined,
         altText: parsed?.altText,
         width: parsed?.width,
         height: parsed?.height,
@@ -463,15 +617,16 @@ export class FileManager {
 
   private rewriteLinksForCurrentSettings(content: string, noteFile: TFile, sourcePath: string): RewriteResult {
     const settings = this.getSettings();
-    return this.rewriteImageLinks(content, (match, rawTarget, parsed) => {
-      const resolved = this.app.metadataCache.getFirstLinkpathDest(rawTarget, sourcePath);
-      if (!(resolved instanceof TFile) || !this.isImageFile(resolved)) {
+    return this.rewriteImageLinks(content, (match, _rawTarget, parsed) => {
+      const resolved = this.resolveLinkedImageFile(parsed, sourcePath);
+      if (!(resolved?.file instanceof TFile) || !this.isImageFile(resolved.file)) {
         return match;
       }
 
-      return this.linkFormatter.formatLink(resolved.path, noteFile, {
+      return this.linkFormatter.formatLink(resolved.file.path, noteFile, {
         format: settings.defaultLinkFormat,
         pathFormat: settings.defaultPathFormat,
+        markdownPathEncodingStrategy: settings.markdownPathEncodingStrategy,
         altText: parsed?.altText,
         width: parsed?.width,
         height: parsed?.height,
@@ -507,12 +662,144 @@ export class FileManager {
     return /(?:\{time\}|\$\{time\})/.test(pattern);
   }
 
-  private async deleteFolderIfEmpty(folder: TFolder): Promise<void> {
-    if (folder.children.length > 0) {
-      return;
+  private async deleteOrphanImages(
+    images: readonly TFile[],
+    scopeNotePaths: ReadonlySet<string>
+  ): Promise<OrphanImageCleanupResult> {
+    const deletedParents = new Set<string>();
+    let deletedImages = 0;
+    let relocatedImages = 0;
+    let preservedImages = 0;
+
+    for (const image of this.deduplicateFilesByPath(images)) {
+      const referrers = [...new Set(this.getReferencingNotePaths(image.path))];
+      if (referrers.some((notePath) => scopeNotePaths.has(notePath))) {
+        continue;
+      }
+
+      const externalReferrers = referrers.filter((notePath) => !scopeNotePaths.has(notePath));
+      if (externalReferrers.length === 1) {
+        const [referencePath] = externalReferrers;
+        if (!referencePath) {
+          preservedImages += 1;
+          continue;
+        }
+
+        const referenceNote = this.app.vault.getAbstractFileByPath(referencePath);
+        if (referenceNote instanceof TFile && referenceNote.extension.toLowerCase() === 'md') {
+          const oldParentPath = image.parent?.path ?? getParentPath(image.path);
+          const moved = await this.reassignImageToReferencingNote(image, referenceNote);
+          if (oldParentPath) {
+            deletedParents.add(oldParentPath);
+          }
+          if (moved) {
+            relocatedImages += 1;
+          } else {
+            preservedImages += 1;
+          }
+          continue;
+        }
+
+        preservedImages += 1;
+        continue;
+      }
+      if (externalReferrers.length > 1) {
+        preservedImages += 1;
+        continue;
+      }
+
+      const parentPath = image.parent?.path ?? getParentPath(image.path);
+      if (parentPath) {
+        deletedParents.add(parentPath);
+      }
+
+      await this.recoveryManager?.captureBinarySnapshot(image);
+      await this.app.vault.delete(image, true);
+      deletedImages += 1;
     }
 
+    let deletedFolders = 0;
+    for (const folderPath of deletedParents) {
+      const abstract = this.app.vault.getAbstractFileByPath(folderPath);
+      if (abstract instanceof TFolder) {
+        deletedFolders += await this.deleteFolderIfEmpty(abstract);
+      }
+    }
+
+    return {
+      deletedImages,
+      deletedFolders,
+      relocatedImages,
+      preservedImages
+    };
+  }
+
+  private async reassignImageToReferencingNote(image: TFile, noteFile: TFile): Promise<boolean> {
+    const oldPath = image.path;
+    const targetFolder = this.resolveOutputFolderPath(noteFile.path);
+    if (targetFolder) {
+      await this.ensureFolder(targetFolder);
+    }
+
+    const candidatePath = normalizeVaultPath(targetFolder ? `${targetFolder}/${image.name}` : image.name);
+    const occupiedPaths = new Set(this.app.vault.getFiles().map((file) => file.path));
+    occupiedPaths.delete(oldPath);
+    const newPath =
+      candidatePath === oldPath
+        ? oldPath
+        : nextAvailablePath(candidatePath, (path) => occupiedPaths.has(path));
+
+    if (newPath === oldPath) {
+      return false;
+    }
+
+    await this.recoveryManager?.captureBinarySnapshot(image);
+    await this.app.fileManager.renameFile(image, newPath);
+    this.recoveryManager?.recordRename(oldPath, newPath);
+    await this.updateLinks(noteFile, oldPath, newPath, noteFile.path);
+    return true;
+  }
+
+  private deduplicateFilesByPath(files: readonly TFile[]): TFile[] {
+    const byPath = new Map<string, TFile>();
+    for (const file of files) {
+      byPath.set(file.path, file);
+    }
+    return [...byPath.values()];
+  }
+
+  private resolveOrphanCleanupFolderForNote(noteFile: TFile): TFolder | null {
+    const managedFolderPath = this.resolveOutputFolderPath(noteFile.path);
+    if (managedFolderPath) {
+      const managedFolder = this.app.vault.getAbstractFileByPath(managedFolderPath);
+      if (managedFolder instanceof TFolder) {
+        return managedFolder;
+      }
+
+      if (this.getSettings().outputFolder.trim()) {
+        return null;
+      }
+    }
+
+    const fallbackFolderPath = noteFile.parent?.path ?? getParentPath(noteFile.path);
+    if (!fallbackFolderPath) {
+      return null;
+    }
+
+    const fallbackFolder = this.app.vault.getAbstractFileByPath(fallbackFolderPath);
+    return fallbackFolder instanceof TFolder ? fallbackFolder : null;
+  }
+
+  private async deleteFolderIfEmpty(folder: TFolder): Promise<number> {
+    if (!this.getSettings().deleteEmptyFolders || folder.children.length > 0) {
+      return 0;
+    }
+
+    const parent = folder.parent instanceof TFolder ? folder.parent : null;
+    this.recoveryManager?.recordDeletedFolder(folder.path);
     await this.app.vault.delete(folder, true);
+    const parentDeleted = parent ? await this.deleteFolderIfEmpty(parent) : 0;
+    return 1 + parentDeleted;
   }
 
   private rewriteImageLinks(
@@ -521,11 +808,11 @@ export class FileManager {
   ): RewriteResult {
     const imageLinkRegex = /!\[\[[^\]]+\]\]|!\[[^\]]*]\(((?:<[^>]+>|[^)])+)\)/g;
     let replaced = 0;
-    const updated = content.replace(
+      const updated = content.replace(
       imageLinkRegex,
       (match) => {
         const parsed = this.linkFormatter.parseLink(match);
-        const rawTarget = parsed?.path ? decodeURIComponent(parsed.path) : '';
+        const rawTarget = parsed?.rawPath ?? parsed?.path ?? '';
         if (!rawTarget) {
           return match;
         }
@@ -551,36 +838,121 @@ export class FileManager {
     return sources.length === 1 ? sources[0] : null;
   }
 
-  private refreshOpenLeaves(file: TFile, originalPath: string, targetPath: string): void {
-    this.app.workspace.iterateAllLeaves((leaf: WorkspaceLeaf) => {
-      if (leaf.view instanceof MarkdownView && leaf.view.file) {
-        void this.refreshMarkdownLeafIfNeeded(leaf.view, originalPath, targetPath);
-        return;
-      }
+  private resolveLinkedImageFile(parsed: ReturnType<LinkFormatter['parseLink']>, sourcePath: string): ResolvedLinkedImageFile | null {
+    if (!parsed) {
+      return null;
+    }
 
-      const viewWithFile = leaf.view as { file?: TFile | null };
-      if (viewWithFile.file?.path !== originalPath && viewWithFile.file?.path !== targetPath) {
-        return;
+    for (const candidate of getParsedLinkResolutionCandidates(parsed)) {
+      const resolved = this.app.metadataCache.getFirstLinkpathDest(candidate, sourcePath);
+      if (resolved instanceof TFile) {
+        return {
+          file: resolved,
+          matchedTarget: candidate
+        };
       }
+    }
 
-      void this.reloadLeafFile(leaf, file);
-    });
+    return null;
   }
 
-  private async refreshMarkdownLeafIfNeeded(view: MarkdownView, originalPath: string, targetPath: string): Promise<void> {
+  private getPreservedMarkdownPathPresentation(
+    parsed: ReturnType<LinkFormatter['parseLink']>,
+    matchedTarget: string
+  ): 'encoded' | 'wrapped' | 'plain' | undefined {
+    if (parsed?.format !== LinkFormat.MARKDOWN) {
+      return undefined;
+    }
+
+    if (parsed.markdownPathPresentation === 'wrapped' || parsed.markdownPathPresentation === 'plain') {
+      return parsed.markdownPathPresentation;
+    }
+
+    if (parsed.markdownPathPresentation === 'encoded' && matchedTarget === parsed.rawPath) {
+      return 'plain';
+    }
+
+    return parsed.markdownPathPresentation;
+  }
+
+  private async refreshOpenLeaves(file: TFile, originalPath: string, targetPath: string): Promise<void> {
+    const request: PendingLeafRefresh = {
+      file,
+      originalPath,
+      targetPath
+    };
+    if (this.deferredLeafRefreshDepth > 0) {
+      this.pendingLeafRefreshes.push(request);
+      return;
+    }
+
+    await this.flushLeafRefreshes([request]);
+  }
+
+  private async flushPendingLeafRefreshes(): Promise<void> {
+    if (this.pendingLeafRefreshes.length === 0) {
+      return;
+    }
+
+    const requests = [...this.pendingLeafRefreshes];
+    this.pendingLeafRefreshes = [];
+    await this.flushLeafRefreshes(requests);
+  }
+
+  private async flushLeafRefreshes(requests: readonly PendingLeafRefresh[]): Promise<void> {
+    if (requests.length === 0) {
+      return;
+    }
+
+    const affectedPaths = new Set<string>();
+    const filesByPath = new Map<string, TFile>();
+    const markdownViews: MarkdownView[] = [];
+    const reloadTargets: { leaf: WorkspaceLeaf; file: TFile }[] = [];
+
+    for (const request of requests) {
+      affectedPaths.add(request.originalPath);
+      affectedPaths.add(request.targetPath);
+      filesByPath.set(request.originalPath, request.file);
+      filesByPath.set(request.targetPath, request.file);
+    }
+
+    this.app.workspace.iterateAllLeaves((leaf: WorkspaceLeaf) => {
+      if (leaf.view instanceof MarkdownView && leaf.view.file) {
+        markdownViews.push(leaf.view);
+        return;
+      }
+
+      const path = (leaf.view as { file?: TFile | null }).file?.path;
+      if (!path || !affectedPaths.has(path)) {
+        return;
+      }
+
+      const file = filesByPath.get(path);
+      if (file) {
+        reloadTargets.push({ leaf, file });
+      }
+    });
+
+    await Promise.all(markdownViews.map((view) => this.refreshMarkdownLeafIfNeeded(view, affectedPaths)));
+    await Promise.all(reloadTargets.map(({ leaf, file }) => this.reloadLeafFile(leaf, file)));
+  }
+
+  private async refreshMarkdownLeafIfNeeded(view: MarkdownView, affectedPaths: ReadonlySet<string>): Promise<void> {
     const noteFile = view.file;
     if (!noteFile) {
       return;
     }
 
     const referencedImages = await this.getImagesInNote(noteFile);
-    const referencesUpdatedImage = referencedImages.some((image) => image.path === originalPath || image.path === targetPath);
-    if (!referencesUpdatedImage) {
+    const matchedPaths = [...new Set(referencedImages.map((image) => image.path).filter((path) => affectedPaths.has(path)))];
+    if (matchedPaths.length === 0) {
       return;
     }
 
     const viewWithContent = view as MarkdownView & { contentEl?: HTMLElement };
-    this.refreshImageElements(viewWithContent.contentEl ?? view.containerEl, targetPath);
+    for (const path of matchedPaths) {
+      this.refreshImageElements(viewWithContent.contentEl ?? view.containerEl, path);
+    }
     view.previewMode.rerender(true);
     await this.rebuildLeafView(view.leaf);
   }

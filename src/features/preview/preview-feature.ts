@@ -1,7 +1,10 @@
 import { TFile } from 'obsidian';
 import type { MarkdownPostProcessorContext } from 'obsidian';
+import { openSingleImageGallery } from '@/features/gallery/gallery-actions';
 import type { ImageManagerFeature, ImageManagerFeatureContext } from '@/types/index';
 import { Alignment } from '@/types/index';
+import { getRawLinkResolutionCandidates } from '@/utils/link-resolution';
+import { showOperationNotice } from '@/utils/operation-feedback';
 
 export class PreviewFeature implements ImageManagerFeature {
   readonly id = 'preview';
@@ -21,6 +24,16 @@ export class PreviewFeature implements ImageManagerFeature {
 
         image.setAttribute('src', this.buildFreshResourcePath(context, target));
         image.setAttribute('data-image-manager-path', target.path);
+        image.addEventListener('dblclick', (event) => {
+          if (!context.services.settings.getSettings().enableGallery) {
+            showOperationNotice(context.services.settings.getSettings(), 'Gallery is disabled in settings');
+            return;
+          }
+
+          event.preventDefault();
+          event.stopPropagation();
+          void openSingleImageGallery(context, target, this.resolveSourceNote(context, markdownContext));
+        });
       }
     });
   }
@@ -38,9 +51,14 @@ export class PreviewFeature implements ImageManagerFeature {
       return null;
     }
 
-    const normalizedTarget = decodeURIComponent(rawTarget.split('?')[0] ?? rawTarget);
-    const target = context.app.metadataCache.getFirstLinkpathDest(normalizedTarget, markdownContext.sourcePath);
-    return target instanceof TFile ? target : null;
+    for (const candidate of getRawLinkResolutionCandidates(rawTarget)) {
+      const target = context.app.metadataCache.getFirstLinkpathDest(candidate, markdownContext.sourcePath);
+      if (target instanceof TFile) {
+        return target;
+      }
+    }
+
+    return null;
   }
 
   private buildFreshResourcePath(context: ImageManagerFeatureContext, file: TFile): string {
@@ -76,5 +94,13 @@ export class PreviewFeature implements ImageManagerFeature {
         event.stopPropagation();
       });
     }
+  }
+
+  private resolveSourceNote(
+    context: ImageManagerFeatureContext,
+    markdownContext: MarkdownPostProcessorContext
+  ): TFile | null {
+    const abstract = context.app.vault.getAbstractFileByPath(markdownContext.sourcePath);
+    return abstract instanceof TFile && abstract.extension.toLowerCase() === 'md' ? abstract : null;
   }
 }

@@ -37,11 +37,18 @@ export enum PathFormat {
   SHORTEST = 'shortest'
 }
 
+export enum MarkdownPathEncodingStrategy {
+  ENCODED = 'encoded',
+  READABLE = 'readable',
+  AUTO = 'auto'
+}
+
 export interface ImageManagerSettings {
   defaultFormat: ImageFormat;
   defaultQuality: number;
   defaultLinkFormat: LinkFormat;
   defaultPathFormat: PathFormat;
+  markdownPathEncodingStrategy: MarkdownPathEncodingStrategy;
   renamePattern: string;
   outputFolder: string;
   enablePasteHandler: boolean;
@@ -59,6 +66,8 @@ export interface ImageManagerSettings {
   showSpaceSavedNotification: boolean;
   enableNoteRenameSync: boolean;
   renameImagesOnNoteRelocate: boolean;
+  deleteEmptyFolders: boolean;
+  deleteOrphanImages: boolean;
   galleryGridSize: GalleryGridSize;
   gallerySortBy: GallerySortBy;
   compressionQuality: number;
@@ -72,6 +81,7 @@ export const DEFAULT_SETTINGS: Readonly<ImageManagerSettings> = {
   defaultQuality: 80,
   defaultLinkFormat: LinkFormat.WIKI,
   defaultPathFormat: PathFormat.SHORTEST,
+  markdownPathEncodingStrategy: MarkdownPathEncodingStrategy.ENCODED,
   renamePattern: '{noteName}-{date}-{random}',
   outputFolder: '',
   enablePasteHandler: true,
@@ -89,6 +99,8 @@ export const DEFAULT_SETTINGS: Readonly<ImageManagerSettings> = {
   showSpaceSavedNotification: true,
   enableNoteRenameSync: true,
   renameImagesOnNoteRelocate: false,
+  deleteEmptyFolders: true,
+  deleteOrphanImages: false,
   galleryGridSize: GalleryGridSize.MEDIUM,
   gallerySortBy: GallerySortBy.DATE,
   compressionQuality: 80,

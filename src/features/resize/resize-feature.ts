@@ -12,20 +12,29 @@ export class ResizeFeature implements ImageManagerFeature {
   async register(context: ImageManagerFeatureContext): Promise<void> {
     const resizeCommand = {
       commandId: 'resize-active-image-to-1920px',
-      commandName: '图片：缩放到 1920px 边界'
+      commandName: '缩放图片到 1920px 边界'
     } as const;
     context.plugin.addCommand({
       id: resizeCommand.commandId,
       name: resizeCommand.commandName,
-        callback: () => {
-          void executeLoggedCommand(context, resizeCommand, async () => {
-            await this.withActiveImageFile(context, resizeCommand, async (file) => {
-            const buffer = await context.services.imageProcessor.resize(file, 1920, 1920);
-            await context.services.fileManager.replaceFile(file, buffer);
-            showOperationNotice(context.services.settings.getSettings(), 'Image resized');
-          });
-          });
-        }
+      callback: () => {
+        void executeLoggedCommand(context, resizeCommand, async () => {
+          await context.services.recovery.runTransaction(
+            {
+              label: '缩放当前图片到 1920px',
+              trigger: 'resize',
+              scope: 'single-file'
+            },
+            async () => {
+              await this.withActiveImageFile(context, resizeCommand, async (file) => {
+                const buffer = await context.services.imageProcessor.resize(file, 1920, 1920);
+                await context.services.fileManager.replaceFile(file, buffer);
+                showOperationNotice(context.services.settings.getSettings(), 'Image resized');
+              });
+            }
+          );
+        });
+      }
     });
   }
 

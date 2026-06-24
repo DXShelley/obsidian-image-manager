@@ -12,32 +12,50 @@ export class EditorFeature implements ImageManagerFeature {
   async register(context: ImageManagerFeatureContext): Promise<void> {
     const rotateCommand = {
       commandId: 'rotate-active-image-90',
-      commandName: '图片：顺时针旋转 90°'
+      commandName: '顺时针旋转图片 90°'
     } as const;
     context.plugin.addCommand({
       id: rotateCommand.commandId,
       name: rotateCommand.commandName,
       callback: () => {
         void executeLoggedCommand(context, rotateCommand, async () => {
-          await this.withActiveImageFile(context, rotateCommand, async (file) => {
-            await this.replaceImage(context, file, () => context.services.imageProcessor.rotate(file, 90), 'Image rotated');
-          });
+          await context.services.recovery.runTransaction(
+            {
+              label: '旋转当前图片 90 度',
+              trigger: 'rotate',
+              scope: 'single-file'
+            },
+            async () => {
+              await this.withActiveImageFile(context, rotateCommand, async (file) => {
+                await this.replaceImage(context, file, () => context.services.imageProcessor.rotate(file, 90), 'Image rotated');
+              });
+            }
+          );
         });
       }
     });
 
     const flipCommand = {
       commandId: 'flip-active-image-horizontal',
-      commandName: '图片：水平翻转'
+      commandName: '水平翻转图片'
     } as const;
     context.plugin.addCommand({
       id: flipCommand.commandId,
       name: flipCommand.commandName,
       callback: () => {
         void executeLoggedCommand(context, flipCommand, async () => {
-          await this.withActiveImageFile(context, flipCommand, async (file) => {
-            await this.replaceImage(context, file, () => context.services.imageProcessor.flip(file, 'horizontal'), 'Image flipped horizontally');
-          });
+          await context.services.recovery.runTransaction(
+            {
+              label: '水平翻转当前图片',
+              trigger: 'flip',
+              scope: 'single-file'
+            },
+            async () => {
+              await this.withActiveImageFile(context, flipCommand, async (file) => {
+                await this.replaceImage(context, file, () => context.services.imageProcessor.flip(file, 'horizontal'), 'Image flipped horizontally');
+              });
+            }
+          );
         });
       }
     });

@@ -1,36 +1,80 @@
 import { describe, expect, it } from 'vitest';
-import { sortCommandsByScope } from '@/utils/command-order';
+import { applyScopedCommandSortKey, sortCommandsByScope, stripScopedCommandSortKey } from '@/utils/command-order';
 
 describe('command ordering', () => {
-  it('groups plugin commands by file, folder, vault, and then other commands', () => {
+  it('groups same-action commands by file, folder, vault, and then other commands', () => {
     const commands = [
-      { id: 'convert-vault-images-to-default-format', name: '整个仓库：转换为默认格式' },
-      { id: 'open-current-note-gallery', name: '当前笔记：打开图片画廊' },
-      { id: 'compress-current-folder-images', name: '当前文件夹：压缩图片' },
-      { id: 'rotate-active-image-90', name: '图片：顺时针旋转 90°' },
+      { id: 'c3-compress-vault-images', name: '压缩图片' },
+      { id: 'a3-compress-active-image', name: '压缩图片' },
+      { id: 'c2-convert-vault-images-to-default-format', name: '转换图片为默认格式' },
+      { id: 'b3-compress-current-folder-images', name: '压缩图片' },
       { id: 'custom-command', name: '其他命令' }
     ] as const;
 
     expect(sortCommandsByScope(commands).map((command) => command.id)).toEqual([
-      'open-current-note-gallery',
-      'rotate-active-image-90',
-      'compress-current-folder-images',
-      'convert-vault-images-to-default-format',
+      'a3-compress-active-image',
+      'b3-compress-current-folder-images',
+      'c2-convert-vault-images-to-default-format',
+      'c3-compress-vault-images',
       'custom-command'
     ]);
   });
 
-  it('preserves insertion order inside the same scope group', () => {
+  it('groups all scoped commands by file, folder, and vault, then sorts by action priority inside each scope', () => {
     const commands = [
-      { id: 'compress-active-image', name: '当前文件：压缩图片' },
-      { id: 'convert-active-image-to-default-format', name: '当前文件：批量转换所有图片为默认格式' },
-      { id: 'resize-active-image-to-1920px', name: '图片：缩放到 1920px 边界' }
+      { id: 'b2-convert-current-folder-images-to-default-format', name: '转换图片为默认格式' },
+      { id: 'a3-compress-active-image', name: '压缩图片' },
+      { id: 'a1-update-current-note-image-links', name: '更新图片链接与目录' },
+      { id: 'a2-convert-active-image-to-default-format', name: '转换图片为默认格式' },
+      { id: 'c3-compress-vault-images', name: '压缩图片' },
+      { id: 'b3-compress-current-folder-images', name: '压缩图片' },
+      { id: 'b1-update-current-folder-image-links', name: '更新图片链接与目录' }
     ] as const;
 
     expect(sortCommandsByScope(commands).map((command) => command.id)).toEqual([
-      'compress-active-image',
-      'convert-active-image-to-default-format',
-      'resize-active-image-to-1920px'
+      'a1-update-current-note-image-links',
+      'a2-convert-active-image-to-default-format',
+      'a3-compress-active-image',
+      'b1-update-current-folder-image-links',
+      'b2-convert-current-folder-images-to-default-format',
+      'b3-compress-current-folder-images',
+      'c3-compress-vault-images'
+    ]);
+  });
+
+  it('keeps unscoped commands after scoped command groups', () => {
+    const commands = [
+      { id: 'd1-undo-last-image-manager-transaction', name: '恢复：撤销上一步图片管理修改' },
+      { id: 'd2-redo-last-image-manager-transaction', name: '恢复：重做上一步图片管理修改' },
+      { id: 'a3-compress-active-image', name: '压缩图片' },
+      { id: 'c3-compress-vault-images', name: '压缩图片' },
+      { id: 'custom-command', name: '其他命令' }
+    ] as const;
+
+    expect(sortCommandsByScope(commands).map((command) => command.id)).toEqual([
+      'a3-compress-active-image',
+      'c3-compress-vault-images',
+      'd1-undo-last-image-manager-transaction',
+      'd2-redo-last-image-manager-transaction',
+      'custom-command'
+    ]);
+  });
+
+  it('adds hidden sort keys so Obsidian name-based sorting still groups by scope', () => {
+    const commands = [
+      { id: 'custom-command', name: '其他命令' },
+      { id: 'c3-compress-vault-images', name: '压缩图片' },
+      { id: 'b3-compress-current-folder-images', name: '压缩图片' },
+      { id: 'a3-compress-active-image', name: '压缩图片' }
+    ]
+      .map((command) => applyScopedCommandSortKey(command))
+      .sort((left, right) => (left.name < right.name ? -1 : left.name > right.name ? 1 : 0));
+
+    expect(commands.map((command) => stripScopedCommandSortKey(command.name))).toEqual([
+      '【单文件】压缩图片',
+      '【单文件夹】压缩图片',
+      '【整库】压缩图片',
+      '其他命令'
     ]);
   });
 });

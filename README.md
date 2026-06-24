@@ -1,49 +1,78 @@
+[中文](README.md) | [English](README.en.md)
+
 # Obsidian Image Manager
 
-Obsidian 图片管理插件，`v1.0.0` 为首个稳定版本。
+`Obsidian Image Manager` 是一个面向 Obsidian 的图片管理插件，`v2.0.0` 是首个以批量管理、恢复重做与增强画廊为核心的大版本。
 
-## Architecture
+## 项目概览
 
-- `src/app`: plugin runtime composition, built-in feature catalog, and startup wiring
-- `src/core`: settings, event bus, and feature registry
-- `src/features`: rename, compress, convert, preview, editor, gallery, batch, resize, align, and context menu modules
-- `src/services`: image processor, file manager, variable resolver, and link formatter
-- `src/types`: split domain types for settings, images, batch jobs, runtime contracts, and shared results
-- `src/ui`: settings tab and modal components
-- `src/utils`: platform/path helpers and lightweight validators
+- `src/app`：插件运行时组合、内置功能目录与启动装配。
+- `src/core`：设置管理、事件总线与功能注册中心。
+- `src/features`：重命名、压缩、转换、预览、编辑、画廊、批处理、缩放、对齐与右键菜单模块。
+- `src/services`：图片处理、文件管理、变量解析与链接格式化服务。
+- `src/types`：设置、图片、批任务、运行时契约与通用结果类型。
+- `src/ui`：设置页与模态框组件。
+- `src/utils`：平台、路径与轻量校验工具。
 
-See:
+## 当前能力
 
-- `docs/architecture.md`
-- `docs/api-reference.md`
-- `docs/test-cases.md`
-- `docs/user-guide.md`
-- `docs/variables.md`
-- `docs/task-status.md`
+- 将粘贴进笔记的图片自动保存到可配置目录。
+- 支持 `./assets/${noteFileName}` 这类基于笔记的保存目录规则。
+- 将粘贴图片自动转换为设定的默认格式。
+- 使用 `{noteName}`、`{fileName}`、`{date}`、`{time}`、`{random}` 等变量生成文件名。
+- 按 Obsidian Wiki 链接或标准 Markdown 链接插入图片引用。
+- 批量转换当前笔记引用的全部图片。
+- 对当前文件、当前文件夹或整个仓库执行压缩和链接更新命令。
+- 对当前文件、当前文件夹或整个仓库执行“删除多余图片文件”命令，清理未被任何笔记引用的图片。
+- 命令面板中的范围型命令按 `a1-a4`、`b1-b4`、`c1-c4` 的 `id` 顺序排序，并统一显示为 `【单文件】`、`【单文件夹】`、`【整库】`。
+- 执行整库命令前弹出风险确认，避免误操作。
+- 当前笔记范围的转换和压缩命令会批量处理该笔记引用的所有图片，而不是只处理当前激活图片文件。
+- 暂停、恢复或取消正在运行的批处理任务。
+- 通过图片右键菜单执行复制、压缩、转换、旋转与水平或垂直翻转。
+- 打开当前图片、当前笔记或当前文件夹画廊，并支持筛选、排序、网格/列表切换，以及在阅读视图中双击图片直接打开画廊。
+- 在笔记重命名或移动时同步受管图片目录，并可按规则重命名图片文件。
+- 提供“删除空图片文件夹”和“删除孤立图片”设置，可选地模仿 `Custom Attachment Location` 的附件清理行为。
+- 孤立图片清理在检测到外部唯一引用时，会自动迁移到对应笔记的受管目录，而不是直接删除。
+- 在使用基于时间的命名时，通过 `-01`、`-02` 等后缀安全处理重名。
+- 在格式转换时，如 `aaa.png` 和 `aaa.jpg` 同时转为 `webp`，会自动生成 `aaa.webp`、`aaa-1.webp` 这类唯一名称。
+- Markdown 图片链接支持编码、可读包裹和自动三种路径输出策略，兼容中文、空格、括号及已编码路径混用。
+- 压缩历史会持久化记录当前文件版本，避免对同一版本重复压缩或重复尝试无收益压缩。
+- 持久化记录图片和 Markdown 修改的恢复事务，并支持撤销 / 重做最近的 Image Manager 操作。
 
-## Current capabilities
+## 文档导航
 
-- Paste images into notes and auto-save them into a configurable folder
-- Support note-scoped folder rules such as `./assets/${noteFileName}`
-- Convert pasted images to the configured default format
-- Generate names with variables such as `{noteName}`, `{fileName}`, `{date}`, `{time}`, and `{random}`
-- Format inserted image links as either Obsidian Wiki links or standard Markdown links
-- Batch-convert all images referenced in the current note
-- Run compression and link-update commands against the current file, current folder, or entire vault
-- Pause, resume, or cancel active batch jobs
-- Use image context menu actions for copy, compress, convert, rotate, and horizontal or vertical flip
-- Open note and folder galleries with filtering, sorting, and grid/list toggles
-- Sync managed image folders when notes are renamed or moved, with optional image file renaming
-- Use time-based naming safely with collision suffixes such as `-01`, `-02`
+- [文档索引](docs/README.md)
+- [用户指南](docs/user-guide.md)
+- [架构说明](docs/architecture.md)
+- [API 参考](docs/api-reference.md)
+- [变量参考](docs/variables.md)
+- [测试用例](docs/test-cases.md)
+- [任务状态](docs/task-status.md)
+- [TypeScript 指南](docs/typescript-guide.md)
+- [更新日志](CHANGELOG.md)
 
-## Release
+## 致谢与参考
 
-- Version: `1.0.0`
-- Minimum Obsidian version: `0.15.0`
-- Release workflow: push tag `v*` to trigger `.github/workflows/release.yml`
-- Release artifacts: `manifest.json`, `main.js`, `styles.css`
+- [Obsidian](https://obsidian.md/)：提供插件运行时、编辑器和仓库模型，本项目所有能力都建立在其插件 API 之上。
+- [Custom Attachment Location](https://github.com/mnaoumov/obsidian-custom-attachment-location)：本项目的附件目录模板、空目录清理、孤立附件清理等行为设计参考了该插件的部分交互语义。
+- 以上项目用于能力设计和行为语义参考，不代表本插件与其保持完全兼容。
 
-## Development
+## 发布信息
+
+- 版本：`2.0.0`
+- 最低 Obsidian 版本：`0.15.0`
+- 发布流程：推送 `v*` 标签以触发 `.github/workflows/release.yml`
+- 发布产物：`manifest.json`、`main.js`、`styles.css`
+
+## 恢复机制
+
+- 恢复快照保存在 `.obsidian/plugins/obsidian-image-manager/recovery/`。
+- `.gitignore` 默认忽略 `.obsidian/plugins/obsidian-image-manager/recovery/`，避免本地恢复快照进入版本控制。
+- 历史记录最多保留最新 `10` 笔事务，并清理超过 `24` 小时的事务。
+- 使用命令 `恢复：撤销上一步图片管理修改` 可回滚最近一次 Image Manager 事务。
+- 使用命令 `恢复：重做上一步图片管理修改` 可重新应用刚撤销的事务。
+
+## 开发
 
 ```bash
 npm install
@@ -51,15 +80,18 @@ npm run validate
 npm run build
 ```
 
-## Manual verification
+## 手动验证
 
-1. Copy `manifest.json`, `main.js`, and `styles.css` into `.obsidian/plugins/obsidian-image-manager/`.
-2. Enable **Image Manager** in **Settings -> Community plugins** and reload after each rebuild.
-3. Open **Settings -> Image Manager** and confirm the settings page renders without console errors, including save path and file-name previews.
-4. Paste an image into a note and verify save path, generated name, link format, and cursor placement follow your settings.
-5. Rotate or flip an image referenced by a Markdown note and verify both the file and rendered note preview refresh.
-6. Right-click an image file in the file explorer and verify the context menu actions.
-7. If Obsidian still shows old behavior after a rebuild, recopy `manifest.json`, `main.js`, and `styles.css` into the vault plugin directory and reload the plugin.
-8. Run the batch compression commands and confirm pause, resume, and cancel work as expected.
-9. Open note and folder galleries and verify filter, sort, and grid/list toggles.
-10. Run the current-file convert command from a Markdown note and verify all referenced images are converted once.
+1. 将 `manifest.json`、`main.js` 与 `styles.css` 复制到 `.obsidian/plugins/obsidian-image-manager/`。
+2. 在 **Settings -> Community plugins** 中启用 **Image Manager**，每次重新构建后执行一次重载。
+3. 打开 **Settings -> Image Manager**，确认设置页能够渲染，且保存路径与文件名预览无控制台报错。
+4. 向笔记粘贴图片，确认保存路径、生成名称、链接格式与光标位置都符合设置。
+5. 对 Markdown 笔记引用的图片执行旋转或翻转，确认文件内容和预览都会刷新。
+6. 在文件管理器中右键图片文件，确认插件右键菜单项正常出现。
+7. 如果重建后 Obsidian 仍显示旧行为，重新复制 `manifest.json`、`main.js`、`styles.css` 到插件目录并重载插件。
+8. 运行批量压缩命令，确认暂停、恢复与取消行为正常。
+9. 打开笔记画廊和文件夹画廊，确认筛选、排序与网格/列表切换可用。
+10. 在 Markdown 笔记中运行当前文件转换命令，确认每张引用图片只被转换一次。
+11. 运行任一整库命令，确认会先弹出风险确认框。
+12. 连续执行多次图片修改后，验证 `撤销` 与 `重做` 命令可以来回切换最近几次操作。
+13. 开启 `删除孤立图片` 后执行 `更新图片链接与目录`，确认只会删除当前受管目录中未被任何笔记引用的图片。

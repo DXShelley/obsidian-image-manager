@@ -1,12 +1,29 @@
-# Changelog
+[中文](CHANGELOG.md) | [English](CHANGELOG.en.md)
+
+# 更新日志
+
+## Unreleased
+
+## 2.0.0
+
+- 将当前笔记范围的转换与压缩命令改为批量处理该笔记引用的全部图片，并延迟合并 Markdown 预览刷新。
+- 调整命令面板中的范围型命令排序，统一按 `【单文件】`、`【单文件夹】`、`【整库】` 分组展示，仅在 `id` 中保留 `a/b/c/d` 排序前缀。
+- 为所有整库命令增加执行前风险确认，降低误操作风险。
+- 扩展恢复系统为可撤销 / 重做最近事务，并为事务记录补充 before / after 状态快照。
+- 新增压缩历史跟踪，避免对同一文件版本重复压缩，且在无收益压缩时给出明确跳过提示。
+- 新增“删除空图片文件夹”“删除孤立图片”控制项，以及当前笔记 / 当前文件夹 / 整库三个范围的 `删除多余图片文件` 命令。
+- 孤立图片清理在检测到外部唯一引用时，会自动迁移到对应笔记的受管目录；存在多个外部引用时则保留文件。
+- Markdown 图片链接新增编码、可读包裹和自动三种路径输出策略，兼容中文、空格、括号以及已编码路径混用。
+- 画廊增强为支持当前图片入口、阅读视图双击打开、右键菜单打开，以及在来源笔记范围内预选当前图片。
+- 新增中英文文档索引、用户指南、架构说明、测试用例和更新日志补充。
 
 ## 1.0.0
 
-- Initial stable release for Obsidian Image Manager.
-- Modularized the plugin into `app`, `core`, `features`, `services`, `types`, `ui`, and `utils`.
-- Added configurable paste handling, save-path templates, rename templates, and live settings previews.
-- Added scope-based commands for current file, current folder, and entire vault where applicable.
-- Added batch image-link rewrite with managed-folder relocation support.
-- Added image compression, format conversion, resize preset, rotate, and flip commands.
-- Added note and folder gallery views with sort, filter, and grid sizing options.
-- Added context-menu integration, preview refresh after image replacement, and CI/release workflows.
+- `Obsidian Image Manager` 首个稳定版本。
+- 将插件按 `app`、`core`、`features`、`services`、`types`、`ui` 与 `utils` 模块化拆分。
+- 增加可配置的粘贴处理、保存路径模板、重命名模板与实时设置预览。
+- 为适用功能增加当前文件、当前文件夹与整个仓库范围的命令。
+- 增加按受管目录迁移图片并批量更新图片链接的能力。
+- 增加图片压缩、格式转换、缩放预设、旋转与翻转命令。
+- 增加笔记与文件夹画廊视图，支持排序、筛选与网格大小切换。
+- 增加右键菜单集成、图片替换后的预览刷新，以及 CI / 发布工作流。

@@ -9,6 +9,9 @@ interface ImageGalleryModalOptions {
   images: ImageInfo[];
   defaultSortBy: GallerySortBy;
   defaultGridSize: GalleryGridSize;
+  initialSelectedImagePath?: string;
+  onCopyMarkdownLink?: (image: ImageInfo) => Promise<void>;
+  onCopyImageToClipboard?: (image: ImageInfo) => Promise<void>;
 }
 
 type ViewMode = 'grid' | 'list';
@@ -28,6 +31,9 @@ export class ImageGalleryModal extends Modal {
   private readonly images: ImageInfo[];
   private sortBy: GallerySortBy;
   private readonly gridSize: GalleryGridSize;
+  private readonly initialSelectedImagePath: string | null;
+  private readonly onCopyMarkdownLink?: (image: ImageInfo) => Promise<void>;
+  private readonly onCopyImageToClipboard?: (image: ImageInfo) => Promise<void>;
   private filterText = '';
   private viewMode: ViewMode = 'grid';
   private filteredImages: ImageInfo[] = [];
@@ -38,6 +44,7 @@ export class ImageGalleryModal extends Modal {
   private lightboxTitleEl!: HTMLElement;
   private lightboxMetaEl!: HTMLElement;
   private lightboxCounterEl!: HTMLElement;
+  private lightboxActionsEl!: HTMLElement;
   private lightboxPrevButton!: HTMLButtonElement;
   private lightboxNextButton!: HTMLButtonElement;
 
@@ -47,9 +54,13 @@ export class ImageGalleryModal extends Modal {
     this.images = options.images;
     this.sortBy = options.defaultSortBy;
     this.gridSize = options.defaultGridSize;
+    this.initialSelectedImagePath = options.initialSelectedImagePath ?? null;
+    this.onCopyMarkdownLink = options.onCopyMarkdownLink;
+    this.onCopyImageToClipboard = options.onCopyImageToClipboard;
   }
 
   override onOpen(): void {
+    this.selectedImagePath = this.initialSelectedImagePath;
     this.contentEl.empty();
     this.contentEl.addClass('image-manager-gallery');
     this.contentEl.createEl('h2', { text: this.title });
@@ -118,6 +129,9 @@ export class ImageGalleryModal extends Modal {
 
     filtered.forEach((image, index) => {
       const item = container.createDiv({ cls: 'image-manager-gallery-item' });
+      if (image.path === this.selectedImagePath) {
+        item.addClass('is-selected');
+      }
       if (image.resourcePath) {
         item.addClass('image-manager-gallery-item--clickable');
         item.addEventListener('click', () => {
@@ -135,6 +149,7 @@ export class ImageGalleryModal extends Modal {
       meta.createEl('div', {
         text: `${formatBytes(image.size)} ${image.width ?? '?'}x${image.height ?? '?'}`
       });
+      this.renderItemActions(item, image);
     });
 
     if (filtered.length === 0) {
@@ -164,11 +179,13 @@ export class ImageGalleryModal extends Modal {
     const titleWrap = header.createDiv({ cls: 'image-manager-gallery-lightbox__title' });
     this.lightboxTitleEl = titleWrap.createEl('strong', { text: '' });
     this.lightboxMetaEl = titleWrap.createEl('span', { text: '' });
-    this.lightboxCounterEl = header.createEl('span', {
+    const controls = header.createDiv({ cls: 'image-manager-gallery-lightbox__controls' });
+    this.lightboxCounterEl = controls.createEl('span', {
       cls: 'image-manager-gallery-lightbox__counter',
       text: ''
     });
-    const closeButton = header.createEl('button', {
+    this.lightboxActionsEl = controls.createDiv({ cls: 'image-manager-gallery-lightbox__actions' });
+    const closeButton = controls.createEl('button', {
       cls: 'image-manager-gallery-lightbox__close',
       text: 'Close'
     });
@@ -238,6 +255,7 @@ export class ImageGalleryModal extends Modal {
     this.lightboxTitleEl.setText(image.name);
     this.lightboxMetaEl.setText(`${formatBytes(image.size)} ${image.width ?? '?'}x${image.height ?? '?'}`);
     this.lightboxCounterEl.setText(`${selectedIndex + 1} / ${this.filteredImages.length}`);
+    this.renderLightboxActions(image);
     this.lightboxImageEl.src = image.resourcePath;
     this.lightboxImageEl.alt = image.name;
     this.lightboxPrevButton.disabled = selectedIndex <= 0;
@@ -247,5 +265,47 @@ export class ImageGalleryModal extends Modal {
 
   private getSelectedImageIndex(): number {
     return this.selectedImagePath ? this.filteredImages.findIndex((image) => image.path === this.selectedImagePath) : -1;
+  }
+
+  private renderItemActions(container: HTMLElement, image: ImageInfo): void {
+    if (!this.onCopyMarkdownLink && !this.onCopyImageToClipboard) {
+      return;
+    }
+
+    const actions = container.createDiv({ cls: 'image-manager-gallery-actions' });
+    this.appendActionButtons(actions, image);
+  }
+
+  private renderLightboxActions(image: ImageInfo): void {
+    this.lightboxActionsEl.empty();
+    this.appendActionButtons(this.lightboxActionsEl, image);
+  }
+
+  private appendActionButtons(container: HTMLElement, image: ImageInfo): void {
+    if (this.onCopyMarkdownLink) {
+      const button = container.createEl('button', {
+        cls: 'image-manager-gallery-action',
+        text: 'Copy Markdown'
+      });
+      button.type = 'button';
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        void this.onCopyMarkdownLink?.(image);
+      });
+    }
+
+    if (this.onCopyImageToClipboard) {
+      const button = container.createEl('button', {
+        cls: 'image-manager-gallery-action',
+        text: 'Copy Image'
+      });
+      button.type = 'button';
+      button.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        void this.onCopyImageToClipboard?.(image);
+      });
+    }
   }
 }

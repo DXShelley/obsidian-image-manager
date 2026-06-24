@@ -5,13 +5,13 @@ export function extractImageLinks(content: string): string[] {
 
   for (const match of content.matchAll(wikiRegex)) {
     if (match[1]) {
-      links.add(decodeURIComponent(match[1].split('|')[0] ?? match[1]));
+      links.add(match[1].split('|')[0] ?? match[1]);
     }
   }
 
   for (const match of content.matchAll(markdownRegex)) {
     if (match[1]) {
-      links.add(decodeURIComponent(parseMarkdownTarget(match[1])));
+      links.add(parseMarkdownTarget(match[1]));
     }
   }
 

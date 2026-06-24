@@ -1,9 +1,22 @@
-import { TFile } from 'obsidian';
+import { MarkdownView, TFile } from 'obsidian';
 import type { TFolder } from 'obsidian';
 import type { ImageManagerFeature, ImageManagerFeatureContext } from '@/types/index';
+import { formatBatchCompressionNotice } from '@/utils/batch-operation-feedback';
 import { executeLoggedCommand, logSkippedCommand } from '@/utils/command-logging';
-import { formatCompressionSummary, showOperationNotice } from '@/utils/operation-feedback';
+import {
+  formatCompressionBelowThresholdNotice,
+  formatCompressionIgnoredNotice,
+  formatCompressionNoGainNotice,
+  formatCompressionProcessedNotice,
+  formatCompressionSummary,
+  showOperationNotice
+} from '@/utils/operation-feedback';
 import { matchRegexIgnorePattern } from '@/utils/regex-ignore';
+import { confirmVaultScopeOperation } from '@/utils/vault-operation';
+
+interface CompressionSkipState {
+  readonly message: string;
+}
 
 export class CompressFeature implements ImageManagerFeature {
   readonly id = 'compress';
@@ -13,24 +26,33 @@ export class CompressFeature implements ImageManagerFeature {
 
   async register(context: ImageManagerFeatureContext): Promise<void> {
     const activeCommand = {
-      commandId: 'compress-active-image',
-      commandName: '当前文件：压缩图片'
+      commandId: 'a3-compress-active-image',
+      commandName: '【单文件】压缩图片'
     } as const;
     context.plugin.addCommand({
       id: activeCommand.commandId,
       name: activeCommand.commandName,
       callback: () => {
         void executeLoggedCommand(context, activeCommand, async () => {
-          await this.withActiveImageFile(context, activeCommand, async (file) => {
-            await this.compressImage(context, file);
-          });
+          await context.services.recovery.runTransaction(
+            {
+              label: '压缩当前文件引用图片',
+              trigger: 'compress',
+              scope: 'single-note'
+            },
+            async () => {
+              await this.withActiveNoteFile(context, activeCommand, async (file) => {
+                await this.compressImagesInNote(context, file);
+              });
+            }
+          );
         });
       }
     });
 
     const folderCommand = {
-      commandId: 'compress-current-folder-images',
-      commandName: '当前文件夹：压缩图片'
+      commandId: 'b3-compress-current-folder-images',
+      commandName: '【单文件夹】压缩图片'
     } as const;
     context.plugin.addCommand({
       id: folderCommand.commandId,
@@ -47,21 +69,43 @@ export class CompressFeature implements ImageManagerFeature {
             return;
           }
 
-          await this.compressImagesInFolder(context, folder);
+          await context.services.recovery.runTransaction(
+            {
+              label: `压缩文件夹图片 ${folder.path || 'vault root'}`,
+              trigger: 'compress',
+              scope: 'folder'
+            },
+            async () => {
+              await this.compressImagesInFolder(context, folder);
+            }
+          );
         });
       }
     });
 
     const vaultCommand = {
-      commandId: 'compress-vault-images',
-      commandName: '整个仓库：压缩图片'
+      commandId: 'c3-compress-vault-images',
+      commandName: '【整库】压缩图片'
     } as const;
     context.plugin.addCommand({
       id: vaultCommand.commandId,
       name: vaultCommand.commandName,
       callback: () => {
         void executeLoggedCommand(context, vaultCommand, async () => {
-          await this.compressImagesInVault(context);
+          if (!(await confirmVaultScopeOperation(context.app, '整库压缩'))) {
+            return;
+          }
+
+          await context.services.recovery.runTransaction(
+            {
+              label: '压缩整个仓库图片',
+              trigger: 'compress',
+              scope: 'vault'
+            },
+            async () => {
+              await this.compressImagesInVault(context);
+            }
+          );
         });
       }
     });
@@ -69,6 +113,10 @@ export class CompressFeature implements ImageManagerFeature {
 
   async compressImagesInFolder(context: ImageManagerFeatureContext, folder: TFolder): Promise<void> {
     await this.compressFiles(context, context.services.fileManager.getImagesInFolder(folder));
+  }
+
+  async compressImagesInNote(context: ImageManagerFeatureContext, noteFile: TFile): Promise<void> {
+    await this.compressFiles(context, await context.services.fileManager.getImagesInNote(noteFile));
   }
 
   async compressImagesInVault(context: ImageManagerFeatureContext): Promise<void> {
@@ -83,51 +131,61 @@ export class CompressFeature implements ImageManagerFeature {
     let afterTotal = 0;
     let compressedCount = 0;
 
-    for (const file of files) {
-      if (this.shouldSkipCompression(context, file)) {
-        continue;
+    const runWithDeferredLeafRefresh =
+      typeof context.services.fileManager.runWithDeferredLeafRefresh === 'function'
+        ? context.services.fileManager.runWithDeferredLeafRefresh.bind(context.services.fileManager)
+        : async <T>(operation: () => Promise<T>) => operation();
+    await runWithDeferredLeafRefresh(async () => {
+      for (const file of files) {
+        const skipped = await this.getCompressionSkipState(context, file);
+        if (skipped) {
+          continue;
+        }
+
+        const result = await this.compressAndReplace(context, file);
+        if (!result) {
+          continue;
+        }
+
+        beforeTotal += result.before;
+        afterTotal += result.after;
+        compressedCount += 1;
       }
+    });
 
-      const before = file.stat.size;
-      const buffer = await context.services.imageProcessor.compress(file);
-      await context.services.fileManager.replaceFile(file, buffer);
-      beforeTotal += before;
-      afterTotal += buffer.byteLength;
-      compressedCount += 1;
-    }
-
-    if (files.length === 0 || compressedCount === 0) {
-      showOperationNotice(context.services.settings.getSettings(), 'No images found');
-      return;
-    }
-
-    if (context.services.settings.getSettings().showSpaceSavedNotification) {
-      showOperationNotice(context.services.settings.getSettings(), formatCompressionSummary(beforeTotal, afterTotal));
-      return;
-    }
-
-    showOperationNotice(context.services.settings.getSettings(), `Compressed ${compressedCount} image(s)`);
+    showOperationNotice(
+      context.services.settings.getSettings(),
+      formatBatchCompressionNotice({
+        fileCount: compressedCount,
+        beforeBytes: beforeTotal,
+        afterBytes: afterTotal,
+        showSpaceSaved: context.services.settings.getSettings().showSpaceSavedNotification
+      })
+    );
   }
 
   async compressImage(context: ImageManagerFeatureContext, file: TFile): Promise<void> {
-    if (this.shouldSkipCompression(context, file)) {
-      showOperationNotice(context.services.settings.getSettings(), `Skipped compression for ${file.name}`);
+    const skipped = await this.getCompressionSkipState(context, file);
+    if (skipped) {
+      showOperationNotice(context.services.settings.getSettings(), skipped.message);
       return;
     }
 
-    const before = file.stat.size;
-    const buffer = await context.services.imageProcessor.compress(file);
-    const after = buffer.byteLength;
-    await context.services.fileManager.replaceFile(file, buffer);
+    const result = await this.compressAndReplace(context, file);
+    if (!result) {
+      showOperationNotice(context.services.settings.getSettings(), formatCompressionNoGainNotice(file.name));
+      return;
+    }
+
     if (context.services.settings.getSettings().showSpaceSavedNotification) {
-      showOperationNotice(context.services.settings.getSettings(), formatCompressionSummary(before, after));
+      showOperationNotice(context.services.settings.getSettings(), formatCompressionSummary(result.before, result.after));
       return;
     }
 
     showOperationNotice(context.services.settings.getSettings(), 'Image compressed');
   }
 
-  private async withActiveImageFile(
+  private async withActiveNoteFile(
     context: ImageManagerFeatureContext,
     command: {
       commandId: string;
@@ -135,40 +193,88 @@ export class CompressFeature implements ImageManagerFeature {
     },
     callback: (file: TFile) => Promise<void>
   ): Promise<void> {
-    const file = context.app.workspace.getActiveFile();
-    if (!(file instanceof TFile) || !context.services.fileManager.isImageFile(file)) {
+    const view = context.app.workspace.getActiveViewOfType(MarkdownView);
+    const file = view?.file;
+    if (!(file instanceof TFile) || file.extension.toLowerCase() !== 'md') {
       logSkippedCommand(context, {
         ...command,
-        reason: 'No active image file'
+        reason: 'No active note file'
       });
-      showOperationNotice(context.services.settings.getSettings(), 'Open an image file first');
+      showOperationNotice(context.services.settings.getSettings(), 'Open a note file first');
       return;
     }
 
     await callback(file);
   }
 
-  private shouldSkipCompression(context: ImageManagerFeatureContext, file: TFile): boolean {
+  private async getCompressionSkipState(
+    context: ImageManagerFeatureContext,
+    file: TFile
+  ): Promise<CompressionSkipState | null> {
     const settings = context.services.settings.getSettings();
     const thresholdBytes = settings.compressionThresholdKB * 1024;
     if (thresholdBytes > 0 && file.stat.size < thresholdBytes) {
       context.services.logger.debug('Skipping compression because file is below threshold', {
         filePath: file.path,
         fileSize: file.stat.size,
-        thresholdBytes
-      });
-      return true;
+          thresholdBytes
+        });
+      return {
+        message: formatCompressionBelowThresholdNotice(file.name)
+      };
     }
 
     const ignored = matchRegexIgnorePattern(settings.compressionIgnorePattern, file.path);
     if (ignored) {
       context.services.logger.debug('Skipping compression because file matches ignore pattern', {
         filePath: file.path,
-        pattern: ignored.source
-      });
-      return true;
+          pattern: ignored.source
+        });
+      return {
+        message: formatCompressionIgnoredNotice(file.name, ignored.source)
+      };
     }
 
-    return false;
+    const processedStatus = await context.services.compressionTracker.getCurrentStatus(file);
+    if (processedStatus) {
+      context.services.logger.debug('Skipping compression because current file version was already processed', {
+        filePath: file.path,
+        status: processedStatus
+      });
+      return {
+        message: formatCompressionProcessedNotice(file.name, processedStatus)
+      };
+    }
+
+    return null;
+  }
+
+  private async compressAndReplace(
+    context: ImageManagerFeatureContext,
+    file: TFile
+  ): Promise<{
+    before: number;
+    after: number;
+  } | null> {
+    const before = file.stat.size;
+    const buffer = await context.services.imageProcessor.compress(file);
+    const after = buffer.byteLength;
+    if (after >= before) {
+      context.services.logger.debug('Skipping compression because encoded output is not smaller', {
+        filePath: file.path,
+        beforeBytes: before,
+        afterBytes: after
+      });
+      await context.services.compressionTracker.markNotBeneficial(file);
+      return null;
+    }
+
+    const modifiedAt = Date.now();
+    await context.services.fileManager.replaceFile(file, buffer, file.path, modifiedAt);
+    await context.services.compressionTracker.markCompressed(file.path, after, modifiedAt);
+    return {
+      before,
+      after
+    };
   }
 }

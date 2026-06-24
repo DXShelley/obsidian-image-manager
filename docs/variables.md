@@ -1,16 +1,18 @@
-# Variable Reference
+[中文](variables.md) | [English](variables.en.md) | [文档索引](README.md)
 
-Supported rename variables:
+# 变量参考
 
-- `{noteName}`: current note name without extension
-- `{noteFileName}`: alias of `{noteName}`, useful in path templates such as `./assets/${noteFileName}`
-- `{fileName}`: original image file name without extension
-- `{date}`: current date in `YYYY-MM-DD`
-- `{time}`: current time in `HH-MM-SS`
-- `{random}`: random suffix
+支持的重命名变量：
 
-Notes:
+- `{noteName}`：当前笔记名称，不含扩展名
+- `{noteFileName}`：`{noteName}` 的别名，适用于 `./assets/${noteFileName}` 这类路径模板
+- `{fileName}`：原始图片文件名，不含扩展名
+- `{date}`：当前日期，格式为 `YYYY-MM-DD`
+- `{time}`：当前时间，格式为 `HH-MM-SS`
+- `{random}`：随机后缀
 
-- Both `{name}` and `${name}` syntax are supported.
-- Unknown variables are stripped during resolution.
-- `VariableResolver.validatePattern()` can be used to detect unresolved placeholders before saving a template.
+说明：
+
+- 同时支持 `{name}` 与 `${name}` 两种语法。
+- 未知变量在解析时会被移除。
+- `VariableResolver.validatePattern()` 可在保存模板前检测未解析占位符。
