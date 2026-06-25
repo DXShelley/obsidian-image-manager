@@ -48,6 +48,7 @@ interface SiteConfig {
     readonly workflow: { readonly eyebrow: string; readonly title: string };
     readonly status: { readonly eyebrow: string; readonly title: string };
     readonly install: { readonly eyebrow: string };
+    readonly support: { readonly eyebrow: string };
     readonly philosophy: { readonly eyebrow: string; readonly title: string };
   };
   readonly statusLabels: {
@@ -76,9 +77,19 @@ interface SiteConfig {
     readonly snippet: readonly string[];
     readonly note: string;
   };
+  readonly support: {
+    readonly title: string;
+    readonly body: string;
+    readonly methods: readonly {
+      readonly title: string;
+      readonly description: string;
+      readonly image: string;
+      readonly alt: string;
+    }[];
+  };
 }
 
-const VERSION = 'v4.0.4';
+const VERSION = 'v4.0.5';
 
 const SITE_CONFIGS: Readonly<Record<SiteLocale, SiteConfig>> = {
   'zh-CN': {
@@ -96,7 +107,8 @@ const SITE_CONFIGS: Readonly<Record<SiteLocale, SiteConfig>> = {
         { label: '核心能力', href: '#features' },
         { label: '处理流程', href: '#workflow' },
         { label: '功能状态', href: '#status' },
-        { label: '开始使用', href: '#install' }
+        { label: '开始使用', href: '#install' },
+        { label: '支持项目', href: '#support' }
       ]
     },
     languageSwitch: {
@@ -131,6 +143,7 @@ const SITE_CONFIGS: Readonly<Record<SiteLocale, SiteConfig>> = {
       workflow: { eyebrow: '处理流程', title: '导入、整理、批处理、回退，形成一条能长期维护的图片处理路径。' },
       status: { eyebrow: '功能状态', title: '已实现与规划中统一展示，主页口径直接对齐仓库状态。' },
       install: { eyebrow: '安装方式' },
+      support: { eyebrow: '支持项目' },
       philosophy: { eyebrow: '设计取舍', title: '在 Obsidian 里做够用实用的图片工具，而不是继续制造熵。' }
     },
     statusLabels: {
@@ -254,6 +267,30 @@ const SITE_CONFIGS: Readonly<Record<SiteLocale, SiteConfig>> = {
       title: '从仓库到插件目录，路径很短。',
       snippet: ['npm install', 'npm run validate', 'npm run build'],
       note: '社区市场审核通过后可直接从 Community Plugins 安装；在此之前可将 `manifest.json`、`main.js` 和 `styles.css` 手动复制到插件目录。'
+    },
+    support: {
+      title: '如果它节省了你的图片整理时间，可以请我喝杯咖啡。',
+      body: 'Note Image Manager 会继续保持免费和开源。赞助用于支持维护、测试、文档和后续功能迭代。',
+      methods: [
+        {
+          title: '微信支付',
+          description: '推荐使用微信支付扫码支持。',
+          image: 'support/weixin.png',
+          alt: '微信支付收款二维码'
+        },
+        {
+          title: '微信赞赏码',
+          description: '也可以通过微信赞赏码支持项目。',
+          image: 'support/zanshangma.png',
+          alt: '微信赞赏码'
+        },
+        {
+          title: '支付宝',
+          description: '打开支付宝扫一扫即可支持。',
+          image: 'support/zhifubao.png',
+          alt: '支付宝收款二维码'
+        }
+      ]
     }
   },
   en: {
@@ -271,7 +308,8 @@ const SITE_CONFIGS: Readonly<Record<SiteLocale, SiteConfig>> = {
         { label: 'Features', href: '#features' },
         { label: 'Workflow', href: '#workflow' },
         { label: 'Status', href: '#status' },
-        { label: 'Install', href: '#install' }
+        { label: 'Install', href: '#install' },
+        { label: 'Support', href: '#support' }
       ]
     },
     languageSwitch: {
@@ -306,6 +344,7 @@ const SITE_CONFIGS: Readonly<Record<SiteLocale, SiteConfig>> = {
       workflow: { eyebrow: 'Workflow', title: 'Import, normalize, batch-process, and roll back with one maintainable path.' },
       status: { eyebrow: 'Feature Status', title: 'Shipped and planned work are shown together so the site matches the repo.' },
       install: { eyebrow: 'Install' },
+      support: { eyebrow: 'Support' },
       philosophy: { eyebrow: 'Philosophy', title: 'Useful and pleasant in Obsidian, without dragging the project into entropy.' }
     },
     statusLabels: {
@@ -429,6 +468,30 @@ const SITE_CONFIGS: Readonly<Record<SiteLocale, SiteConfig>> = {
       title: 'The path from repo to plugin folder is short.',
       snippet: ['npm install', 'npm run validate', 'npm run build'],
       note: 'Install from Community Plugins after review approval, or manually copy `manifest.json`, `main.js`, and `styles.css` into the plugin directory before then.'
+    },
+    support: {
+      title: 'If it saved you time managing images, you can support the project.',
+      body: 'Note Image Manager will remain free and open source. Sponsorship helps cover maintenance, testing, documentation, and future feature work.',
+      methods: [
+        {
+          title: 'WeChat Pay',
+          description: 'Scan with WeChat Pay to support the project.',
+          image: 'support/weixin.png',
+          alt: 'WeChat Pay QR code'
+        },
+        {
+          title: 'WeChat Reward Code',
+          description: 'You can also support through the WeChat reward code.',
+          image: 'support/zanshangma.png',
+          alt: 'WeChat reward QR code'
+        },
+        {
+          title: 'Alipay',
+          description: 'Scan with Alipay to support the project.',
+          image: 'support/zhifubao.png',
+          alt: 'Alipay QR code'
+        }
+      ]
     }
   }
 };
