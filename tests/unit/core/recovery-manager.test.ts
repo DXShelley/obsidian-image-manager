@@ -85,10 +85,10 @@ describe('RecoveryManager', () => {
 
   it('undoes the last transaction by restoring files and deleting created files', async () => {
     const { app, fileManager, recoveryFiles, vaultFiles, textFiles } = createApp();
-    const manager = new RecoveryManager(app as never, 'obsidian-image-manager', fileManager as never);
+    const manager = new RecoveryManager(app as never, 'note-image-manager', fileManager as never);
 
     recoveryFiles.set(
-      '.obsidian/plugins/obsidian-image-manager/recovery/history.json',
+      '.obsidian/plugins/note-image-manager/recovery/history.json',
       JSON.stringify({
         transactions: [
           {
@@ -107,12 +107,12 @@ describe('RecoveryManager', () => {
               {
                 kind: 'binary-snapshot',
                 path: 'assets/photo.png',
-                snapshotPath: '.obsidian/plugins/obsidian-image-manager/recovery/snapshots/tx-1-assets_photo.png.bin'
+                snapshotPath: '.obsidian/plugins/note-image-manager/recovery/snapshots/tx-1-assets_photo.png.bin'
               },
               {
                 kind: 'text-snapshot',
                 path: 'notes/demo.md',
-                snapshotPath: '.obsidian/plugins/obsidian-image-manager/recovery/snapshots/tx-1-notes_demo.md.txt'
+                snapshotPath: '.obsidian/plugins/note-image-manager/recovery/snapshots/tx-1-notes_demo.md.txt'
               },
               {
                 kind: 'created-file',
@@ -124,11 +124,11 @@ describe('RecoveryManager', () => {
       })
     );
     recoveryFiles.set(
-      '.obsidian/plugins/obsidian-image-manager/recovery/snapshots/tx-1-assets_photo.png.bin',
+      '.obsidian/plugins/note-image-manager/recovery/snapshots/tx-1-assets_photo.png.bin',
       new Uint8Array([1, 2, 3]).buffer
     );
     recoveryFiles.set(
-      '.obsidian/plugins/obsidian-image-manager/recovery/snapshots/tx-1-notes_demo.md.txt',
+      '.obsidian/plugins/note-image-manager/recovery/snapshots/tx-1-notes_demo.md.txt',
       'restored markdown'
     );
     vaultFiles.set('assets/photo.webp', new TFile('assets/photo.webp'));
@@ -152,7 +152,7 @@ describe('RecoveryManager', () => {
     vi.setSystemTime(new Date('2026-06-23T10:00:00.000Z'));
 
     const { app, fileManager, recoveryFiles } = createApp();
-    const manager = new RecoveryManager(app as never, 'obsidian-image-manager', fileManager as never);
+    const manager = new RecoveryManager(app as never, 'note-image-manager', fileManager as never);
     const oldTimestamp = Date.now() - 2 * 24 * 60 * 60 * 1000;
     const transactions = Array.from({ length: 12 }, (_value, index) => ({
       id: `tx-${index}`,
@@ -165,7 +165,7 @@ describe('RecoveryManager', () => {
         {
           kind: 'text-snapshot',
           path: `notes/${index}.md`,
-          snapshotPath: `.obsidian/plugins/obsidian-image-manager/recovery/snapshots/tx-${index}.txt`
+          snapshotPath: `.obsidian/plugins/note-image-manager/recovery/snapshots/tx-${index}.txt`
         }
       ],
       beforeState:
@@ -176,7 +176,7 @@ describe('RecoveryManager', () => {
                   path: 'assets/before.png',
                   kind: 'binary',
                   exists: true,
-                  snapshotPath: '.obsidian/plugins/obsidian-image-manager/recovery/snapshots/tx-0-before.bin'
+                  snapshotPath: '.obsidian/plugins/note-image-manager/recovery/snapshots/tx-0-before.bin'
                 }
               ],
               folders: []
@@ -190,7 +190,7 @@ describe('RecoveryManager', () => {
                   path: 'assets/after.webp',
                   kind: 'binary',
                   exists: true,
-                  snapshotPath: '.obsidian/plugins/obsidian-image-manager/recovery/snapshots/tx-0-after.bin'
+                  snapshotPath: '.obsidian/plugins/note-image-manager/recovery/snapshots/tx-0-after.bin'
                 }
               ],
               folders: []
@@ -198,21 +198,21 @@ describe('RecoveryManager', () => {
           : undefined
     }));
     recoveryFiles.set(
-      '.obsidian/plugins/obsidian-image-manager/recovery/history.json',
+      '.obsidian/plugins/note-image-manager/recovery/history.json',
       JSON.stringify({ transactions })
     );
     for (const transaction of transactions) {
       recoveryFiles.set(
-        `.obsidian/plugins/obsidian-image-manager/recovery/snapshots/${transaction.id}.txt`,
+        `.obsidian/plugins/note-image-manager/recovery/snapshots/${transaction.id}.txt`,
         transaction.id
       );
     }
     recoveryFiles.set(
-      '.obsidian/plugins/obsidian-image-manager/recovery/snapshots/tx-0-before.bin',
+      '.obsidian/plugins/note-image-manager/recovery/snapshots/tx-0-before.bin',
       new Uint8Array([1, 2, 3]).buffer
     );
     recoveryFiles.set(
-      '.obsidian/plugins/obsidian-image-manager/recovery/snapshots/tx-0-after.bin',
+      '.obsidian/plugins/note-image-manager/recovery/snapshots/tx-0-after.bin',
       new Uint8Array([4, 5, 6]).buffer
     );
 
@@ -221,17 +221,17 @@ describe('RecoveryManager', () => {
     const retained = manager.listTransactions();
     expect(retained).toHaveLength(10);
     expect(retained.some((transaction) => transaction.id === 'tx-0')).toBe(false);
-    expect(recoveryFiles.has('.obsidian/plugins/obsidian-image-manager/recovery/snapshots/tx-0.txt')).toBe(false);
-    expect(recoveryFiles.has('.obsidian/plugins/obsidian-image-manager/recovery/snapshots/tx-0-before.bin')).toBe(false);
-    expect(recoveryFiles.has('.obsidian/plugins/obsidian-image-manager/recovery/snapshots/tx-0-after.bin')).toBe(false);
+    expect(recoveryFiles.has('.obsidian/plugins/note-image-manager/recovery/snapshots/tx-0.txt')).toBe(false);
+    expect(recoveryFiles.has('.obsidian/plugins/note-image-manager/recovery/snapshots/tx-0-before.bin')).toBe(false);
+    expect(recoveryFiles.has('.obsidian/plugins/note-image-manager/recovery/snapshots/tx-0-after.bin')).toBe(false);
   });
 
   it('redoes the earliest undone transaction after the current history boundary', async () => {
     const { app, fileManager, recoveryFiles, vaultFiles } = createApp();
-    const manager = new RecoveryManager(app as never, 'obsidian-image-manager', fileManager as never);
+    const manager = new RecoveryManager(app as never, 'note-image-manager', fileManager as never);
 
     recoveryFiles.set(
-      '.obsidian/plugins/obsidian-image-manager/recovery/history.json',
+      '.obsidian/plugins/note-image-manager/recovery/history.json',
       JSON.stringify({
         transactions: [
           {
@@ -249,7 +249,7 @@ describe('RecoveryManager', () => {
                   path: 'assets/photo.png',
                   kind: 'binary',
                   exists: true,
-                  snapshotPath: '.obsidian/plugins/obsidian-image-manager/recovery/snapshots/tx-1-before.bin'
+                  snapshotPath: '.obsidian/plugins/note-image-manager/recovery/snapshots/tx-1-before.bin'
                 },
                 {
                   path: 'assets/photo.webp',
@@ -270,7 +270,7 @@ describe('RecoveryManager', () => {
                   path: 'assets/photo.webp',
                   kind: 'binary',
                   exists: true,
-                  snapshotPath: '.obsidian/plugins/obsidian-image-manager/recovery/snapshots/tx-1-after.bin'
+                  snapshotPath: '.obsidian/plugins/note-image-manager/recovery/snapshots/tx-1-after.bin'
                 }
               ],
               folders: []
@@ -280,7 +280,7 @@ describe('RecoveryManager', () => {
       })
     );
     recoveryFiles.set(
-      '.obsidian/plugins/obsidian-image-manager/recovery/snapshots/tx-1-after.bin',
+      '.obsidian/plugins/note-image-manager/recovery/snapshots/tx-1-after.bin',
       new Uint8Array([4, 5, 6]).buffer
     );
     vaultFiles.set('assets/photo.png', new TFile('assets/photo.png'));

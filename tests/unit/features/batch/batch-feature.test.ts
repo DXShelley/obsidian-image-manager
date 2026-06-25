@@ -51,7 +51,8 @@ describe('BatchFeature', () => {
         fileManager: {
           isImageFile: vi.fn(() => true),
           getMarkdownFilesInVault: vi.fn(() => []),
-          rewriteImageLinksInNote: vi.fn(async () => ({ replaced: 0, moved: 0, downloaded: 0, deleted: 0, foldersDeleted: 0 }))
+          rewriteImageLinksInNote: vi.fn(async () => ({ replaced: 0, moved: 0, downloaded: 0, deleted: 0, foldersDeleted: 0 })),
+          importExternalImageLinksInNote: vi.fn(async () => ({ replaced: 0, downloaded: 0 }))
         },
         settings: {
           getSettings: vi.fn(() => ({
@@ -126,6 +127,69 @@ describe('BatchFeature', () => {
     expect(noticeMock).toHaveBeenCalledTimes(1);
     expect(noticeMock).toHaveBeenCalledWith(
       'Batch link update finished: 2 file(s), 3 link(s) updated: notes/a.md (2 links), notes/b.md (1 link); moved 1 image(s)'
+    );
+  });
+
+  it('shows one aggregated notice after external image import', async () => {
+    const feature = new BatchFeature();
+    const notes = [{ path: 'notes/a.md' }, { path: 'notes/b.md' }];
+    const context = {
+      app: {
+        vault: {
+          getFiles: vi.fn(() => []),
+          getAbstractFileByPath: vi.fn(() => null)
+        },
+        workspace: {
+          getActiveViewOfType: vi.fn(() => null)
+        }
+      },
+      services: {
+        logger: {
+          refreshMode: vi.fn(),
+          debug: vi.fn(),
+          error: vi.fn()
+        },
+        batchProcessor: {
+          getReport: vi.fn(() => null),
+          run: vi.fn(async (request: { tasks: Array<{ run: () => Promise<void> }> }) => {
+            for (const task of request.tasks) {
+              await task.run();
+            }
+            return {
+              completed: 2,
+              failed: 0,
+              skipped: 0,
+              status: BatchExecutionStatus.COMPLETED
+            };
+          })
+        },
+        fileManager: {
+          getMarkdownFilesInVault: vi.fn(() => notes),
+          importExternalImageLinksInNote: vi
+            .fn()
+            .mockResolvedValueOnce({ replaced: 2, downloaded: 1 })
+            .mockResolvedValueOnce({ replaced: 1, downloaded: 1 })
+        },
+        settings: {
+          getSettings: vi.fn(() => ({
+            showOperationNotifications: true
+          }))
+        },
+        recovery: {
+          runTransaction: vi.fn()
+        },
+        imageProcessor: {} as never
+      }
+    };
+
+    await (
+      feature as unknown as {
+        runExternalImageImportBatch: (ctx: typeof context, scope: BatchScope) => Promise<void>;
+      }
+    ).runExternalImageImportBatch(context, BatchScope.VAULT);
+
+    expect(noticeMock).toHaveBeenCalledWith(
+      'External image import finished: 2 file(s), 3 link(s) updated: notes/a.md (2 links), notes/b.md (1 link); downloaded 2 image(s)'
     );
   });
 

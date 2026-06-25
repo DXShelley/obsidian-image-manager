@@ -53,13 +53,13 @@ describe('CompressionTracker', () => {
     });
     files.set(file.path, file);
 
-    const tracker = new CompressionTracker(app as never, 'obsidian-image-manager');
+    const tracker = new CompressionTracker(app as never, 'note-image-manager');
     await tracker.initialize();
     await tracker.markCompressed(file.path, file.stat.size, file.stat.mtime);
 
-    expect(storage.get('.obsidian/plugins/obsidian-image-manager/compression-history.json')).toContain('"status": "compressed"');
+    expect(storage.get('.obsidian/plugins/note-image-manager/compression-history.json')).toContain('"status": "compressed"');
 
-    const reloaded = new CompressionTracker(app as never, 'obsidian-image-manager');
+    const reloaded = new CompressionTracker(app as never, 'note-image-manager');
     await reloaded.initialize();
 
     expect(await reloaded.getCurrentStatus(file)).toBe('compressed');
@@ -68,7 +68,7 @@ describe('CompressionTracker', () => {
   it('drops stale records when the file version changes', async () => {
     const { app, files, storage } = createApp();
     storage.set(
-      '.obsidian/plugins/obsidian-image-manager/compression-history.json',
+      '.obsidian/plugins/note-image-manager/compression-history.json',
       JSON.stringify({
         records: [
           {
@@ -91,10 +91,10 @@ describe('CompressionTracker', () => {
     });
     files.set(file.path, file);
 
-    const tracker = new CompressionTracker(app as never, 'obsidian-image-manager');
+    const tracker = new CompressionTracker(app as never, 'note-image-manager');
     await tracker.initialize();
 
     expect(await tracker.getCurrentStatus(file)).toBeNull();
-    expect(storage.get('.obsidian/plugins/obsidian-image-manager/compression-history.json')).not.toContain('"assets/photo.webp"');
+    expect(storage.get('.obsidian/plugins/note-image-manager/compression-history.json')).not.toContain('"assets/photo.webp"');
   });
 });

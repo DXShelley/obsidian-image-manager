@@ -495,7 +495,7 @@ describe('FileManager.rewriteImageLinksInNote', () => {
     expect(app.vault.modify).toHaveBeenCalledWith(note, '![[photo.png|Preview]]');
   });
 
-  it('downloads external image links when auto-download is enabled', async () => {
+  it('imports external image links through the dedicated import flow', async () => {
     const note = Object.assign(new TFile(), {
       path: 'notes/test.md',
       name: 'test.md',
@@ -555,12 +555,171 @@ describe('FileManager.rewriteImageLinksInNote', () => {
     }));
     vi.stubGlobal('fetch', fetchMock);
 
-    const result = await manager.rewriteImageLinksInNote(note as never);
+    const result = await manager.importExternalImageLinksInNote(note as never);
 
     expect(fetchMock).toHaveBeenCalledWith('https://example.com/photo.png');
     expect(app.vault.createBinary).toHaveBeenCalled();
-    expect(result).toEqual({ replaced: 1, moved: 0, downloaded: 1, deleted: 0, foldersDeleted: 0 });
+    expect(result).toEqual({ replaced: 1, downloaded: 1 });
     expect(app.vault.modify).toHaveBeenCalledWith(note, '![Remote](photo.png)');
+  });
+
+  it('imports only the external image link that matches the selected rendered image source', async () => {
+    const note = Object.assign(new TFile(), {
+      path: 'notes/test.md',
+      name: 'test.md',
+      basename: 'test',
+      extension: 'md'
+    });
+    const savedImage = Object.assign(new TFile(), {
+      path: 'notes/photo-b.png',
+      name: 'photo-b.png',
+      basename: 'photo-b',
+      extension: 'png',
+      parent: { path: 'notes' }
+    });
+    const content = '![One](https://example.com/photo-a.png)\n![Two](https://example.com/photo-b.png)';
+    const app = {
+      vault: {
+        read: vi.fn(async () => content),
+        modify: vi.fn(async () => undefined),
+        getFiles: vi.fn(() => [note, savedImage]),
+        getAbstractFileByPath: vi.fn((path: string) => {
+          if (path === 'notes') {
+            return { path: 'notes' };
+          }
+          return null;
+        }),
+        createBinary: vi.fn(async () => savedImage)
+      },
+      metadataCache: {
+        getFirstLinkpathDest: vi.fn((rawTarget: string) => {
+          if (rawTarget === 'photo-b.png' || rawTarget === 'notes/photo-b.png') {
+            return savedImage;
+          }
+          return null;
+        }),
+        resolvedLinks: {}
+      },
+      fileManager: {
+        renameFile: vi.fn(async () => undefined)
+      }
+    };
+    const manager = new FileManager(
+      app as never,
+      () => ({
+        ...settings,
+        enableAutoRename: false,
+        defaultLinkFormat: LinkFormat.MARKDOWN,
+        defaultPathFormat: PathFormat.RELATIVE
+      }),
+      new VariableResolver(),
+      new LinkFormatter(app as never)
+    );
+    const fetchMock = vi.fn(async (url: string) => ({
+      ok: true,
+      headers: {
+        get: vi.fn(() => 'image/png')
+      },
+      arrayBuffer: vi.fn(async () => new Uint8Array(url.includes('photo-b') ? [4, 5, 6] : [1, 2, 3]).buffer)
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await manager.importExternalImageLinkInNoteBySource(note as never, 'https://example.com/photo-b.png');
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledWith('https://example.com/photo-b.png');
+    expect(result).toEqual({ replaced: 1, downloaded: 1 });
+    expect(app.vault.modify).toHaveBeenCalledWith(
+      note,
+      '![One](https://example.com/photo-a.png)\n![Two](photo-b.png)'
+    );
+  });
+
+  it('imports the requested occurrence when the same external image source appears multiple times', async () => {
+    const note = Object.assign(new TFile(), {
+      path: 'notes/test.md',
+      name: 'test.md',
+      basename: 'test',
+      extension: 'md'
+    });
+    const firstSavedImage = Object.assign(new TFile(), {
+      path: 'notes/first.png',
+      name: 'first.png',
+      basename: 'first',
+      extension: 'png',
+      parent: { path: 'notes' }
+    });
+    const secondSavedImage = Object.assign(new TFile(), {
+      path: 'notes/second.png',
+      name: 'second.png',
+      basename: 'second',
+      extension: 'png',
+      parent: { path: 'notes' }
+    });
+    const content = [
+      '![One](https://example.com/shared.png)',
+      '![Two](https://example.com/shared.png)'
+    ].join('\n');
+    const createdImages = [firstSavedImage, secondSavedImage];
+    const app = {
+      vault: {
+        read: vi.fn(async () => content),
+        modify: vi.fn(async () => undefined),
+        getFiles: vi.fn(() => [note, firstSavedImage, secondSavedImage]),
+        getAbstractFileByPath: vi.fn((path: string) => {
+          if (path === 'notes') {
+            return { path: 'notes' };
+          }
+          return null;
+        }),
+        createBinary: vi.fn(async () => createdImages.shift())
+      },
+      metadataCache: {
+        getFirstLinkpathDest: vi.fn((rawTarget: string) => {
+          if (rawTarget === 'first.png' || rawTarget === 'notes/first.png') {
+            return firstSavedImage;
+          }
+          if (rawTarget === 'second.png' || rawTarget === 'notes/second.png') {
+            return secondSavedImage;
+          }
+          return null;
+        }),
+        resolvedLinks: {}
+      },
+      fileManager: {
+        renameFile: vi.fn(async () => undefined)
+      }
+    };
+    const manager = new FileManager(
+      app as never,
+      () => ({
+        ...settings,
+        enableAutoRename: false,
+        defaultLinkFormat: LinkFormat.MARKDOWN,
+        defaultPathFormat: PathFormat.RELATIVE
+      }),
+      new VariableResolver(),
+      new LinkFormatter(app as never)
+    );
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      headers: {
+        get: vi.fn(() => 'image/png')
+      },
+      arrayBuffer: vi.fn(async () => new Uint8Array([1, 2, 3]).buffer)
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await manager.importExternalImageLinkInNoteBySource(note as never, 'https://example.com/shared.png', {
+      occurrence: 2
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({ replaced: 1, downloaded: 1 });
+    expect(app.vault.modify).toHaveBeenCalledWith(
+      note,
+      '![One](https://example.com/shared.png)\n![Two](first.png)'
+    );
   });
 
   it('normalizes mixed encoded and unencoded Chinese markdown paths in a single note', async () => {

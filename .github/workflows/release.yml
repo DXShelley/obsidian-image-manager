@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - '*.*.*'
 
 permissions:
   contents: write
@@ -17,11 +17,16 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - name: Verify release version matches manifest and versions map
+        run: |
+          node -e "const fs=require('fs'); const manifest=JSON.parse(fs.readFileSync('manifest.json','utf8')); const versions=JSON.parse(fs.readFileSync('versions.json','utf8')); const tag=process.env.GITHUB_REF_NAME; if(tag!==manifest.version){console.error(`Tag ${tag} must exactly match manifest version ${manifest.version}.`); process.exit(1);} if(!Object.prototype.hasOwnProperty.call(versions, manifest.version)){console.error(`versions.json is missing ${manifest.version}.`); process.exit(1);} if(versions[manifest.version]!==manifest.minAppVersion){console.error(`versions.json maps ${manifest.version} to ${versions[manifest.version]}, expected ${manifest.minAppVersion}.`); process.exit(1);} console.log(`Release version ${tag} verified.`);"
       - run: npm ci
       - run: npm run validate
       - run: npm run build
       - uses: softprops/action-gh-release@v2
         with:
+          name: ${{ github.ref_name }}
+          generate_release_notes: true
           files: |
             manifest.json
             main.js

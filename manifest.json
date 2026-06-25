@@ -1,11 +1,9 @@
 {
-  "id": "obsidian-image-manager",
+  "id": "note-image-manager",
   "name": "Image Manager",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "minAppVersion": "0.15.0",
-  "description": "A comprehensive image management plugin for Obsidian. Rename, compress, convert, edit, and organize your images with ease.",
-  "author": "",
-  "authorUrl": "",
-  "isDesktopOnly": false,
-  "fundingUrl": ""
+  "description": "Desktop-only image workflow for Obsidian. Import, rename, convert, compress, edit, and recover images safely.",
+  "author": "DXShelley",
+  "isDesktopOnly": true
 }

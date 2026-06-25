@@ -112,15 +112,15 @@ describe('CompressFeature', () => {
     expect(context.plugin.addCommand).toHaveBeenCalledTimes(3);
     expect(context.plugin.addCommand).toHaveBeenNthCalledWith(
       1,
-      expect.objectContaining({ id: 'a3-compress-active-image', name: '【单文件】压缩图片' })
+      expect.objectContaining({ id: 'a4-compress-active-image', name: '【单文件】压缩图片' })
     );
     expect(context.plugin.addCommand).toHaveBeenNthCalledWith(
       2,
-      expect.objectContaining({ id: 'b3-compress-current-folder-images', name: '【单文件夹】压缩图片' })
+      expect.objectContaining({ id: 'b4-compress-current-folder-images', name: '【单文件夹】压缩图片' })
     );
     expect(context.plugin.addCommand).toHaveBeenNthCalledWith(
       3,
-      expect.objectContaining({ id: 'c3-compress-vault-images', name: '【整库】压缩图片' })
+      expect.objectContaining({ id: 'c4-compress-vault-images', name: '【整库】压缩图片' })
     );
   });
 

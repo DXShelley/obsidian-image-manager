@@ -4,16 +4,19 @@
 
 ## Commands
 
-- Scoped commands are ordered by the `a1-a4`, `b1-b4`, and `c1-c4` `id` groups for `【单文件】`, `【单文件夹】`, and `【整库】`, with `update links -> convert format -> compress -> delete extra image files` inside each scope.
+- Scoped commands are ordered by the `a1-a5`, `b1-b5`, and `c1-c5` `id` groups for `【单文件】`, `【单文件夹】`, and `【整库】`, with `update links -> import external images -> convert format -> compress -> delete extra image files` inside each scope.
 - `【单文件】更新图片链接与目录`
+- `【单文件】下载外部图片到本地`
 - `【单文件】转换图片为默认格式`
 - `【单文件】压缩图片`
 - `【单文件】删除多余图片文件`
 - `【单文件夹】更新图片链接与目录`
+- `【单文件夹】下载外部图片到本地`
 - `【单文件夹】转换图片为默认格式`
 - `【单文件夹】压缩图片`
 - `【单文件夹】删除多余图片文件`
 - `【整库】更新图片链接与目录`
+- `【整库】下载外部图片到本地`
 - `【整库】转换图片为默认格式`
 - `【整库】压缩图片`
 - `【整库】删除多余图片文件`
@@ -55,6 +58,9 @@ Right-click an image file in the file explorer to access:
 - If `{noteName}` and `{date}` resolve to the same value, adjacent duplicate fragments are collapsed automatically.
 - If `renamePattern` contains `{time}`, collision handling uses ordered suffixes such as `-01`, `-02`, and `-03`.
 - When a note is renamed or moved, managed image folders can be synchronized automatically.
+- `Download external images to local` imports `URL`, `file://`, and `data:image/...;base64,...` sources from a note into the managed folder and rewrites those links to local image links.
+- The command-palette `【单文件】下载外部图片到本地` command processes every external image link in the current note.
+- In reading view, right-clicking a rendered external image shows `下载该外部图片到本地`, which imports only that selected image source.
 
 ## Compatibility Strategy
 
@@ -90,10 +96,10 @@ Right-click an image file in the file explorer to access:
 - Image Manager records snapshots for file-content changes, path changes, and Markdown rewrites before applying a managed operation.
 - The undo command restores the latest transaction in reverse order, including images, note links, and files created by paste / import flows.
 - The redo command reapplies the most recently undone transaction so you can move back and forth across recent operations.
-- Recovery history is stored in `.obsidian/plugins/obsidian-image-manager/recovery/`.
-- `.gitignore` ignores `.obsidian/plugins/obsidian-image-manager/recovery/` by default so local recovery snapshots do not enter version control.
+- Recovery history is stored in `.obsidian/plugins/note-image-manager/recovery/`.
+- `.gitignore` ignores `.obsidian/plugins/note-image-manager/recovery/` by default so local recovery snapshots do not enter version control.
 - To save space, only the newest 10 transactions are retained and transactions older than 24 hours are pruned automatically.
 
 ## Deployment Note
 
-- After rebuilding locally, recopy `manifest.json`, `main.js`, and `styles.css` into `.obsidian/plugins/obsidian-image-manager/` before retesting in Obsidian.
+- After rebuilding locally, recopy `manifest.json`, `main.js`, and `styles.css` into `.obsidian/plugins/note-image-manager/` before retesting in Obsidian.

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   formatBatchCompressionNotice,
   formatBatchConversionNotice,
+  formatBatchExternalImageImportNotice,
   formatBatchLinkRewriteNotice,
   formatBatchOrphanCleanupNotice
 } from '@/utils/batch-operation-feedback';
@@ -25,6 +26,20 @@ describe('batch operation feedback utilities', () => {
         targetFormat: 'webp'
       })
     ).toBe('Batch conversion finished: 5 image(s) -> webp');
+  });
+
+  it('formats external image import notices with file-level link counts', () => {
+    expect(
+      formatBatchExternalImageImportNotice({
+        items: [
+          { notePath: 'notes/a.md', replaced: 2 },
+          { notePath: 'notes/b.md', replaced: 1 }
+        ],
+        importedLinks: 3,
+        downloadedImages: 2,
+        failedCount: 0
+      })
+    ).toBe('External image import finished: 2 file(s), 3 link(s) updated: notes/a.md (2 links), notes/b.md (1 link); downloaded 2 image(s)');
   });
 
   it('formats batch link rewrite notices with file-level link counts', () => {

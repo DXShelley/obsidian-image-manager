@@ -1,7 +1,7 @@
 {
-  "name": "obsidian-image-manager",
-  "version": "3.1.0",
-  "description": "A comprehensive image management plugin for Obsidian",
+  "name": "note-image-manager",
+  "version": "3.1.1",
+  "description": "Desktop-only image workflow for Obsidian",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
@@ -22,7 +22,7 @@
     "image",
     "management"
   ],
-  "author": "",
+  "author": "DXShelley",
   "license": "MIT",
   "devDependencies": {
     "@eslint/js": "^9.35.0",

@@ -101,7 +101,8 @@ describe('ContextMenuFeature', () => {
           on: vi.fn((_event: string, callback: typeof fileMenuHandler) => {
             fileMenuHandler = callback;
             return { event: 'file-menu' };
-          })
+          }),
+          getActiveViewOfType: vi.fn(() => null)
         }
       },
       plugin: {
@@ -153,7 +154,8 @@ describe('ContextMenuFeature', () => {
           on: vi.fn((_event: string, callback: typeof fileMenuHandler) => {
             fileMenuHandler = callback;
             return { event: 'file-menu' };
-          })
+          }),
+          getActiveViewOfType: vi.fn(() => null)
         }
       },
       plugin: {
@@ -222,7 +224,8 @@ describe('ContextMenuFeature', () => {
           on: vi.fn((_event: string, callback: typeof fileMenuHandler) => {
             fileMenuHandler = callback;
             return { event: 'file-menu' };
-          })
+          }),
+          getActiveViewOfType: vi.fn(() => null)
         }
       },
       plugin: {
@@ -282,4 +285,5 @@ describe('ContextMenuFeature', () => {
       expect(replaceFileMock).toHaveBeenCalledWith(file, expect.any(ArrayBuffer));
     });
   });
+
 });

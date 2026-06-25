@@ -26,7 +26,7 @@ export class CompressFeature implements ImageManagerFeature {
 
   async register(context: ImageManagerFeatureContext): Promise<void> {
     const activeCommand = {
-      commandId: 'a3-compress-active-image',
+      commandId: 'a4-compress-active-image',
       commandName: '【单文件】压缩图片'
     } as const;
     context.plugin.addCommand({
@@ -51,7 +51,7 @@ export class CompressFeature implements ImageManagerFeature {
     });
 
     const folderCommand = {
-      commandId: 'b3-compress-current-folder-images',
+      commandId: 'b4-compress-current-folder-images',
       commandName: '【单文件夹】压缩图片'
     } as const;
     context.plugin.addCommand({
@@ -84,7 +84,7 @@ export class CompressFeature implements ImageManagerFeature {
     });
 
     const vaultCommand = {
-      commandId: 'c3-compress-vault-images',
+      commandId: 'c4-compress-vault-images',
       commandName: '【整库】压缩图片'
     } as const;
     context.plugin.addCommand({

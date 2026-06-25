@@ -7,6 +7,7 @@ export enum BatchScope {
 export enum BatchOperation {
   COMPRESS = 'compress',
   CONVERT = 'convert',
+  IMPORT_EXTERNAL_IMAGES = 'import-external-images',
   RENAME = 'rename',
   UPDATE_LINKS = 'update-links'
 }

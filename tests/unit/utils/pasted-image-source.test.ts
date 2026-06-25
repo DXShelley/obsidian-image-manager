@@ -49,7 +49,7 @@ describe('resolveTextImageSource', () => {
   });
 
   it('reads image bytes from a file url', async () => {
-    const folder = await mkdtemp(join(tmpdir(), 'obsidian-image-manager-'));
+    const folder = await mkdtemp(join(tmpdir(), 'note-image-manager-'));
     const filePath = join(folder, 'local-image.png');
     await writeFile(filePath, Buffer.from([1, 2, 3, 4]));
 
