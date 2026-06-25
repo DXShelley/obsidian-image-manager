@@ -46,6 +46,7 @@
 - `defaultQuality = 80`
 - `defaultLinkFormat = wiki`
 - `defaultPathFormat = shortest`
+- `uiLanguage = zh-CN`
 - `renamePattern = {noteName}-{date}-{random}`
 - `outputFolder = ./assets/${noteFileName}`
 - `enableAutoConvert = true`
@@ -109,15 +110,29 @@
   1. 打开 `Settings -> Image Manager`
   2. 检查分组区域
 - 预期:
-  - 显示 `Save and rename`
-  - 显示 `Convert and compress`
-  - 显示 `Editor and paste behavior`
-  - 显示 `Gallery`
+  - 顶部显示 `界面语言`
+  - 显示 `保存与命名`
+  - 显示 `转换与压缩`
+  - 显示 `粘贴与编辑`
+  - 显示 `图片画廊`
   - 显示 `功能状态`
   - 显示 `图片文件保存位置`
   - 显示 `生成的图片文件名`
   - 显示两个预览块
   - 控制台无 `setErrorMessage is not a function`
+
+#### TC-SET-007 界面语言即时切换
+
+- 状态: `Implemented`
+- 目标: 验证设置页与功能状态支持中英文即时切换
+- 步骤:
+  1. 在设置页顶部将 `界面语言` 从 `简体中文` 切换到 `English`
+  2. 观察分组标题、字段说明和 `功能状态`
+  3. 切回 `简体中文`
+- 预期:
+  - 设置页立即刷新为英文
+  - `Recovery transactions` 与 `Watermark removal` 等功能状态显示为英文
+  - 切回中文后重新显示 `恢复事务` 与 `去水印`
 
 #### TC-SET-002 下拉设置持久化
 
@@ -874,7 +889,6 @@
   - 出现 `压缩图片`
   - 出现 `转换为默认格式`
   - 出现 `拖拽裁剪`
-  - 出现 `框选去水印`
   - 出现 `顺时针旋转 90°`
   - 出现 `水平翻转`
   - 出现 `垂直翻转`
@@ -1162,7 +1176,8 @@
   1. 对照设置页 `功能状态`
   2. 对照 `docs/task-status.md`
 - 预期:
-  - 已实现和部分实现描述基本一致
+  - 已实现、规划中和部分实现描述基本一致
+  - 去水印在设置页与文档中都只作为规划项出现
 
 #### TC-DOC-002 测试文档覆盖性
 

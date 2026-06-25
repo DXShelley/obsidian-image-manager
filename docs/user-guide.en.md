@@ -34,7 +34,6 @@ Right-click an image file in the file explorer to access:
 - Compress image
 - Convert to default format
 - Drag-to-crop
-- Remove watermark from selection
 - Rotate 90 degrees
 - Flip horizontal
 - Flip vertical
@@ -57,15 +56,29 @@ Right-click an image file in the file explorer to access:
 - If `renamePattern` contains `{time}`, collision handling uses ordered suffixes such as `-01`, `-02`, and `-03`.
 - When a note is renamed or moved, managed image folders can be synchronized automatically.
 
+## Compatibility Strategy
+
+- Treat image paste as a single-owner workflow. If `enablePasteHandler` is on, let Image Manager own paste capture, file placement, and auto-convert; if you rely more on Obsidian's native attachment flow or another paste plugin, turn this plugin's paste takeover off.
+- Treat note rename or move follow-up as another single-owner workflow. If another attachment-management plugin is already relocating folders or rewriting links, turn off `enableNoteRenameSync` to avoid duplicate moves and renames.
+- Prefer safely relocatable managed-folder templates such as `./assets/${noteFileName}` or `./assets/{noteName}`. Relative or note-scoped templates are easier to keep in sync when notes move and safer for scoped cleanup.
+- If `outputFolder` points to a fixed shared library such as `Attachments/Images`, use it as a shared pool instead of enabling note-rename sync. That reduces overlap with plugins such as `Attachment Management`, `Custom Attachment Location`, and `File Organizer`.
+- When you need better compatibility with external Markdown tooling, publishing pipelines, or sync flows, prefer `Markdown` links with the `AUTO` or `ENCODED` path strategy. Use `Wiki` links and shortest-unique paths mainly for Obsidian-first vaults.
+- Reading-view image enhancements should stay additive rather than replacing native behavior. If you rely on Obsidian's default image click selection, keep `disableObsidianImageSelectionOnClick` turned off and use double-click gallery entry as the extra interaction.
+- Turn on `deleteOrphanImages` only after your attachment boundaries and reference patterns are stable. If your vault still uses Canvas, nonstandard embeds, or external scripts that read images directly, leave it off.
+- Start with `【单文件】` and `【单文件夹】` scoped commands before running any `【整库】` operation so you can verify link rewrites and folder moves incrementally.
+- Use the settings page's compatibility section as the routine checkpoint. When paste, attachment-management, or file-organization plugins are enabled together, decide which plugin owns each workflow before you run bulk cleanup.
+
 ## Settings Page
 
+- The top of the settings page now includes an `Interface Language` switch for Simplified Chinese and English.
 - The save-location editor and generated-file-name editor appear at the top of the settings page.
 - Both fields include a live preview block.
+- The `Feature Status` section shows both shipped and planned capabilities; watermark removal is currently listed only as planned.
 - On older Obsidian builds, the plugin skips inline field-error rendering instead of crashing the entire settings page.
 
 ## Refresh Behavior
 
-- Rotate, flip, resize, crop, watermark removal, compress, and convert operations update the image file immediately.
+- Rotate, flip, resize, crop, compress, and convert operations update the image file immediately.
 - If the image is embedded in a Markdown note, the plugin attempts to rerender that note preview automatically.
 - Scoped batch-style commands defer Markdown rerenders so a run ends with one summary notice and one preview refresh.
 - The current-file conversion command operates on the active Markdown note and processes each referenced image at most once.

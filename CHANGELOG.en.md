@@ -2,14 +2,19 @@
 
 # Changelog
 
-## Unreleased
+## 3.1.0
+
+- Moved watermark removal into the planned-feature list so the project no longer ships an implementation that fails the quality bar.
+- Added bilingual settings-page and feature-status copy, defaulting to Simplified Chinese, and tightened configuration wording across the plugin.
+- Rewrote the bilingual website copy, typography, and information hierarchy, and added the project's "useful without entropy" philosophy.
+- Updated README, user guides, task status, test cases, and acknowledgements, including thanks to `obsidian-image-converter`.
 
 ## 3.0.0
 
-- Added context-menu driven drag-to-crop and selection-based watermark removal, both wrapped in recovery transactions so edits can be undone and redone safely.
+- Added context-menu driven drag-to-crop, wrapped in recovery transactions so edits can be undone and redone safely.
 - Tightened gallery and directory-management details, including reading-view double-click entry, current-image preselection inside the source-note gallery, and empty-folder cleanup that stays within image attachment branches.
 - Restored registration for the active-image rotate, flip, and resize-to-1920px commands, fixing mismatches between feature status, toggle semantics, and actual delivered capabilities.
-- Added unit coverage for crop, watermark removal, feature-catalog registration, and toggle-driven context-menu visibility, while cleaning up outdated docs and test descriptions.
+- Added unit coverage for crop, feature-catalog registration, and toggle-driven context-menu visibility, while cleaning up outdated docs and test descriptions.
 - Added a standalone `website/` marketing site that presents shipped features, planned items, and release-facing product messaging.
 
 ## 2.0.0

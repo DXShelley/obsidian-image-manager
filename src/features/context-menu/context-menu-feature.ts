@@ -89,12 +89,6 @@ export class ContextMenuFeature implements ImageManagerFeature {
       });
     });
     menu.addItem((item) => {
-      item.setTitle('框选去水印').setIcon('wand').onClick(() => {
-        context.services.logger.refreshMode('context-menu-watermark');
-        void this.removeWatermark(context, file);
-      });
-    });
-    menu.addItem((item) => {
       item.setTitle('顺时针旋转 90°').setIcon('rotate-cw').onClick(() => {
         context.services.logger.refreshMode('context-menu-rotate');
         void context.services.recovery.runTransaction(
@@ -200,33 +194,6 @@ export class ContextMenuFeature implements ImageManagerFeature {
       },
       async () => {
         await this.replaceImage(context, file, () => context.services.imageProcessor.crop(file, selection), 'Image cropped');
-      }
-    );
-  }
-
-  private async removeWatermark(context: ImageManagerFeatureContext, file: TFile): Promise<void> {
-    const selection = await this.pickSelection(context, file, {
-      title: `框选去水印：${file.name}`,
-      description: '拖拽框出水印区域，确认后会使用周边像素对选区进行修补。',
-      confirmLabel: '去水印'
-    });
-    if (!selection) {
-      return;
-    }
-
-    await context.services.recovery.runTransaction(
-      {
-        label: `右键去水印 ${file.name}`,
-        trigger: 'context-menu',
-        scope: 'single-file'
-      },
-      async () => {
-        await this.replaceImage(
-          context,
-          file,
-          () => context.services.imageProcessor.removeWatermark(file, selection),
-          'Watermark removed'
-        );
       }
     );
   }

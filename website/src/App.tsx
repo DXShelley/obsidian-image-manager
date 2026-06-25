@@ -1,6 +1,20 @@
-import { siteConfig } from './config/site';
+import { useEffect, useState } from 'react';
+import { getSiteConfig, type SiteLocale } from './config/site';
 
 function App(): JSX.Element {
+  const [locale, setLocale] = useState<SiteLocale>('zh-CN');
+  const siteConfig = getSiteConfig(locale);
+
+  useEffect(() => {
+    document.documentElement.lang = locale;
+    document.title = siteConfig.meta.title;
+
+    const description = document.querySelector('meta[name="description"]');
+    if (description) {
+      description.setAttribute('content', siteConfig.meta.description);
+    }
+  }, [locale, siteConfig.meta.description, siteConfig.meta.title]);
+
   return (
     <div className="page-shell">
       <div className="ambient ambient-left" aria-hidden="true" />
@@ -15,12 +29,30 @@ function App(): JSX.Element {
           </span>
         </a>
 
-        <nav className="topnav" aria-label="站点导航">
-          <a href="#features">核心能力</a>
-          <a href="#workflow">工作流</a>
-          <a href="#status">功能状态</a>
-          <a href="#install">开始使用</a>
-        </nav>
+        <div className="topbar-actions">
+          <nav className="topnav" aria-label={siteConfig.nav.ariaLabel}>
+            {siteConfig.nav.items.map((item) => (
+              <a href={item.href} key={item.href}>
+                {item.label}
+              </a>
+            ))}
+          </nav>
+
+          <div className="locale-switch" aria-label={siteConfig.languageSwitch.label}>
+            {(['zh-CN', 'en'] as const).map((item) => (
+              <button
+                type="button"
+                key={item}
+                className={`locale-switch__button ${locale === item ? 'is-active' : ''}`}
+                onClick={() => {
+                  setLocale(item);
+                }}
+              >
+                {siteConfig.languageSwitch.options[item]}
+              </button>
+            ))}
+          </div>
+        </div>
       </header>
 
       <main>
@@ -38,7 +70,7 @@ function App(): JSX.Element {
               </a>
             </div>
 
-            <ul className="stats" aria-label="发布亮点">
+            <ul className="stats" aria-label={siteConfig.sections.status.eyebrow}>
               {siteConfig.stats.map((item) => (
                 <li key={item.label}>
                   <strong>{item.value}</strong>
@@ -51,27 +83,25 @@ function App(): JSX.Element {
           <div className="hero-visual reveal reveal-delay-2" aria-hidden="true">
             <div className="ghost-version">{siteConfig.version}</div>
             <article className="visual-panel visual-panel-primary">
-              <span className="panel-tag">Current Note</span>
-              <h2>从粘贴到发布，图片路径和文件名都保持可控。</h2>
-              <p>受管目录、批量处理、恢复事务与阅读画廊共同构成完整链路。</p>
+              <span className="panel-tag">{siteConfig.hero.panelTag}</span>
+              <h2>{siteConfig.hero.panelTitle}</h2>
+              <p>{siteConfig.hero.panelBody}</p>
               <div className="command-strip">
-                <span>Paste Import</span>
-                <span>Auto Convert</span>
-                <span>Managed Folder Sync</span>
-                <span>Undo / Redo</span>
+                {siteConfig.hero.commandStrip.map((item) => (
+                  <span key={item}>{item}</span>
+                ))}
               </div>
             </article>
 
             <article className="visual-panel visual-panel-secondary">
               <div className="visual-kicker">
-                <span>Feature Rail</span>
-                <span>Implemented</span>
+                <span>{siteConfig.hero.railLabel}</span>
+                <span>{siteConfig.hero.railState}</span>
               </div>
               <ul className="rail-list">
-                <li>当前图片 / 当前笔记 / 当前文件夹画廊</li>
-                <li>拖拽裁剪与框选去水印</li>
-                <li>批量压缩、转换、链接重写</li>
-                <li>孤立图片清理与安全迁移</li>
+                {siteConfig.hero.railItems.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
               </ul>
             </article>
           </div>
@@ -79,8 +109,8 @@ function App(): JSX.Element {
 
         <section className="section" id="features">
           <div className="section-heading reveal">
-            <p className="eyebrow">Core Features</p>
-            <h2>围绕真实 Obsidian 图片流转场景设计，而不是堆零散命令。</h2>
+            <p className="eyebrow">{siteConfig.sections.features.eyebrow}</p>
+            <h2>{siteConfig.sections.features.title}</h2>
           </div>
 
           <div className="feature-grid">
@@ -105,12 +135,26 @@ function App(): JSX.Element {
               </article>
             ))}
           </div>
+
+          <article className="philosophy-card reveal reveal-delay-2">
+            <div className="section-heading section-heading-compact">
+              <p className="eyebrow eyebrow-compact">{siteConfig.sections.philosophy.eyebrow}</p>
+              <h3>{siteConfig.sections.philosophy.title}</h3>
+            </div>
+            <blockquote>{siteConfig.philosophy.quote}</blockquote>
+            <p>{siteConfig.philosophy.body}</p>
+            <div className="philosophy-points">
+              {siteConfig.philosophy.points.map((item) => (
+                <span key={item}>{item}</span>
+              ))}
+            </div>
+          </article>
         </section>
 
         <section className="section workflow-section" id="workflow">
           <div className="section-heading reveal">
-            <p className="eyebrow">Workflow</p>
-            <h2>把过去容易散落在插件、手工和记忆里的动作，收拢成一条清晰流水线。</h2>
+            <p className="eyebrow">{siteConfig.sections.workflow.eyebrow}</p>
+            <h2>{siteConfig.sections.workflow.title}</h2>
           </div>
 
           <div className="workflow-grid">
@@ -126,8 +170,8 @@ function App(): JSX.Element {
 
         <section className="section status-section" id="status">
           <div className="section-heading reveal">
-            <p className="eyebrow">Feature Status</p>
-            <h2>已上线和规划中统一展示，主页口径直接对齐仓库状态。</h2>
+            <p className="eyebrow">{siteConfig.sections.status.eyebrow}</p>
+            <h2>{siteConfig.sections.status.title}</h2>
           </div>
 
           <div className="status-grid">
@@ -136,7 +180,9 @@ function App(): JSX.Element {
                 <div className="status-top">
                   <h3>{item.title}</h3>
                   <span className={`status-badge status-${item.status}`}>
-                    {item.status === 'implemented' ? '已上线' : '规划中'}
+                    {item.status === 'implemented'
+                      ? siteConfig.statusLabels.implemented
+                      : siteConfig.statusLabels.planned}
                   </span>
                 </div>
                 <p>{item.description}</p>
@@ -148,7 +194,7 @@ function App(): JSX.Element {
         <section className="section install-section" id="install">
           <div className="install-panel reveal">
             <div className="install-copy">
-              <p className="eyebrow">Ship It</p>
+              <p className="eyebrow">{siteConfig.sections.install.eyebrow}</p>
               <h2>{siteConfig.install.title}</h2>
               <p>{siteConfig.install.note}</p>
             </div>
