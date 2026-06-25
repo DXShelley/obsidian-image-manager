@@ -16,7 +16,7 @@ Status mapping:
 
 ### Required Environment
 
-- Obsidian desktop
+- Obsidian test environment
 - A test vault with community plugins enabled
 - Plugin build artifacts copied into `.obsidian/plugins/note-image-manager/`
 - The current plugin version loaded and enabled

@@ -7,7 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Obsidian](https://img.shields.io/badge/Obsidian-desktop%20only-7c3aed.svg)](manifest.json)
 
-`Note Image Manager` is a desktop-only image-management plugin for Obsidian. It keeps image import, naming, conversion, compression, lightweight editing, gallery browsing, and recovery in one controlled workflow.
+`Note Image Manager` is an image-management plugin for Obsidian. It keeps image import, naming, conversion, compression, lightweight editing, gallery browsing, and recovery in one controlled workflow.
 
 Current version: `4.0.4`<br>
 Minimum Obsidian version: `1.13.1`<br>
@@ -55,7 +55,7 @@ After marketplace approval, install it from **Settings -> Community plugins** by
 
 - The plugin does not collect telemetry, does not include ads, and does not silently upload vault content.
 - Remote images are downloaded only when the relevant external-image import flow is enabled or explicitly triggered by the user.
-- `file://` local-image import is desktop-only and runs only when the user explicitly pastes or imports such sources.
+- `file://` local-image import runs only when the user explicitly pastes or imports such sources.
 - Formats such as `GIF`, `SVG`, `TIFF`, `HEIC`, and `AVIF` use layered compatibility: they may be recognized, imported, or accepted as conversion input, but that does not guarantee every in-place edit or compression path is stable.
 - Compression history and recovery snapshots are stored under `.obsidian/plugins/note-image-manager/` so the plugin can avoid duplicate compression and support undo / redo.
 - Vault-wide conversion, compression, and orphan-image cleanup commands require confirmation before running.
