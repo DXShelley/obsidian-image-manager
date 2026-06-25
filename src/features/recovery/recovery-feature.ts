@@ -6,7 +6,7 @@ import { showOperationNotice } from '@/utils/operation-feedback';
 export class RecoveryFeature implements ImageManagerFeature {
   readonly id = 'recovery';
   readonly name = 'Recovery';
-  readonly summary = 'Undo or redo the most recent Image Manager transaction from persisted snapshots.';
+  readonly summary = 'Undo or redo the most recent Note Image Manager transaction from persisted snapshots.';
   readonly state = 'implemented' as const;
 
   async register(context: ImageManagerFeatureContext): Promise<void> {
@@ -39,7 +39,7 @@ export class RecoveryFeature implements ImageManagerFeature {
 
       showOperationNotice(settings, notices.undoCompleted(restored.label));
     } catch (error) {
-      console.error('Image Manager failed to undo the last transaction', error);
+      console.error('Note Image Manager failed to undo the last transaction', error);
       context.services.logger.error('Recovery undo failed', error);
       new Notice(error instanceof Error ? error.message : getNoticeCopy(context.services.settings.getSettings().uiLanguage).undoFailed);
     }
@@ -57,7 +57,7 @@ export class RecoveryFeature implements ImageManagerFeature {
 
       showOperationNotice(settings, notices.redoCompleted(restored.label));
     } catch (error) {
-      console.error('Image Manager failed to redo the last transaction', error);
+      console.error('Note Image Manager failed to redo the last transaction', error);
       context.services.logger.error('Recovery redo failed', error);
       new Notice(error instanceof Error ? error.message : getNoticeCopy(context.services.settings.getSettings().uiLanguage).redoFailed);
     }

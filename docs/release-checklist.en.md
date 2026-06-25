@@ -12,8 +12,8 @@
 ## Release Assets And Versioning
 
 - Keep `manifest.json.version`, `package.json.version`, `versions.json`, and website version copy aligned.
-- The Git tag must exactly match `manifest.json.version`, for example `4.0.0`, without a `v` prefix.
-- GitHub Release assets must include `manifest.json`, `main.js`, and `styles.css`.
+- The Git tag must exactly match `manifest.json.version`, for example `4.0.1`, without a `v` prefix.
+- GitHub Release assets must include `manifest.json`, `main.js`, `styles.css`, and `note-image-manager-<version>.zip`.
 - Re-run `npm run validate` and `npm run build` before cutting the release.
 - The release workflow should verify tag/version consistency and upload the required assets automatically.
 

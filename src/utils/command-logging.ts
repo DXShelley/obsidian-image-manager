@@ -30,7 +30,7 @@ export async function executeLoggedCommand(
   } catch (error) {
     const language = resolveUiLanguage(context.services.settings.getSettings().uiLanguage);
     const commandName = getLocalizedCommandName(meta.commandId, language) ?? meta.commandName;
-    console.error(`Image Manager command failed: ${meta.commandName}`, error);
+    console.error(`Note Image Manager command failed: ${meta.commandName}`, error);
     context.services.logger.error('Command failed', error, {
       commandId: meta.commandId,
       commandName: meta.commandName,

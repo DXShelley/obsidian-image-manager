@@ -1,8 +1,8 @@
 [中文](README.md) | [English](README.en.md)
 
-# Obsidian Image Manager
+# Note Image Manager
 
-`Obsidian Image Manager` is a desktop-only image-management plugin for Obsidian. `v4.0.0` focuses on centralized bilingual UX, safer external-image import, layered AVIF compatibility, compression de-duplication history, and recovery-first image workflows.
+`Note Image Manager` is a desktop-only image-management plugin for Obsidian. `v4.0.1` focuses on centralized bilingual UX, safer external-image import, layered AVIF compatibility, compression de-duplication history, and recovery-first image workflows.
 
 Desktop-only image workflow for Obsidian with managed import, conversion, compression, lightweight editing, and recovery-first batch operations.
 
@@ -46,7 +46,7 @@ Desktop-only image workflow for Obsidian with managed import, conversion, compre
 - Support encoded, readable-wrapped, and automatic Markdown path presentation strategies so Chinese, spaces, parentheses, and already-encoded paths can coexist.
 - Include `AVIF` in image detection, external-image import, and conversion input flows, while requiring conversion to `PNG`, `JPEG`, or `WebP` before in-place compress / rotate / flip / crop / resize operations.
 - Persist compression history for the current file version to avoid recompressing already-processed or non-beneficial outputs.
-- Persist recovery transactions for image and Markdown changes, and support undo / redo for recent Image Manager operations.
+- Persist recovery transactions for image and Markdown changes, and support undo / redo for recent Note Image Manager operations.
 - Switch the settings page and feature-status panel between Simplified Chinese and English, with Chinese as the default.
 
 ## Limitations And Disclosure
@@ -80,7 +80,7 @@ Desktop-only image workflow for Obsidian with managed import, conversion, compre
 
 ## Installation
 
-- After marketplace approval: open **Settings -> Community plugins**, search for `Image Manager`, and install it there.
+- After marketplace approval: open **Settings -> Community plugins**, search for `Note Image Manager`, and install it there.
 - Before the first review is approved, or for manual installs: download `manifest.json`, `main.js`, and `styles.css` from a GitHub Release and copy them into `.obsidian/plugins/note-image-manager/`.
 - This plugin is intentionally desktop-only for the current release line.
 
@@ -93,11 +93,11 @@ Desktop-only image workflow for Obsidian with managed import, conversion, compre
 
 ## Release
 
-- Version: `4.0.0`
+- Version: `4.0.1`
 - Minimum Obsidian version: `0.15.0`
 - First listing: submit the repository through `community.obsidian.md` and wait for review.
-- Updates after approval: create a Git tag and GitHub Release that exactly matches `manifest.json.version`, for example `4.0.0`, without a `v` prefix.
-- Release artifacts: `manifest.json`, `main.js`, `styles.css`
+- Updates after approval: create a Git tag and GitHub Release that exactly matches `manifest.json.version`, for example `4.0.1`, without a `v` prefix.
+- Release artifacts: `manifest.json`, `main.js`, `styles.css`, `note-image-manager-<version>.zip`
 - Keep the GitHub repository description and homepage aligned with this README so the community directory, repo, and Pages site do not drift.
 
 ## Recovery
@@ -105,7 +105,7 @@ Desktop-only image workflow for Obsidian with managed import, conversion, compre
 - Recovery snapshots are stored under `.obsidian/plugins/note-image-manager/recovery/`.
 - `.gitignore` ignores `.obsidian/plugins/note-image-manager/recovery/` by default so local recovery snapshots are not committed.
 - History retention is capped to the newest `10` transactions and transactions older than `24` hours are pruned.
-- Use `恢复：撤销上一步图片管理修改` to roll back the latest Image Manager transaction.
+- Use `恢复：撤销上一步图片管理修改` to roll back the latest Note Image Manager transaction.
 - Use `恢复：重做上一步图片管理修改` to reapply the latest undone transaction.
 
 ## Development
@@ -119,8 +119,8 @@ npm run build
 ## Manual Verification
 
 1. Copy `manifest.json`, `main.js`, and `styles.css` into `.obsidian/plugins/note-image-manager/`.
-2. Enable **Image Manager** in **Settings -> Community plugins** and reload after each rebuild.
-3. Open **Settings -> Image Manager** and confirm the settings page renders without console errors, including save-path and file-name previews.
+2. Enable **Note Image Manager** in **Settings -> Community plugins** and reload after each rebuild.
+3. Open **Settings -> Note Image Manager** and confirm the settings page renders without console errors, including save-path and file-name previews.
 4. Switch `界面语言 / Interface Language` at the top of the settings page and confirm that section titles, field descriptions, and feature status update immediately.
 5. Paste an image into a note and verify that the save path, generated name, link format, and cursor placement follow your settings.
 6. Rotate or flip an image referenced by a Markdown note and verify that both the file and the rendered preview refresh.

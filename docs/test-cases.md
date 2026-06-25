@@ -76,14 +76,14 @@
   - 插件目录已复制 `manifest.json`、`main.js`、`styles.css`
   - Obsidian 已打开测试仓库
 - 步骤:
-  1. 在 Obsidian 中启用 `Image Manager`
+  1. 在 Obsidian 中启用 `Note Image Manager`
   2. 观察插件加载过程
   3. 打开开发者控制台查看是否有报错
 - 预期:
   - 插件成功启用
-  - 显示 `Image Manager loaded`
+  - 显示 `Note Image Manager loaded`
   - 控制台无未捕获异常
-  - 设置页出现 `Image Manager`
+  - 设置页出现 `Note Image Manager`
 
 #### TC-INIT-002 插件重载
 
@@ -107,7 +107,7 @@
 - 状态: `Implemented`
 - 目标: 验证设置页完整渲染
 - 步骤:
-  1. 打开 `Settings -> Image Manager`
+  1. 打开 `Settings -> Note Image Manager`
   2. 检查分组区域
 - 预期:
   - 顶部显示 `界面语言`
@@ -162,7 +162,7 @@
 - 状态: `Implemented`
 - 目标: 验证设置页在不支持 `Setting.setErrorMessage()` 的运行环境中仍可用
 - 步骤:
-  1. 在目标 Obsidian 版本打开 `Settings -> Image Manager`
+  1. 在目标 Obsidian 版本打开 `Settings -> Note Image Manager`
   2. 修改 `图片文件保存位置`
   3. 修改 `生成的图片文件名`
 - 预期:

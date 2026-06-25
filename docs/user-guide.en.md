@@ -61,7 +61,7 @@ Right-click an image file in the file explorer to access:
 
 ## Compatibility Strategy
 
-- Treat image paste as a single-owner workflow. If `enablePasteHandler` is on, let Image Manager own paste capture, file placement, and auto-convert; if you rely more on Obsidian's native attachment flow or another paste plugin, turn this plugin's paste takeover off.
+- Treat image paste as a single-owner workflow. If `enablePasteHandler` is on, let Note Image Manager own paste capture, file placement, and auto-convert; if you rely more on Obsidian's native attachment flow or another paste plugin, turn this plugin's paste takeover off.
 - Treat note rename or move follow-up as another single-owner workflow. If another attachment-management plugin is already relocating folders or rewriting links, turn off `enableNoteRenameSync` to avoid duplicate moves and renames.
 - Prefer safely relocatable managed-folder templates such as `./assets/${noteFileName}` or `./assets/{noteName}`. Relative or note-scoped templates are easier to keep in sync when notes move and safer for scoped cleanup.
 - If `outputFolder` points to a fixed shared library such as `Attachments/Images`, use it as a shared pool instead of enabling note-rename sync. That reduces overlap with plugins such as `Attachment Management`, `Custom Attachment Location`, and `File Organizer`.
@@ -92,7 +92,7 @@ Right-click an image file in the file explorer to access:
 
 ## Recovery
 
-- Image Manager records snapshots for file-content changes, path changes, and Markdown rewrites before applying a managed operation.
+- Note Image Manager records snapshots for file-content changes, path changes, and Markdown rewrites before applying a managed operation.
 - The undo command restores the latest transaction in reverse order, including images, note links, and files created by paste / import flows.
 - The redo command reapplies the most recently undone transaction so you can move back and forth across recent operations.
 - Recovery history is stored in `.obsidian/plugins/note-image-manager/recovery/`.

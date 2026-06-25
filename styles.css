@@ -35,7 +35,12 @@
     var(--background-secondary);
 }
 
-.image-manager-settings-hero__content h2 {
+.image-manager-settings-hero__content .setting-item-heading {
+  border-top: 0;
+  padding: 0;
+}
+
+.image-manager-settings-hero__content .setting-item-heading .setting-item-name {
   margin: 0 0 8px;
 }
 

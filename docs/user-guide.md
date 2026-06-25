@@ -63,7 +63,7 @@
 
 ## 兼容性策略
 
-- 把“图片粘贴”视为单一职责链路。若已启用 `enablePasteHandler`，建议让 Image Manager 独占图片粘贴、自动落盘和自动转换；若你更依赖 Obsidian 原生附件目录或其他粘贴类插件，请关闭本插件的粘贴接管。
+- 把“图片粘贴”视为单一职责链路。若已启用 `enablePasteHandler`，建议让 Note Image Manager 独占图片粘贴、自动落盘和自动转换；若你更依赖 Obsidian 原生附件目录或其他粘贴类插件，请关闭本插件的粘贴接管。
 - 把“笔记改名或移动后的附件迁移”视为单一职责链路。若已启用其他附件整理插件，建议关闭 `enableNoteRenameSync`，避免多个插件同时搬移目录、改写链接或重复重命名图片。
 - 优先使用可安全迁移的受管目录模板，例如 `./assets/${noteFileName}`、`./assets/{noteName}`。这类相对路径或基于笔记名的模板更适合在笔记移动时同步图片目录，也更容易限制清理范围。
 - 如果 `outputFolder` 指向固定公共目录，例如 `Attachments/Images`，更适合把它当作共享图库使用，而不是开启笔记改名同步；这样能减少与 `Attachment Management`、`Custom Attachment Location`、`File Organizer` 一类插件的交叉干预。
@@ -95,7 +95,7 @@
 
 ## 恢复
 
-- Image Manager 会在执行受管操作前，为文件内容变更、路径变更与 Markdown 重写记录快照。
+- Note Image Manager 会在执行受管操作前，为文件内容变更、路径变更与 Markdown 重写记录快照。
 - `撤销` 命令会按逆序恢复最近一次事务，包括图片、笔记链接以及粘贴 / 导入流程中创建的文件。
 - `重做` 命令会重新应用最近一次已撤销事务，因此可以在最近几次操作之间来回切换。
 - 恢复历史保存在 `.obsidian/plugins/note-image-manager/recovery/`。

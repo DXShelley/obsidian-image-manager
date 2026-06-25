@@ -2,6 +2,12 @@
 
 # Changelog
 
+## 4.0.1
+
+- Renamed the community-directory display name from the generic `Image Manager` to the more specific `Note Image Manager` to reduce review risk from an existing plugin with the same name.
+- Added a `note-image-manager-<version>.zip` release asset so users can download the complete install package directly.
+- Rendered the settings-page header with Obsidian's recommended `Setting.setHeading()` API to reduce UI-guideline review comments.
+
 ## 4.0.0
 
 - Added centralized bilingual copy so settings, feature status, command names, notices, context menus, and vault-risk confirmations follow the selected UI language.
@@ -42,7 +48,7 @@
 
 ## 1.0.0
 
-- First stable release of `Obsidian Image Manager`.
+- First stable release of `Note Image Manager`.
 - Modularized the plugin into `app`, `core`, `features`, `services`, `types`, `ui`, and `utils`.
 - Added configurable paste handling, save-path templates, rename templates, and live settings previews.
 - Added current-file, current-folder, and vault-wide commands where applicable.

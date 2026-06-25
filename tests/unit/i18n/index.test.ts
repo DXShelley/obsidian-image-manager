@@ -4,8 +4,8 @@ import { createBuiltInFeatures } from '@/app/feature-catalog';
 
 describe('i18n module', () => {
   it('serves settings-tab copy from a centralized locale bundle', () => {
-    expect(getSettingTabCopy('zh-CN').header.title).toBe('Image Manager 设置');
-    expect(getSettingTabCopy('en').header.title).toBe('Image Manager Settings');
+    expect(getSettingTabCopy('zh-CN').header.title).toBe('Note Image Manager 设置');
+    expect(getSettingTabCopy('en').header.title).toBe('Note Image Manager Settings');
   });
 
   it('serves localized command labels from the same locale bundle', () => {

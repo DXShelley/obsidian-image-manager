@@ -61,7 +61,7 @@
 - `recordCreatedFile(path)`：记录新建文件，以便撤销时删除。
 - `recordRename(fromPath, toPath)`：记录路径移动或重命名，用于反向回放。
 - `recordDeletedFolder(path)`：记录被移除的目录，以便撤销时重建。
-- `undoLastTransaction()`：恢复最近一次已提交或失败的 Image Manager 事务。
+- `undoLastTransaction()`：恢复最近一次已提交或失败的 Note Image Manager 事务。
 - `redoLastUndoneTransaction()`：重新应用最近一次已撤销的事务。
 
 ### `ImageProcessor`

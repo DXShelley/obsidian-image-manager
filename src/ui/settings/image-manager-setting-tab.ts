@@ -553,7 +553,7 @@ export class ImageManagerSettingTab extends PluginSettingTab {
     const languageOptions = getUiLanguageOptions();
     const hero = containerEl.createDiv({ cls: 'image-manager-settings-hero' });
     const content = hero.createDiv({ cls: 'image-manager-settings-hero__content' });
-    content.createEl('h2', { text: copy.header.title });
+    new Setting(content).setName(copy.header.title).setHeading();
     content.createEl('p', {
       text: copy.header.subtitle
     });
