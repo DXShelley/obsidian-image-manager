@@ -12,7 +12,7 @@
 ## 4.0.1
 
 - Renamed the community-directory display name from the generic `Image Manager` to the more specific `Note Image Manager` to reduce review risk from an existing plugin with the same name.
-- Added a `note-image-manager-<version>.zip` release asset so users can download the complete install package directly.
+- Added an install zip release asset so users can download the complete package directly.
 - Rendered the settings-page header with Obsidian's recommended `Setting.setHeading()` API to reduce UI-guideline review comments.
 
 ## 4.0.0

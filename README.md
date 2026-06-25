@@ -34,7 +34,7 @@
 ### 手动安装
 
 1. 打开 [Releases](https://github.com/DXShelley/obsidian-image-manager/releases)。
-2. 下载对应版本的 `manifest.json`、`main.js`、`styles.css`，或下载 `note-image-manager-<version>.zip`。
+2. 下载对应版本的 `manifest.json`、`main.js`、`styles.css`，或下载 `note-image-manager.zip`。
 3. 将文件放入你的 vault：`.obsidian/plugins/note-image-manager/`。
 4. 在 **Settings -> Community plugins** 中启用 **Note Image Manager**。
 
@@ -98,7 +98,7 @@ tests          Vitest 单元测试
 
 - `manifest.json.version`、`package.json.version`、`versions.json` 和展示站点版本文案应保持一致。
 - Git tag 必须与 `manifest.json.version` 完全一致，例如 `4.0.3`，不要添加 `v` 前缀。
-- GitHub Release 附件应包含 `manifest.json`、`main.js`、`styles.css` 和 `note-image-manager-<version>.zip`。
+- GitHub Release 附件应包含 `manifest.json`、`main.js`、`styles.css` 和 `note-image-manager.zip`。
 - 详细检查项见 [发布前清单](docs/release-checklist.md)。
 
 ## 致谢
