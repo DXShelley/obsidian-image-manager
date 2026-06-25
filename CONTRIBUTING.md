@@ -55,5 +55,5 @@ PR 描述建议包含：
 
 - `manifest.json.version`、`package.json.version`、`versions.json` 和展示站点版本文案必须一致。
 - Git tag 使用纯版本号，例如 `4.0.3`，不要加 `v` 前缀。
-- GitHub Release 附件应包含 `manifest.json`、`main.js`、`styles.css` 和 `note-image-manager-<version>.zip`。
+- GitHub Release 附件应包含 `manifest.json`、`main.js`、`styles.css` 和 `note-image-manager.zip`。
 - 详细规则见 [发布前清单](docs/release-checklist.md)。

@@ -12,7 +12,7 @@
 ## 4.0.1
 
 - 将社区目录展示名从泛用的 `Image Manager` 调整为更唯一的 `Note Image Manager`，降低与既有社区插件重名导致的审核退回风险。
-- 发布工作流新增 `note-image-manager-<version>.zip` 附件，方便用户直接下载完整安装包。
+- 发布工作流新增安装 zip 附件，方便用户直接下载完整安装包。
 - 设置页顶部标题改用 Obsidian 推荐的 `Setting.setHeading()` 渲染，减少人工审核中的 UI 规范评论。
 
 ## 4.0.0

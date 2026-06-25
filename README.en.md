@@ -34,7 +34,7 @@ After marketplace approval, install it from **Settings -> Community plugins** by
 ### Manual Install
 
 1. Open [Releases](https://github.com/DXShelley/obsidian-image-manager/releases).
-2. Download `manifest.json`, `main.js`, and `styles.css` for the target version, or download `note-image-manager-<version>.zip`.
+2. Download `manifest.json`, `main.js`, and `styles.css` for the target version, or download `note-image-manager.zip`.
 3. Place the files in your vault under `.obsidian/plugins/note-image-manager/`.
 4. Enable **Note Image Manager** in **Settings -> Community plugins**.
 
@@ -98,7 +98,7 @@ tests          Vitest unit tests
 
 - Keep `manifest.json.version`, `package.json.version`, `versions.json`, and the website version copy aligned.
 - The Git tag must exactly match `manifest.json.version`, for example `4.0.3`, without a `v` prefix.
-- GitHub Release assets should include `manifest.json`, `main.js`, `styles.css`, and `note-image-manager-<version>.zip`.
+- GitHub Release assets should include `manifest.json`, `main.js`, `styles.css`, and `note-image-manager.zip`.
 - See the [Release Checklist](docs/release-checklist.en.md) for the full checklist.
 
 ## Acknowledgements

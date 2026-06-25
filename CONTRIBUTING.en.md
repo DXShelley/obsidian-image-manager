@@ -55,5 +55,5 @@ Recommended PR description:
 
 - `manifest.json.version`, `package.json.version`, `versions.json`, and website version copy must stay aligned.
 - Use a plain version Git tag, for example `4.0.3`, without a `v` prefix.
-- GitHub Release assets should include `manifest.json`, `main.js`, `styles.css`, and `note-image-manager-<version>.zip`.
+- GitHub Release assets should include `manifest.json`, `main.js`, `styles.css`, and `note-image-manager.zip`.
 - See the [Release Checklist](docs/release-checklist.en.md) for details.
