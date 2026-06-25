@@ -16,7 +16,7 @@
 
 ### 必需环境
 
-- Obsidian 桌面版
+- Obsidian 测试环境
 - 已启用社区插件的测试仓库
 - 已将插件构建产物复制到 `.obsidian/plugins/note-image-manager/`
 - 已加载并启用当前插件版本

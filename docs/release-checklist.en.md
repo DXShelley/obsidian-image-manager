@@ -7,7 +7,7 @@
 - Submit through `community.obsidian.md` under `Plugins -> New plugin`; do not rely on the old `obsidian-releases` PR tutorials.
 - The repository must be public and expose `README.md`, `LICENSE`, and `manifest.json` from the default branch.
 - Keep the GitHub repository description, README hero copy, and Pages landing-page copy aligned so capability, version, and platform messaging do not drift.
-- The README should clearly state: plugin purpose, installation path, core commands, limitations and disclosures, desktop-only positioning, and any cases that use network access or external files.
+- The README should clearly state: plugin purpose, installation path, core commands, limitations and disclosures, and any cases that use network access or external files.
 
 ## Release Assets And Versioning
 

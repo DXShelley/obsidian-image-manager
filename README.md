@@ -7,7 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Obsidian](https://img.shields.io/badge/Obsidian-desktop%20only-7c3aed.svg)](manifest.json)
 
-`Note Image Manager` 是一个面向 Obsidian 桌面端的图片管理插件，用于把笔记图片的导入、命名、转换、压缩、轻量编辑、画廊浏览和恢复回退收敛到一条可控流程。
+`Note Image Manager` 是一个面向 Obsidian 的图片管理插件，用于把笔记图片的导入、命名、转换、压缩、轻量编辑、画廊浏览和恢复回退收敛到一条可控流程。
 
 当前版本：`4.0.4`<br>
 最低 Obsidian 版本：`1.13.1`<br>
@@ -55,7 +55,7 @@
 
 - 插件不会收集遥测数据，不包含广告，也不会在后台静默上传 vault 内容。
 - 仅当用户启用或触发外部图片导入相关能力时，插件才会访问网络下载远程图片。
-- `file://` 本地图片导入只在桌面端可用，并且只会在用户显式粘贴或导入这类来源时执行。
+- `file://` 本地图片导入只会在用户显式粘贴或导入这类来源时执行。
 - `GIF`、`SVG`、`TIFF`、`HEIC`、`AVIF` 等格式属于分层兼容：可识别、可导入或可作为转换输入，不代表所有原位编辑和压缩操作都稳定可用。
 - 插件会在 `.obsidian/plugins/note-image-manager/` 下保存压缩历史与恢复快照，用于避免重复压缩并支持撤销 / 重做。
 - 整库转换、整库压缩、整库删除多余图片文件等高风险操作都会先弹出确认。

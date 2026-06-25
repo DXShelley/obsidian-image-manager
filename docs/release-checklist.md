@@ -7,7 +7,7 @@
 - 使用 `community.obsidian.md` 的 `Plugins -> New plugin` 入口提交，不再走旧的 `obsidian-releases` PR 教程。
 - 仓库必须公开，且能正常访问默认分支上的 `README.md`、`LICENSE`、`manifest.json`。
 - GitHub 仓库描述、README 首屏文案、Pages 首页文案保持同一口径，不要出现能力、版本或平台定位不一致。
-- README 至少明确：插件用途、安装方式、核心命令、限制与披露、桌面端定位、需要联网或访问外部文件的场景。
+- README 至少明确：插件用途、安装方式、核心命令、限制与披露、需要联网或访问外部文件的场景。
 
 ## Release 附件与版本
 
