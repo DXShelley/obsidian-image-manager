@@ -16,10 +16,14 @@ export interface ResolvedTextImageSource {
   readonly originalName: string;
 }
 
-const IMAGE_FILE_EXTENSION_REGEX = /\.(png|jpe?g|gif|webp|bmp|svg|tiff?|heic)$/i;
+export interface ParseTextImageSourceOptions {
+  readonly allowExtensionlessRemote?: boolean;
+}
+
+const IMAGE_FILE_EXTENSION_REGEX = /\.(png|jpe?g|gif|webp|bmp|svg|tiff?|heic|avif)$/i;
 const DATA_IMAGE_URL_REGEX = /^data:(image\/[a-z0-9.+-]+);base64,([a-z0-9+/=\s]+)$/i;
 
-export function parseTextImageSources(text: string): TextImageSource[] {
+export function parseTextImageSources(text: string, options: ParseTextImageSourceOptions = {}): TextImageSource[] {
   const candidates = text
     .split(/\r?\n/)
     .map((line) => line.trim())
@@ -29,7 +33,7 @@ export function parseTextImageSources(text: string): TextImageSource[] {
     return [];
   }
 
-  const sources = candidates.map((line) => parseSingleTextImageSource(line));
+  const sources = candidates.map((line) => parseSingleTextImageSource(line, options));
   if (sources.some((source) => source === null)) {
     return [];
   }
@@ -48,7 +52,7 @@ export async function resolveTextImageSource(source: TextImageSource): Promise<R
   }
 }
 
-function parseSingleTextImageSource(value: string): TextImageSource | null {
+function parseSingleTextImageSource(value: string, options: ParseTextImageSourceOptions): TextImageSource | null {
   const dataSource = parseDataImageSource(value);
   if (dataSource !== null) {
     return dataSource;
@@ -75,15 +79,23 @@ function parseSingleTextImageSource(value: string): TextImageSource | null {
   if (/^https?:\/\//i.test(value)) {
     try {
       const url = new URL(value);
-      const name = decodeURIComponent(basename(url.pathname));
-      if (!name || !IMAGE_FILE_EXTENSION_REGEX.test(name)) {
+      const name = getRemoteSourceFileName(url);
+      if (name && IMAGE_FILE_EXTENSION_REGEX.test(name)) {
+        return {
+          kind: 'remote',
+          value,
+          originalName: name
+        };
+      }
+
+      if (!options.allowExtensionlessRemote) {
         return null;
       }
 
       return {
         kind: 'remote',
         value,
-        originalName: name
+        originalName: name || 'downloaded-image'
       };
     } catch {
       return null;
@@ -104,6 +116,9 @@ function parseDataImageSource(value: string): TextImageSource | null {
     return null;
   }
   const extension = mimeTypeToExtension(mimeType);
+  if (!extension) {
+    return null;
+  }
   return {
     kind: 'data',
     value,
@@ -150,14 +165,20 @@ async function resolveDataImageSource(source: TextImageSource): Promise<Resolved
 }
 
 function ensureFileNameExtension(fileName: string, mimeType: string): string {
-  if (extname(fileName)) {
+  if (IMAGE_FILE_EXTENSION_REGEX.test(fileName)) {
     return fileName;
   }
 
-  return `${fileName}.${mimeTypeToExtension(mimeType)}`;
+  const extension = mimeTypeToExtension(mimeType);
+  if (!extension) {
+    throw new Error(`Unsupported remote image format: ${mimeType}`);
+  }
+
+  const normalizedBaseName = extname(fileName) ? fileName.slice(0, -extname(fileName).length) : fileName;
+  return `${normalizedBaseName || 'downloaded-image'}.${extension}`;
 }
 
-function mimeTypeToExtension(mimeType: string): string {
+function mimeTypeToExtension(mimeType: string): string | null {
   switch (mimeType.toLowerCase()) {
     case 'image/jpeg':
       return 'jpg';
@@ -176,9 +197,20 @@ function mimeTypeToExtension(mimeType: string): string {
       return 'tiff';
     case 'image/heic':
       return 'heic';
+    case 'image/avif':
+      return 'avif';
     default:
-      return 'png';
+      return null;
   }
+}
+
+function getRemoteSourceFileName(url: URL): string {
+  const pathName = decodeURIComponent(basename(url.pathname));
+  if (pathName === '' || pathName === '/' || pathName === '.') {
+    return '';
+  }
+
+  return pathName;
 }
 
 function decodeBase64ToArrayBuffer(value: string): ArrayBuffer {

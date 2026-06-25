@@ -1,5 +1,6 @@
+import { getLocalizedCommandName, getNoticeCopy } from '@/i18n';
 import { Notice } from 'obsidian';
-import type { ImageManagerFeatureContext } from '@/types/index';
+import { resolveUiLanguage, type ImageManagerFeatureContext } from '@/types/index';
 
 interface CommandLogContext {
   readonly commandId: string;
@@ -27,13 +28,15 @@ export async function executeLoggedCommand(
       ...(meta.payload ?? {})
     });
   } catch (error) {
+    const language = resolveUiLanguage(context.services.settings.getSettings().uiLanguage);
+    const commandName = getLocalizedCommandName(meta.commandId, language) ?? meta.commandName;
     console.error(`Image Manager command failed: ${meta.commandName}`, error);
     context.services.logger.error('Command failed', error, {
       commandId: meta.commandId,
       commandName: meta.commandName,
       ...(meta.payload ?? {})
     });
-    new Notice(`命令执行失败：${meta.commandName}`);
+    new Notice(getNoticeCopy(language).commandFailed(commandName));
   }
 }
 

@@ -4,8 +4,8 @@ import type { App } from 'obsidian';
 interface RiskConfirmModalOptions {
   readonly title: string;
   readonly message: string;
-  readonly confirmText?: string;
-  readonly cancelText?: string;
+  readonly confirmText: string;
+  readonly cancelText: string;
 }
 
 export function confirmRiskAction(app: App, options: RiskConfirmModalOptions): Promise<boolean> {
@@ -32,14 +32,14 @@ class RiskConfirmModal extends Modal {
 
     const actions = this.contentEl.createDiv({ cls: 'image-manager-risk-confirm-actions' });
     const cancelButton = actions.createEl('button', {
-      text: this.options.cancelText ?? '取消'
+      text: this.options.cancelText
     });
     cancelButton.type = 'button';
     cancelButton.addEventListener('click', () => this.settle(false));
 
     const confirmButton = actions.createEl('button', {
       cls: 'mod-cta',
-      text: this.options.confirmText ?? '继续'
+      text: this.options.confirmText
     });
     confirmButton.type = 'button';
     confirmButton.addEventListener('click', () => this.settle(true));

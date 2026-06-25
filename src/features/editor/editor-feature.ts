@@ -1,4 +1,5 @@
 import { TFile } from 'obsidian';
+import { getDefaultCommandName, getNoticeCopy, getUiCopy } from '@/i18n';
 import type { ImageManagerFeature, ImageManagerFeatureContext } from '@/types/index';
 import { executeLoggedCommand, logSkippedCommand } from '@/utils/command-logging';
 import { showOperationNotice } from '@/utils/operation-feedback';
@@ -12,7 +13,7 @@ export class EditorFeature implements ImageManagerFeature {
   async register(context: ImageManagerFeatureContext): Promise<void> {
     const rotateCommand = {
       commandId: 'rotate-active-image-90',
-      commandName: '顺时针旋转图片 90°'
+      commandName: getDefaultCommandName('rotate-active-image-90')
     } as const;
     context.plugin.addCommand({
       id: rotateCommand.commandId,
@@ -21,13 +22,13 @@ export class EditorFeature implements ImageManagerFeature {
         void executeLoggedCommand(context, rotateCommand, async () => {
           await context.services.recovery.runTransaction(
             {
-              label: '旋转当前图片 90 度',
+              label: getUiCopy(context.services.settings.getSettings().uiLanguage).transactions.rotateActiveImage,
               trigger: 'rotate',
               scope: 'single-file'
             },
             async () => {
               await this.withActiveImageFile(context, rotateCommand, async (file) => {
-                await this.replaceImage(context, file, () => context.services.imageProcessor.rotate(file, 90), 'Image rotated');
+                await this.replaceImage(context, file, () => context.services.imageProcessor.rotate(file, 90), getNoticeCopy(context.services.settings.getSettings().uiLanguage).imageRotated);
               });
             }
           );
@@ -37,7 +38,7 @@ export class EditorFeature implements ImageManagerFeature {
 
     const flipCommand = {
       commandId: 'flip-active-image-horizontal',
-      commandName: '水平翻转图片'
+      commandName: getDefaultCommandName('flip-active-image-horizontal')
     } as const;
     context.plugin.addCommand({
       id: flipCommand.commandId,
@@ -46,13 +47,13 @@ export class EditorFeature implements ImageManagerFeature {
         void executeLoggedCommand(context, flipCommand, async () => {
           await context.services.recovery.runTransaction(
             {
-              label: '水平翻转当前图片',
+              label: getUiCopy(context.services.settings.getSettings().uiLanguage).transactions.flipActiveImageHorizontal,
               trigger: 'flip',
               scope: 'single-file'
             },
             async () => {
               await this.withActiveImageFile(context, flipCommand, async (file) => {
-                await this.replaceImage(context, file, () => context.services.imageProcessor.flip(file, 'horizontal'), 'Image flipped horizontally');
+                await this.replaceImage(context, file, () => context.services.imageProcessor.flip(file, 'horizontal'), getNoticeCopy(context.services.settings.getSettings().uiLanguage).imageFlippedHorizontal);
               });
             }
           );
@@ -86,7 +87,17 @@ export class EditorFeature implements ImageManagerFeature {
         ...command,
         reason: 'No active image file'
       });
-      showOperationNotice(context.services.settings.getSettings(), 'Open an image file first');
+      const settings = context.services.settings.getSettings();
+      showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noActiveImageFile);
+      return;
+    }
+    const restriction = context.services.imageProcessor.getInPlaceModificationRestriction(file);
+    if (restriction) {
+      logSkippedCommand(context, {
+        ...command,
+        reason: restriction
+      });
+      showOperationNotice(context.services.settings.getSettings(), restriction);
       return;
     }
 

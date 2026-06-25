@@ -2,7 +2,7 @@
 
 # Obsidian Image Manager
 
-`Obsidian Image Manager` is a desktop-only image-management plugin for Obsidian. `v3.1.1` focuses on practical image workflows, bilingual settings, safer external-image import, and a clearer release-facing presentation.
+`Obsidian Image Manager` is a desktop-only image-management plugin for Obsidian. `v4.0.0` focuses on centralized bilingual UX, safer external-image import, layered AVIF compatibility, compression de-duplication history, and recovery-first image workflows.
 
 Desktop-only image workflow for Obsidian with managed import, conversion, compression, lightweight editing, and recovery-first batch operations.
 
@@ -29,13 +29,12 @@ Desktop-only image workflow for Obsidian with managed import, conversion, compre
 - Convert pasted images to the configured default format.
 - Generate file names with variables such as `{noteName}`, `{fileName}`, `{date}`, `{time}`, and `{random}`.
 - Insert image links as either Obsidian Wiki links or standard Markdown links.
-- Import note image sources from `URL`, `file://`, and `data:image/...;base64,...` into the managed local folder.
+- Import note image sources from `URL`, `file://`, and `data:image/...;base64,...` into the managed local folder, including extensionless or dynamic image endpoints when an explicit import flow can verify the response `content-type`.
 - Batch-convert all images referenced by the current note.
 - Run link-update, format-conversion, compression, and orphan-image cleanup commands against the current file, current folder, or entire vault.
-- Sort scoped commands by the `a1-a5`, `b1-b5`, and `c1-c5` `id` order, while displaying them as `【单文件】`, `【单文件夹】`, and `【整库】` in the command palette.
+- Sort scoped commands by the `a1-a5`, `b1-b5`, and `c1-c5` `id` order, while displaying `【单文件】`, `【单文件夹】`, and `【整库】` as command-name suffixes in the command palette.
 - Prompt for confirmation before any vault-wide command runs.
 - Make current-note conversion and compression commands process every image referenced by the active Markdown note instead of only the active image file.
-- Provide active-image commands for rotate, flip, and resize-to-1920px so the current image can also be processed from the command palette.
 - Pause, resume, or cancel active batch jobs.
 - Use image context-menu actions for copy, compress, convert, rotate, horizontal or vertical flip, and drag-to-crop.
 - Open current-image, note-level, or folder-level galleries with filtering, sorting, grid/list toggles, and reading-view double-click entry points.
@@ -45,6 +44,7 @@ Desktop-only image workflow for Obsidian with managed import, conversion, compre
 - Handle name collisions safely with ordered suffixes such as `-01` and `-02` when time-based naming is used.
 - When format conversion would collapse different source formats into the same name, such as `aaa.png` and `aaa.jpg` to `webp`, generate unique names like `aaa.webp` and `aaa-1.webp`.
 - Support encoded, readable-wrapped, and automatic Markdown path presentation strategies so Chinese, spaces, parentheses, and already-encoded paths can coexist.
+- Include `AVIF` in image detection, external-image import, and conversion input flows, while requiring conversion to `PNG`, `JPEG`, or `WebP` before in-place compress / rotate / flip / crop / resize operations.
 - Persist compression history for the current file version to avoid recompressing already-processed or non-beneficial outputs.
 - Persist recovery transactions for image and Markdown changes, and support undo / redo for recent Image Manager operations.
 - Switch the settings page and feature-status panel between Simplified Chinese and English, with Chinese as the default.
@@ -55,6 +55,7 @@ Desktop-only image workflow for Obsidian with managed import, conversion, compre
 - The plugin does not collect telemetry, does not include ads, and does not silently upload vault content.
 - When features such as auto-downloading text image sources are enabled, the plugin may access the network to download remote images only in response to user actions.
 - The plugin can read local image files referenced by `file://` and import them into the vault. This behavior is desktop-only and only runs when the user explicitly pastes such sources.
+- Formats such as `GIF`, `SVG`, `TIFF`, `HEIC`, and `AVIF` should be treated as layered compatibility: recognized, importable, or convertible does not guarantee that every in-place edit or compression path is stable for that format.
 - The plugin stores compression history and recovery snapshots under `.obsidian/plugins/note-image-manager/` so it can avoid duplicate compression and support undo / redo.
 - Vault-wide conversion, compression, and orphan-image cleanup commands always require confirmation first, and managed image or Markdown changes are covered by recovery transactions.
 
@@ -92,10 +93,10 @@ Desktop-only image workflow for Obsidian with managed import, conversion, compre
 
 ## Release
 
-- Version: `3.1.1`
+- Version: `4.0.0`
 - Minimum Obsidian version: `0.15.0`
 - First listing: submit the repository through `community.obsidian.md` and wait for review.
-- Updates after approval: create a Git tag and GitHub Release that exactly matches `manifest.json.version`, for example `3.1.1`, without a `v` prefix.
+- Updates after approval: create a Git tag and GitHub Release that exactly matches `manifest.json.version`, for example `4.0.0`, without a `v` prefix.
 - Release artifacts: `manifest.json`, `main.js`, `styles.css`
 - Keep the GitHub repository description and homepage aligned with this README so the community directory, repo, and Pages site do not drift.
 
@@ -124,7 +125,7 @@ npm run build
 5. Paste an image into a note and verify that the save path, generated name, link format, and cursor placement follow your settings.
 6. Rotate or flip an image referenced by a Markdown note and verify that both the file and the rendered preview refresh.
 7. Right-click an image file in the file explorer and verify the plugin context-menu actions.
-8. Right-click a rendered external image in reading view and verify `下载该外部图片到本地` imports only the selected image source.
+8. Right-click a rendered external image in reading view and verify `下载该外部图片` imports only the selected image source.
 9. If Obsidian still shows old behavior after a rebuild, recopy `manifest.json`, `main.js`, and `styles.css` into the plugin directory and reload the plugin.
 10. Run the batch compression commands and confirm pause, resume, and cancel behave as expected.
 11. Open the note and folder galleries and verify filtering, sorting, and grid/list toggles.

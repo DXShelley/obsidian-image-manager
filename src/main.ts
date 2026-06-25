@@ -17,6 +17,7 @@ import {
   type ImageManagerSettings
 } from '@/types/index';
 import { ImageManagerSettingTab } from '@/ui/settings/image-manager-setting-tab';
+import { getLocalizedCommandName, getNoticeCopy, getUiCopy } from '@/i18n';
 import { getConvertedTargetPath } from '@/utils/image-manager';
 import {
   formatAutoConvertFallbackNotice,
@@ -47,6 +48,7 @@ export default class ImageManagerPlugin extends Plugin {
   );
   private featureRegistry!: FeatureRegistry;
   private services!: ImageManagerServices;
+  private readonly registeredCommandDefinitions = new Map<string, Command>();
 
   override async onload(): Promise<void> {
     await this.settingsManager.load();
@@ -64,8 +66,10 @@ export default class ImageManagerPlugin extends Plugin {
       features: this.featureRegistry.list().map((feature) => feature.id)
     });
 
-    showOperationNotice(this.settingsManager.getSettings(), 'Image Manager loaded');
-    const conflictNotice = formatPluginConflictNotice(detectPluginConflicts(this.app, this.settingsManager.getSettings()));
+    const settings = this.settingsManager.getSettings();
+    const notices = getNoticeCopy(settings.uiLanguage);
+    showOperationNotice(settings, notices.loaded);
+    const conflictNotice = formatPluginConflictNotice(detectPluginConflicts(this.app, settings), settings.uiLanguage);
     if (conflictNotice) {
       showOperationNotice(this.settingsManager.getSettings(), conflictNotice);
     }
@@ -108,7 +112,7 @@ export default class ImageManagerPlugin extends Plugin {
             : textSources.map((source) => ({ kind: 'text-image-source', source }));
         void this.insertPastedImages(inputs, view).catch((error: unknown) => {
           console.error('Image Manager failed to process pasted images', error);
-          new Notice('Failed to process pasted images');
+          new Notice(getNoticeCopy(this.settingsManager.getSettings().uiLanguage).failedToProcessPastedImages);
         });
       })
     );
@@ -137,6 +141,9 @@ export default class ImageManagerPlugin extends Plugin {
         this.services.logger.error('Failed to update image links after settings change', error);
       });
     }
+    if (changedKeys.includes('uiLanguage')) {
+      this.refreshRegisteredCommands();
+    }
     return updated;
   }
 
@@ -147,10 +154,14 @@ export default class ImageManagerPlugin extends Plugin {
   private async activateFeatures(): Promise<void> {
     const deferredCommands: Command[] = [];
     const originalAddCommand = this.addCommand.bind(this);
+    this.registeredCommandDefinitions.clear();
 
     this.addCommand = (command: Command) => {
-      deferredCommands.push(command);
-      return command;
+      const commandDefinition = this.createStoredCommandDefinition(command);
+      this.registeredCommandDefinitions.set(commandDefinition.id, commandDefinition);
+      const localized = this.localizeCommand(commandDefinition);
+      deferredCommands.push(localized);
+      return localized;
     };
 
     try {
@@ -160,8 +171,69 @@ export default class ImageManagerPlugin extends Plugin {
     }
 
     for (const command of sortCommandsByScope(deferredCommands)) {
-      originalAddCommand(applyScopedCommandSortKey(command));
+      originalAddCommand(this.createRuntimeCommand(applyScopedCommandSortKey(command, this.settingsManager.getSettings().uiLanguage)));
     }
+  }
+
+  private refreshRegisteredCommands(): void {
+    const language = this.settingsManager.getSettings().uiLanguage;
+    const commands = sortCommandsByScope(
+      [...this.registeredCommandDefinitions.values()].map((command) => this.localizeCommand(command))
+    );
+
+    for (const commandId of this.registeredCommandDefinitions.keys()) {
+      this.removeCommand(commandId);
+    }
+
+    for (const command of commands) {
+      this.addCommand(this.createRuntimeCommand(applyScopedCommandSortKey(command, language)));
+    }
+  }
+
+  private localizeCommand(command: Command): Command {
+    const localizedName = getLocalizedCommandName(command.id, this.settingsManager.getSettings().uiLanguage);
+    if (!localizedName || localizedName === command.name) {
+      return command;
+    }
+
+    return {
+      ...command,
+      name: localizedName
+    };
+  }
+
+  private createStoredCommandDefinition(command: Command): Command {
+    return {
+      ...command,
+      name: this.stripPluginNamePrefixes(command.name)
+    };
+  }
+
+  private createRuntimeCommand(command: Command): Command {
+    return {
+      ...command,
+      name: this.stripPluginNamePrefixes(command.name)
+    };
+  }
+
+  private stripPluginNamePrefixes(commandName: string): string {
+    const pluginName = this.manifest?.name ?? 'Image Manager';
+    const prefixes = [...new Set([pluginName, 'Image Manager'].filter((value) => value.trim().length > 0))];
+    let nextName = commandName.trimStart();
+    let changed = true;
+
+    while (changed) {
+      changed = false;
+      for (const prefix of prefixes) {
+        const marker = `${prefix}:`;
+        if (nextName.startsWith(marker)) {
+          nextName = nextName.slice(marker.length).trimStart();
+          changed = true;
+        }
+      }
+    }
+
+    return nextName;
   }
 
   private async insertPastedImages(inputs: ClipboardImageInput[], view: MarkdownView): Promise<void> {
@@ -179,7 +251,7 @@ export default class ImageManagerPlugin extends Plugin {
 
     await this.services.recovery.runTransaction(
       {
-        label: `粘贴导入 ${view.file.basename}`,
+        label: getUiCopy(this.settingsManager.getSettings().uiLanguage).transactions.pasteImport(view.file.basename),
         trigger: 'paste-import',
         scope: 'single-note'
       },
@@ -198,7 +270,7 @@ export default class ImageManagerPlugin extends Plugin {
             const settings = this.settingsManager.getSettings();
             let output = tempFile;
 
-            if (settings.enableAutoConvert && settings.defaultFormat !== this.extensionToImageFormat(tempFile.extension)) {
+            if (settings.enableAutoConvert && !this.extensionMatchesFormat(tempFile.extension, settings.defaultFormat)) {
               try {
                 const ignored = matchRegexIgnorePattern(settings.conversionIgnorePattern, tempFile.path);
                 if (ignored) {
@@ -242,7 +314,7 @@ export default class ImageManagerPlugin extends Plugin {
         }
 
         if (links.length === 0) {
-          new Notice('Failed to save pasted images');
+          new Notice(getNoticeCopy(this.settingsManager.getSettings().uiLanguage).failedToSavePastedImages);
           return;
         }
 
@@ -254,15 +326,18 @@ export default class ImageManagerPlugin extends Plugin {
         }
 
         if (failedFiles.length > 0) {
-          showOperationNotice(this.settingsManager.getSettings(), `Processed ${links.length} pasted image(s), failed ${failedFiles.length}`);
+          const activeSettings = this.settingsManager.getSettings();
+          showOperationNotice(activeSettings, getNoticeCopy(activeSettings.uiLanguage).processedPastedImages(links.length, failedFiles.length));
         } else {
-          showOperationNotice(this.settingsManager.getSettings(), formatSavedLocationNotice(savedPaths));
+          const activeSettings = this.settingsManager.getSettings();
+          showOperationNotice(activeSettings, formatSavedLocationNotice(savedPaths, activeSettings));
         }
 
         if (ignoredConversionFiles.length > 0 || failedConversionFiles.length > 0) {
+          const activeSettings = this.settingsManager.getSettings();
           showOperationNotice(
-            this.settingsManager.getSettings(),
-            formatAutoConvertFallbackNotice(ignoredConversionFiles.length, failedConversionFiles.length)
+            activeSettings,
+            formatAutoConvertFallbackNotice(ignoredConversionFiles.length, failedConversionFiles.length, activeSettings)
           );
         }
 
@@ -319,15 +394,15 @@ export default class ImageManagerPlugin extends Plugin {
     return this.services.fileManager.replaceFile(file, buffer, targetPath);
   }
 
-  private extensionToImageFormat(extension: string): ImageFormat {
+  private extensionMatchesFormat(extension: string, format: ImageFormat): boolean {
     const normalized = extension.toLowerCase();
     if (normalized === 'jpg') {
-      return ImageFormat.JPEG;
+      return format === ImageFormat.JPEG;
     }
-    if (Object.values(ImageFormat).includes(normalized as ImageFormat)) {
-      return normalized as ImageFormat;
+    if (normalized === 'tif') {
+      return format === ImageFormat.TIFF;
     }
-    return this.settingsManager.getSettings().defaultFormat;
+    return normalized === format.toLowerCase();
   }
 
   private async rewriteActiveNoteImageLinks(): Promise<void> {
@@ -339,7 +414,9 @@ export default class ImageManagerPlugin extends Plugin {
 
     await this.services.recovery.runTransaction(
       {
-        label: `重写活动笔记图片链接 ${noteFile.basename}`,
+        label: getUiCopy(this.settingsManager.getSettings().uiLanguage).transactions.rewriteActiveNoteImageLinks(
+          noteFile.basename
+        ),
         trigger: 'settings-rewrite',
         scope: 'single-note'
       },

@@ -1,3 +1,5 @@
+import { getNoticeCopy } from '@/i18n';
+import { DEFAULT_UI_LANGUAGE, type UiLanguage } from '@/types/index';
 import { formatBytes } from '@/utils/operation-feedback';
 
 export interface BatchLinkRewriteNoticeItem {
@@ -45,120 +47,126 @@ export interface BatchOrphanCleanupNoticeOptions {
   readonly relocatedImages: number;
   readonly preservedImages: number;
   readonly failedCount: number;
+  readonly language?: UiLanguage;
 }
 
-export function formatBatchLinkRewriteNotice(options: BatchLinkRewriteNoticeOptions): string {
+function getNotices(language?: UiLanguage) {
+  return getNoticeCopy(language ?? DEFAULT_UI_LANGUAGE);
+}
+
+export function formatBatchLinkRewriteNotice(options: BatchLinkRewriteNoticeOptions & { readonly language?: UiLanguage }): string {
+  const notices = getNotices(options.language);
   const { items, rewrittenLinks, movedImages, downloadedImages, deletedImages, deletedFolders, failedCount } = options;
   if (items.length === 0) {
     if (deletedImages > 0) {
-      const extras: string[] = [`deleted ${deletedImages} image(s)`];
-      if (deletedFolders > 0) {
-        extras.push(`removed ${deletedFolders} empty folder(s)`);
-      }
-      if (failedCount > 0) {
-        extras.push(`${failedCount} failed`);
-      }
-      return `Batch link update finished: 0 file(s), 0 link(s) updated; ${extras.join(', ')}`;
+      return notices.batchLinkUpdateEmptyWithDeletes(deletedImages, deletedFolders, failedCount);
     }
-    return failedCount > 0 ? `Batch link update finished: 0 file(s) updated, ${failedCount} failed` : 'No image links needed updating';
+    return failedCount > 0 ? notices.batchLinkUpdateEmptyFailed(failedCount) : notices.noImageLinksUpdated;
   }
 
-  const previews = items
-    .slice(0, 3)
-    .map((item) => `${item.notePath} (${item.replaced} link${item.replaced === 1 ? '' : 's'})`);
+  const previews = items.slice(0, 3).map((item) => notices.batchLinkPreviewItem(item.notePath, item.replaced));
   if (items.length > 3) {
-    previews.push(`+${items.length - 3} more`);
+    previews.push(notices.batchLinkMore(items.length - 3));
   }
 
   const extras: string[] = [];
   if (movedImages > 0) {
-    extras.push(`moved ${movedImages} image(s)`);
+    extras.push(notices.batchLinkMoved(movedImages));
   }
   if (downloadedImages > 0) {
-    extras.push(`downloaded ${downloadedImages} image(s)`);
+    extras.push(notices.batchLinkDownloaded(downloadedImages));
   }
   if (deletedImages > 0) {
-    extras.push(`deleted ${deletedImages} image(s)`);
+    extras.push(notices.batchLinkDeleted(deletedImages));
   }
   if (deletedFolders > 0) {
-    extras.push(`removed ${deletedFolders} empty folder(s)`);
+    extras.push(notices.batchLinkRemovedFolders(deletedFolders));
   }
   if (failedCount > 0) {
-    extras.push(`${failedCount} failed`);
+    extras.push(notices.batchFailedCount(failedCount));
   }
 
   const suffix = extras.length > 0 ? `; ${extras.join(', ')}` : '';
-  return `Batch link update finished: ${items.length} file(s), ${rewrittenLinks} link(s) updated: ${previews.join(', ')}${suffix}`;
+  return notices.batchLinkUpdateFinished(items.length, rewrittenLinks, previews.join(', '), suffix);
 }
 
-export function formatBatchCompressionNotice(options: BatchCompressionNoticeOptions): string {
+export function formatBatchCompressionNotice(options: BatchCompressionNoticeOptions & { readonly language?: UiLanguage }): string {
+  const notices = getNotices(options.language);
   const { fileCount, beforeBytes, afterBytes, showSpaceSaved } = options;
   if (fileCount === 0) {
-    return 'No images required compression';
+    return notices.batchCompressionNone;
   }
 
   if (!showSpaceSaved) {
-    return `Batch compression finished: ${fileCount} image(s)`;
+    return notices.batchCompressionFinished(fileCount);
   }
 
   const ratio = beforeBytes > 0 ? (Math.abs(beforeBytes - afterBytes) / beforeBytes) * 100 : 0;
-  const direction = afterBytes <= beforeBytes ? 'reduction' : 'increase';
-  return `Batch compression finished: ${fileCount} image(s), ${formatBytes(beforeBytes)} -> ${formatBytes(afterBytes)} (${ratio.toFixed(1)}% ${direction})`;
+  const direction = afterBytes <= beforeBytes ? notices.compressionDirectionReduction : notices.compressionDirectionIncrease;
+  return notices.batchCompressionFinishedWithDelta(
+    fileCount,
+    formatBytes(beforeBytes),
+    formatBytes(afterBytes),
+    `${ratio.toFixed(1)}%`,
+    direction
+  );
 }
 
-export function formatBatchExternalImageImportNotice(options: BatchExternalImageImportNoticeOptions): string {
+export function formatBatchExternalImageImportNotice(
+  options: BatchExternalImageImportNoticeOptions & { readonly language?: UiLanguage }
+): string {
+  const notices = getNotices(options.language);
   const { items, importedLinks, downloadedImages, failedCount } = options;
   if (items.length === 0) {
     if (failedCount > 0) {
-      return `External image import finished: 0 file(s), ${failedCount} failed`;
+      return notices.externalImportEmptyFailed(failedCount);
     }
-    return 'No external image links found';
+    return notices.noExternalImageLinksFound;
   }
 
-  const previews = items
-    .slice(0, 3)
-    .map((item) => `${item.notePath} (${item.replaced} link${item.replaced === 1 ? '' : 's'})`);
+  const previews = items.slice(0, 3).map((item) => notices.batchLinkPreviewItem(item.notePath, item.replaced));
   if (items.length > 3) {
-    previews.push(`+${items.length - 3} more`);
+    previews.push(notices.batchLinkMore(items.length - 3));
   }
 
   const extras: string[] = [];
   if (downloadedImages > 0) {
-    extras.push(`downloaded ${downloadedImages} image(s)`);
+    extras.push(notices.externalImportDownloaded(downloadedImages));
   }
   if (failedCount > 0) {
-    extras.push(`${failedCount} failed`);
+    extras.push(notices.batchFailedCount(failedCount));
   }
 
   const suffix = extras.length > 0 ? `; ${extras.join(', ')}` : '';
-  return `External image import finished: ${items.length} file(s), ${importedLinks} link(s) updated: ${previews.join(', ')}${suffix}`;
+  return notices.externalImportFinished(items.length, importedLinks, previews.join(', '), suffix);
 }
 
-export function formatBatchConversionNotice(options: BatchConversionNoticeOptions): string {
-  return `Batch conversion finished: ${options.imageCount} image(s) -> ${options.targetFormat}`;
+export function formatBatchConversionNotice(options: BatchConversionNoticeOptions & { readonly language?: UiLanguage }): string {
+  return getNotices(options.language).batchConversionFinished(options.imageCount, options.targetFormat);
 }
 
 export function formatBatchOrphanCleanupNotice(options: BatchOrphanCleanupNoticeOptions): string {
+  const notices = getNotices(options.language);
   const { deletedImages, deletedFolders, relocatedImages, preservedImages, failedCount } = options;
   if (deletedImages === 0 && relocatedImages === 0 && preservedImages === 0) {
-    return failedCount > 0 ? `Extra image cleanup finished: 0 image(s) removed, ${failedCount} failed` : 'No extra image files found';
+    return failedCount > 0 ? notices.orphanCleanupEmptyFailed(failedCount) : notices.noExtraImagesFound;
   }
 
   const segments: string[] = [];
   if (deletedImages > 0) {
-    segments.push(`removed ${deletedImages} image(s)`);
+    segments.push(notices.orphanCleanupRemovedImages(deletedImages));
   }
   if (relocatedImages > 0) {
-    segments.push(`moved ${relocatedImages} image(s) to referenced note folder(s)`);
+    segments.push(notices.orphanCleanupRelocatedImages(relocatedImages));
   }
   if (preservedImages > 0) {
-    segments.push(`kept ${preservedImages} image(s) still referenced by other notes`);
+    segments.push(notices.orphanCleanupPreservedImages(preservedImages));
   }
   if (deletedFolders > 0) {
-    segments.push(`removed ${deletedFolders} empty folder(s)`);
+    segments.push(notices.orphanCleanupRemovedFolders(deletedFolders));
   }
   if (failedCount > 0) {
-    segments.push(`${failedCount} failed`);
+    segments.push(notices.batchFailedCount(failedCount));
   }
-  return `Extra image cleanup finished: ${segments.join('; ')}`;
+  return notices.orphanCleanupFinished(segments.join('; '));
 }

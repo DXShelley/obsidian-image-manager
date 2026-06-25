@@ -56,6 +56,7 @@ describe('BatchFeature', () => {
         },
         settings: {
           getSettings: vi.fn(() => ({
+            uiLanguage: 'en',
             showOperationNotifications: true
           }))
         },
@@ -111,6 +112,7 @@ describe('BatchFeature', () => {
         },
         settings: {
           getSettings: vi.fn(() => ({
+            uiLanguage: 'en',
             showOperationNotifications: true
           }))
         },
@@ -172,6 +174,7 @@ describe('BatchFeature', () => {
         },
         settings: {
           getSettings: vi.fn(() => ({
+            uiLanguage: 'en',
             showOperationNotifications: true
           }))
         },
@@ -216,6 +219,7 @@ describe('BatchFeature', () => {
         },
         settings: {
           getSettings: vi.fn(() => ({
+            uiLanguage: 'en',
             showOperationNotifications: true
           }))
         }

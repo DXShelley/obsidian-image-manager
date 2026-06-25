@@ -54,8 +54,8 @@ describe('command ordering', () => {
 
   it('keeps unscoped commands after scoped command groups', () => {
     const commands = [
-      { id: 'd1-undo-last-image-manager-transaction', name: '恢复：撤销上一步图片管理修改' },
-      { id: 'd2-redo-last-image-manager-transaction', name: '恢复：重做上一步图片管理修改' },
+      { id: 'd1-undo-last-image-manager-transaction', name: '撤销图片修改' },
+      { id: 'd2-redo-last-image-manager-transaction', name: '重做图片修改' },
       { id: 'a4-compress-active-image', name: '压缩图片' },
       { id: 'c4-compress-vault-images', name: '压缩图片' },
       { id: 'custom-command', name: '其他命令' }
@@ -81,10 +81,49 @@ describe('command ordering', () => {
       .sort((left, right) => (left.name < right.name ? -1 : left.name > right.name ? 1 : 0));
 
     expect(commands.map((command) => stripScopedCommandSortKey(command.name))).toEqual([
-      '【单文件】压缩图片',
-      '【单文件夹】压缩图片',
-      '【整库】压缩图片',
+      '压缩图片【单文件】',
+      '压缩图片【单文件夹】',
+      '压缩图片【整库】',
       '其他命令'
     ]);
+  });
+
+  it('normalizes existing scoped prefixes to suffixes for palette display', () => {
+    expect(stripScopedCommandSortKey(applyScopedCommandSortKey({ id: 'a4-compress-active-image', name: '【单文件】压缩图片' }).name)).toBe(
+      '压缩图片【单文件】'
+    );
+    expect(
+      stripScopedCommandSortKey(applyScopedCommandSortKey({ id: 'b4-compress-current-folder-images', name: '压缩图片【单文件夹】' }).name)
+    ).toBe('压缩图片【单文件夹】');
+    expect(stripScopedCommandSortKey(applyScopedCommandSortKey({ id: 'c4-compress-vault-images', name: '【整库】压缩图片' }).name)).toBe(
+      '压缩图片【整库】'
+    );
+  });
+
+  it('only treats bracketed scope labels as supported suffixes', () => {
+    expect(stripScopedCommandSortKey(applyScopedCommandSortKey({ id: 'custom-command', name: '整理当前笔记：' }).name)).toBe('整理当前笔记：');
+  });
+
+  it('uses localized English scope suffixes when requested', () => {
+    const commands = [
+      { id: 'c4-compress-vault-images', name: 'Compress images' },
+      { id: 'b4-compress-current-folder-images', name: 'Compress images' },
+      { id: 'a4-compress-active-image', name: 'Compress images' }
+    ].map((command) => applyScopedCommandSortKey(command, 'en'));
+
+    expect(commands.map((command) => stripScopedCommandSortKey(command.name))).toEqual([
+      'Compress images【Vault】',
+      'Compress images【Folder】',
+      'Compress images【File】'
+    ]);
+  });
+
+  it('falls back to default scope labels for invalid language values', () => {
+    const command = applyScopedCommandSortKey(
+      { id: 'a4-compress-active-image', name: '压缩图片' },
+      'fr' as never
+    );
+
+    expect(stripScopedCommandSortKey(command.name)).toBe('压缩图片【单文件】');
   });
 });

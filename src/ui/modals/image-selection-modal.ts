@@ -1,5 +1,6 @@
 import { Modal, Notice } from 'obsidian';
 import type { App, TFile } from 'obsidian';
+import type { UiCopy } from '@/i18n';
 import type { ImageSelection } from '@/types/index';
 import { normalizeImageSelection } from '@/utils/image-edit';
 
@@ -8,6 +9,8 @@ interface ImageSelectionModalOptions {
   readonly title: string;
   readonly description: string;
   readonly confirmLabel: string;
+  readonly emptySelectionNotice: string;
+  readonly ui: UiCopy['imageSelection'];
   readonly onSubmit: (selection: ImageSelection) => void;
   readonly onCancel: () => void;
 }
@@ -103,14 +106,14 @@ export class ImageSelectionModal extends Modal {
     });
 
     const actions = this.contentEl.createDiv({ cls: 'image-manager-selection-modal__actions' });
-    const clearButton = actions.createEl('button', { text: '清空选区' });
+    const clearButton = actions.createEl('button', { text: this.options.ui.clearSelection });
     clearButton.type = 'button';
     clearButton.addEventListener('click', () => {
       this.currentSelection = null;
       this.renderSelection();
     });
 
-    const cancelButton = actions.createEl('button', { text: '取消' });
+    const cancelButton = actions.createEl('button', { text: this.options.ui.cancel });
     cancelButton.type = 'button';
     cancelButton.addEventListener('click', () => {
       this.cancel();
@@ -124,7 +127,7 @@ export class ImageSelectionModal extends Modal {
     confirmButton.addEventListener('click', () => {
       const selection = this.resolveSelectionInImagePixels();
       if (!selection) {
-        new Notice('请先拖拽选择一个区域');
+        new Notice(this.options.emptySelectionNotice);
         return;
       }
 
@@ -182,11 +185,11 @@ export class ImageSelectionModal extends Modal {
 
   private updateHint(selection?: ImageSelection): void {
     if (!selection || selection.width <= 0 || selection.height <= 0) {
-      this.hintEl.setText('在图片上按住鼠标左键拖拽，框出需要处理的区域。');
+      this.hintEl.setText(this.options.ui.dragHint);
       return;
     }
 
-    this.hintEl.setText(`当前选区：${Math.round(selection.width)} × ${Math.round(selection.height)} 像素（预览坐标）`);
+    this.hintEl.setText(this.options.ui.selectionHint(selection.width, selection.height));
   }
 
   private resolveSelectionInImagePixels(): ImageSelection | null {

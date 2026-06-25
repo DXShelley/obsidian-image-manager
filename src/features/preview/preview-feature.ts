@@ -1,5 +1,6 @@
 import { Menu, TFile } from 'obsidian';
 import type { MarkdownPostProcessorContext } from 'obsidian';
+import { getNoticeCopy, getUiCopy } from '@/i18n';
 import { openSingleImageGallery } from '@/features/gallery/gallery-actions';
 import type { ImageManagerFeature, ImageManagerFeatureContext } from '@/types/index';
 import { Alignment } from '@/types/index';
@@ -28,14 +29,17 @@ export class PreviewFeature implements ImageManagerFeature {
         image.setAttribute('src', this.buildFreshResourcePath(context, target));
         image.setAttribute('data-image-manager-path', target.path);
         image.addEventListener('dblclick', (event) => {
-          if (!context.services.settings.getSettings().enableGallery) {
-            showOperationNotice(context.services.settings.getSettings(), 'Gallery is disabled in settings');
+          const settings = context.services.settings.getSettings();
+          if (!settings.enableGallery) {
+            showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).galleryDisabled);
             return;
           }
 
           event.preventDefault();
           event.stopPropagation();
-          void openSingleImageGallery(context, target, sourceNote);
+          void openSingleImageGallery(context, target, sourceNote, {
+            lightboxCloseBehavior: 'close-modal'
+          });
         });
       }
     });
@@ -62,12 +66,13 @@ export class PreviewFeature implements ImageManagerFeature {
       event.stopPropagation();
 
       const menu = new Menu();
+      const ui = getUiCopy(context.services.settings.getSettings().uiLanguage);
       menu.addItem((item) => {
-        item.setTitle('下载该外部图片到本地').setIcon('download').onClick(() => {
+        item.setTitle(ui.contextMenu.downloadExternalImage).setIcon('download').onClick(() => {
           context.services.logger.refreshMode('preview-import-external-image');
           void context.services.recovery.runTransaction(
             {
-              label: `右键下载外部图片 ${sourceNote.basename}`,
+              label: ui.transactions.contextDownloadExternalImage(sourceNote.basename),
               trigger: 'context-menu',
               scope: 'single-note'
             },
@@ -93,17 +98,13 @@ export class PreviewFeature implements ImageManagerFeature {
                     externalSource
                   );
               if (result.replaced === 0 && result.downloaded === 0) {
-                showOperationNotice(
-                  context.services.settings.getSettings(),
-                  'No matching external image link found in the note'
-                );
+                const settings = context.services.settings.getSettings();
+                showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noMatchingExternalImageLink);
                 return;
               }
 
-              showOperationNotice(
-                context.services.settings.getSettings(),
-                `External image import finished: ${result.replaced} link(s) updated, downloaded ${result.downloaded} image(s)`
-              );
+              const settings = context.services.settings.getSettings();
+              showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).singleExternalImportFinished(result.replaced, result.downloaded));
             }
           );
         });
@@ -184,7 +185,9 @@ export class PreviewFeature implements ImageManagerFeature {
       return null;
     }
 
-    const sources = parseTextImageSources(rawSource);
+    const sources = parseTextImageSources(rawSource, {
+      allowExtensionlessRemote: true
+    });
     const [source] = sources;
     return sources.length === 1 && source ? source.value : null;
   }

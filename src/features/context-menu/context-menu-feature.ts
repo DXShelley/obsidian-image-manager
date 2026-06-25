@@ -1,5 +1,6 @@
 import { TFile } from 'obsidian';
 import type { Menu, TAbstractFile } from 'obsidian';
+import { getNoticeCopy, getUiCopy } from '@/i18n';
 import { openSingleImageGallery } from '@/features/gallery/gallery-actions';
 import type { ImageManagerFeature, ImageManagerFeatureContext } from '@/types/index';
 import type { ImageFormat, ImageSelection } from '@/types/index';
@@ -37,27 +38,47 @@ export class ContextMenuFeature implements ImageManagerFeature {
   }
 
   private addImageMenuItems(context: ImageManagerFeatureContext, menu: Menu, file: TFile): void {
+    const inPlaceRestriction = context.services.imageProcessor.getInPlaceModificationRestriction(file);
+    const ui = getUiCopy(context.services.settings.getSettings().uiLanguage);
     menu.addSeparator();
     menu.addItem((item) => {
-      item.setTitle('在画廊中打开').setIcon('images').onClick(() => {
+      item.setTitle(ui.contextMenu.openInGallery).setIcon('images').onClick(() => {
         context.services.logger.refreshMode('context-menu-gallery');
         void this.openImageGallery(context, file);
       });
     });
     if (canWriteImageToClipboard()) {
       menu.addItem((item) => {
-        item.setTitle('复制图片到剪贴板').setIcon('copy').onClick(() => {
+        item.setTitle(ui.contextMenu.copyImageToClipboard).setIcon('copy').onClick(() => {
           context.services.logger.refreshMode('context-menu-copy');
           void this.copyImageToClipboard(context, file);
         });
       });
     }
     menu.addItem((item) => {
-      item.setTitle('压缩图片').setIcon('archive').onClick(() => {
+      item.setTitle(ui.contextMenu.convertToDefaultFormat).setIcon('image').onClick(() => {
+        context.services.logger.refreshMode('context-menu-convert');
+        void context.services.recovery.runTransaction(
+          {
+            label: ui.transactions.contextConvertImage(file.name),
+            trigger: 'context-menu',
+            scope: 'single-file'
+          },
+          async () => {
+            await this.convertImage(context, file, context.services.settings.getSettings().defaultFormat);
+          }
+        );
+      });
+    });
+    if (inPlaceRestriction) {
+      return;
+    }
+    menu.addItem((item) => {
+      item.setTitle(ui.contextMenu.compressImage).setIcon('archive').onClick(() => {
         context.services.logger.refreshMode('context-menu-compress');
         void context.services.recovery.runTransaction(
           {
-            label: `右键压缩图片 ${file.name}`,
+            label: ui.transactions.contextCompressImage(file.name),
             trigger: 'context-menu',
             scope: 'single-file'
           },
@@ -68,67 +89,87 @@ export class ContextMenuFeature implements ImageManagerFeature {
       });
     });
     menu.addItem((item) => {
-      item.setTitle('转换为默认格式').setIcon('image').onClick(() => {
-        context.services.logger.refreshMode('context-menu-convert');
-        void context.services.recovery.runTransaction(
-          {
-            label: `右键转换图片 ${file.name}`,
-            trigger: 'context-menu',
-            scope: 'single-file'
-          },
-          async () => {
-            await this.convertImage(context, file, context.services.settings.getSettings().defaultFormat);
-          }
-        );
-      });
-    });
-    menu.addItem((item) => {
-      item.setTitle('拖拽裁剪').setIcon('scissors').onClick(() => {
+      item.setTitle(ui.contextMenu.cropBySelection).setIcon('scissors').onClick(() => {
         context.services.logger.refreshMode('context-menu-crop');
         void this.cropImage(context, file);
       });
     });
     menu.addItem((item) => {
-      item.setTitle('顺时针旋转 90°').setIcon('rotate-cw').onClick(() => {
+      item.setTitle(ui.contextMenu.rotateClockwise90).setIcon('rotate-cw').onClick(() => {
         context.services.logger.refreshMode('context-menu-rotate');
         void context.services.recovery.runTransaction(
           {
-            label: `右键旋转图片 ${file.name}`,
+            label: ui.transactions.contextRotateImage(file.name),
             trigger: 'context-menu',
             scope: 'single-file'
           },
           async () => {
-            await this.replaceImage(context, file, () => context.services.imageProcessor.rotate(file, 90), 'Image rotated');
+            await this.replaceImage(
+              context,
+              file,
+              () => context.services.imageProcessor.rotate(file, 90),
+              getNoticeCopy(context.services.settings.getSettings().uiLanguage).imageRotated
+            );
           }
         );
       });
     });
     menu.addItem((item) => {
-      item.setTitle('水平翻转').setIcon('flip-horizontal').onClick(() => {
-        context.services.logger.refreshMode('context-menu-flip');
+      item.setTitle(ui.contextMenu.rotateCounterClockwise90).setIcon('rotate-ccw').onClick(() => {
+        context.services.logger.refreshMode('context-menu-rotate');
         void context.services.recovery.runTransaction(
           {
-            label: `右键水平翻转图片 ${file.name}`,
+            label: ui.transactions.contextRotateImage(file.name),
             trigger: 'context-menu',
             scope: 'single-file'
           },
           async () => {
-            await this.replaceImage(context, file, () => context.services.imageProcessor.flip(file, 'horizontal'), 'Image flipped horizontally');
+            await this.replaceImage(
+              context,
+              file,
+              () => context.services.imageProcessor.rotate(file, 270),
+              getNoticeCopy(context.services.settings.getSettings().uiLanguage).imageRotated
+            );
           }
         );
       });
     });
     menu.addItem((item) => {
-      item.setTitle('垂直翻转').setIcon('flip-vertical').onClick(() => {
+      item.setTitle(ui.contextMenu.flipHorizontal).setIcon('flip-horizontal').onClick(() => {
         context.services.logger.refreshMode('context-menu-flip');
         void context.services.recovery.runTransaction(
           {
-            label: `右键垂直翻转图片 ${file.name}`,
+            label: ui.transactions.contextFlipHorizontalImage(file.name),
             trigger: 'context-menu',
             scope: 'single-file'
           },
           async () => {
-            await this.replaceImage(context, file, () => context.services.imageProcessor.flip(file, 'vertical'), 'Image flipped vertically');
+            await this.replaceImage(
+              context,
+              file,
+              () => context.services.imageProcessor.flip(file, 'horizontal'),
+              getNoticeCopy(context.services.settings.getSettings().uiLanguage).imageFlippedHorizontal
+            );
+          }
+        );
+      });
+    });
+    menu.addItem((item) => {
+      item.setTitle(ui.contextMenu.flipVertical).setIcon('flip-vertical').onClick(() => {
+        context.services.logger.refreshMode('context-menu-flip');
+        void context.services.recovery.runTransaction(
+          {
+            label: ui.transactions.contextFlipVerticalImage(file.name),
+            trigger: 'context-menu',
+            scope: 'single-file'
+          },
+          async () => {
+            await this.replaceImage(
+              context,
+              file,
+              () => context.services.imageProcessor.flip(file, 'vertical'),
+              getNoticeCopy(context.services.settings.getSettings().uiLanguage).imageFlippedVertical
+            );
           }
         );
       });
@@ -136,29 +177,31 @@ export class ContextMenuFeature implements ImageManagerFeature {
   }
 
   private async openImageGallery(context: ImageManagerFeatureContext, file: TFile): Promise<void> {
-    if (!context.services.settings.getSettings().enableGallery) {
-      showOperationNotice(context.services.settings.getSettings(), 'Gallery is disabled in settings');
+    const settings = context.services.settings.getSettings();
+    if (!settings.enableGallery) {
+      showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).galleryDisabled);
       return;
     }
 
-    await openSingleImageGallery(context, file);
+    await openSingleImageGallery(context, file, undefined, {
+      lightboxCloseBehavior: 'close-modal'
+    });
   }
 
   private async convertImage(context: ImageManagerFeatureContext, file: TFile, format: ImageFormat): Promise<void> {
+    const settings = context.services.settings.getSettings();
+    const notices = getNoticeCopy(settings.uiLanguage);
     context.services.logger.debug('Converting image from context menu', {
       filePath: file.path,
       targetFormat: format
     });
-    const ignored = matchRegexIgnorePattern(context.services.settings.getSettings().conversionIgnorePattern, file.path);
+    const ignored = matchRegexIgnorePattern(settings.conversionIgnorePattern, file.path);
     if (ignored) {
       context.services.logger.debug('Skipping context menu conversion because file matches ignore pattern', {
         filePath: file.path,
         pattern: ignored.source
       });
-      showOperationNotice(
-        context.services.settings.getSettings(),
-        formatConversionIgnoredNotice(file.name, ignored.source)
-      );
+      showOperationNotice(settings, formatConversionIgnoredNotice(file.name, ignored.source, settings));
       return;
     }
 
@@ -173,14 +216,16 @@ export class ContextMenuFeature implements ImageManagerFeature {
       filePath: file.path,
       targetPath
     });
-    showOperationNotice(context.services.settings.getSettings(), `Converted to ${format}`);
+    showOperationNotice(settings, notices.convertedToFormat(format));
   }
 
   private async cropImage(context: ImageManagerFeatureContext, file: TFile): Promise<void> {
+    const ui = getUiCopy(context.services.settings.getSettings().uiLanguage);
     const selection = await this.pickSelection(context, file, {
-      title: `裁剪图片：${file.name}`,
-      description: '拖拽选择要保留的区域，确认后会按选区裁剪当前图片。',
-      confirmLabel: '裁剪'
+      title: ui.contextMenu.cropDialogTitle(file.name),
+      description: ui.contextMenu.cropDialogDescription,
+      confirmLabel: ui.contextMenu.cropConfirm,
+      emptySelectionNotice: getNoticeCopy(context.services.settings.getSettings().uiLanguage).selectAreaFirst
     });
     if (!selection) {
       return;
@@ -188,12 +233,12 @@ export class ContextMenuFeature implements ImageManagerFeature {
 
     await context.services.recovery.runTransaction(
       {
-        label: `右键裁剪图片 ${file.name}`,
+        label: ui.transactions.contextCropImage(file.name),
         trigger: 'context-menu',
         scope: 'single-file'
       },
       async () => {
-        await this.replaceImage(context, file, () => context.services.imageProcessor.crop(file, selection), 'Image cropped');
+        await this.replaceImage(context, file, () => context.services.imageProcessor.crop(file, selection), getNoticeCopy(context.services.settings.getSettings().uiLanguage).imageCropped);
       }
     );
   }
@@ -221,7 +266,7 @@ export class ContextMenuFeature implements ImageManagerFeature {
     const settings = context.services.settings.getSettings();
     const thresholdBytes = settings.compressionThresholdKB * 1024;
     if (thresholdBytes > 0 && file.stat.size < thresholdBytes) {
-      showOperationNotice(settings, formatCompressionBelowThresholdNotice(file.name));
+      showOperationNotice(settings, formatCompressionBelowThresholdNotice(file.name, settings));
       return;
     }
 
@@ -231,7 +276,7 @@ export class ContextMenuFeature implements ImageManagerFeature {
         filePath: file.path,
         pattern: ignored.source
       });
-      showOperationNotice(settings, formatCompressionIgnoredNotice(file.name, ignored.source));
+      showOperationNotice(settings, formatCompressionIgnoredNotice(file.name, ignored.source, settings));
       return;
     }
 
@@ -241,7 +286,7 @@ export class ContextMenuFeature implements ImageManagerFeature {
         filePath: file.path,
         status: processedStatus
       });
-      showOperationNotice(settings, formatCompressionProcessedNotice(file.name, processedStatus));
+      showOperationNotice(settings, formatCompressionProcessedNotice(file.name, processedStatus, settings));
       return;
     }
 
@@ -254,7 +299,7 @@ export class ContextMenuFeature implements ImageManagerFeature {
         afterBytes: buffer.byteLength
       });
       await context.services.compressionTracker.markNotBeneficial(file);
-      showOperationNotice(settings, formatCompressionNoGainNotice(file.name));
+      showOperationNotice(settings, formatCompressionNoGainNotice(file.name, settings));
       return;
     }
 
@@ -262,19 +307,21 @@ export class ContextMenuFeature implements ImageManagerFeature {
     await context.services.fileManager.replaceFile(file, buffer, file.path, modifiedAt);
     await context.services.compressionTracker.markCompressed(file.path, buffer.byteLength, modifiedAt);
     if (settings.showSpaceSavedNotification) {
-      showOperationNotice(settings, formatCompressionSummary(before, buffer.byteLength));
+      showOperationNotice(settings, formatCompressionSummary(before, buffer.byteLength, settings));
       return;
     }
 
-    showOperationNotice(settings, 'Image compressed');
+    showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).imageCompressed);
   }
 
   private async copyImageToClipboard(context: ImageManagerFeatureContext, file: TFile): Promise<void> {
+    const settings = context.services.settings.getSettings();
+    const notices = getNoticeCopy(settings.uiLanguage);
     if (!canWriteImageToClipboard()) {
       context.services.logger.warn('Clipboard image copy is unavailable on this platform', {
         filePath: file.path
       });
-      showOperationNotice(context.services.settings.getSettings(), 'Copy image is not available on this platform');
+      showOperationNotice(settings, notices.copyImageUnavailable);
       return;
     }
 
@@ -284,12 +331,12 @@ export class ContextMenuFeature implements ImageManagerFeature {
         filePath: file.path,
         mimeType
       });
-      showOperationNotice(context.services.settings.getSettings(), 'Image copied');
+      showOperationNotice(settings, notices.imageCopied);
     } catch (error) {
       context.services.logger.error('Failed to copy image to clipboard', error, {
         filePath: file.path
       });
-      showOperationNotice(context.services.settings.getSettings(), 'Failed to copy image to clipboard');
+      showOperationNotice(settings, notices.failedToCopyImage);
     }
   }
 
@@ -300,13 +347,16 @@ export class ContextMenuFeature implements ImageManagerFeature {
       readonly title: string;
       readonly description: string;
       readonly confirmLabel: string;
+      readonly emptySelectionNotice: string;
     }
   ): Promise<ImageSelection | null> {
     return pickImageSelection(context.app, {
       file,
       title: options.title,
       description: options.description,
-      confirmLabel: options.confirmLabel
+      confirmLabel: options.confirmLabel,
+      emptySelectionNotice: options.emptySelectionNotice,
+      ui: getUiCopy(context.services.settings.getSettings().uiLanguage).imageSelection
     });
   }
 }

@@ -35,6 +35,7 @@ function createContext(overrides: Partial<{
   compressionStatus: 'compressed' | 'not-beneficial' | null;
   compressedBuffer: ArrayBuffer;
   showSpaceSavedNotification: boolean;
+  inPlaceRestriction: string | null;
   activeView: {
     file: TFile | null;
     editor: {
@@ -79,7 +80,8 @@ function createContext(overrides: Partial<{
         replaceFile
       },
       imageProcessor: {
-        compress: vi.fn(async () => overrides.compressedBuffer ?? new Uint8Array([1, 2, 3, 4]).buffer)
+        compress: vi.fn(async () => overrides.compressedBuffer ?? new Uint8Array([1, 2, 3, 4]).buffer),
+        getInPlaceModificationRestriction: vi.fn(() => overrides.inPlaceRestriction ?? null)
       },
       compressionTracker: {
         getCurrentStatus: vi.fn(async () => overrides.compressionStatus ?? null),
@@ -88,6 +90,7 @@ function createContext(overrides: Partial<{
       },
       settings: {
         getSettings: vi.fn(() => ({
+          uiLanguage: 'en',
           showOperationNotifications: true,
           showSpaceSavedNotification: overrides.showSpaceSavedNotification ?? true,
           compressionThresholdKB: 0,
@@ -103,7 +106,7 @@ describe('CompressFeature', () => {
     noticeMock.mockClear();
   });
 
-  it('registers scoped compression commands with explicit names', async () => {
+  it('registers scoped compression commands with centralized default names', async () => {
     const feature = new CompressFeature();
     const context = createContext();
 
@@ -112,15 +115,15 @@ describe('CompressFeature', () => {
     expect(context.plugin.addCommand).toHaveBeenCalledTimes(3);
     expect(context.plugin.addCommand).toHaveBeenNthCalledWith(
       1,
-      expect.objectContaining({ id: 'a4-compress-active-image', name: '【单文件】压缩图片' })
+      expect.objectContaining({ id: 'a4-compress-active-image', name: '压缩图片' })
     );
     expect(context.plugin.addCommand).toHaveBeenNthCalledWith(
       2,
-      expect.objectContaining({ id: 'b4-compress-current-folder-images', name: '【单文件夹】压缩图片' })
+      expect.objectContaining({ id: 'b4-compress-current-folder-images', name: '压缩图片' })
     );
     expect(context.plugin.addCommand).toHaveBeenNthCalledWith(
       3,
-      expect.objectContaining({ id: 'c4-compress-vault-images', name: '【整库】压缩图片' })
+      expect.objectContaining({ id: 'c4-compress-vault-images', name: '压缩图片' })
     );
   });
 
@@ -260,5 +263,28 @@ describe('CompressFeature', () => {
       expect(context.services.imageProcessor.compress).toHaveBeenNthCalledWith(1, image);
       expect(context.services.imageProcessor.compress).toHaveBeenNthCalledWith(2, secondImage);
     });
+  });
+
+  it('skips compression for formats that require conversion before in-place edits', async () => {
+    const feature = new CompressFeature();
+    const context = createContext({
+      inPlaceRestriction: 'Convert AVIF to PNG, JPEG, or WebP before editing or compressing it in place'
+    });
+    const file = Object.assign(new TFile(), {
+      path: 'assets/photo.avif',
+      name: 'photo.avif',
+      extension: 'avif',
+      stat: {
+        size: 400,
+        mtime: 200
+      }
+    });
+
+    await feature.compressImage(context as never, file as never);
+
+    expect(context.services.imageProcessor.compress).not.toHaveBeenCalled();
+    expect(noticeMock).toHaveBeenCalledWith(
+      'Convert AVIF to PNG, JPEG, or WebP before editing or compressing it in place'
+    );
   });
 });

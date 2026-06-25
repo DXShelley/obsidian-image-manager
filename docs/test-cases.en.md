@@ -520,7 +520,7 @@ Status mapping:
   - The current note contains both `![A](assets/%E6%89%AF%E7%9A%AE/test.png)` and `![B](assets/扯皮/test.png)` style Chinese image paths
   - Both links resolve to actual image files inside the vault
 - Steps:
-  1. Run `【单文件】更新图片链接与目录`.
+  1. Run `更新图片链接与目录【单文件】`.
 - Expected:
   - Both links are processed with no partial misses
   - The final link style matches `markdownPathEncodingStrategy`
@@ -532,7 +532,7 @@ Status mapping:
 - Preconditions:
   - The current note contains `https://...png`, `file://...png`, and `data:image/png;base64,...` image links
 - Steps:
-  1. Run `【单文件】下载外部图片到本地`.
+  1. Run `下载外部图片到本地【单文件】`.
 - Expected:
   - External images are downloaded into the configured output folder
   - External Markdown links are replaced with vault-local image links
@@ -609,7 +609,7 @@ Status mapping:
   - The active view is a Markdown note.
 - Steps:
   1. Reference 3 images in the current note.
-  2. Run `【单文件】压缩图片`.
+  2. Run `压缩图片【单文件】`.
 - Expected:
   - All 3 images are processed.
   - A batch-compression summary notice is shown.
@@ -674,7 +674,7 @@ Status mapping:
   - The note references at least 2 images.
   - `defaultFormat = png`
 - Steps:
-  1. Run `【单文件】转换图片为默认格式`.
+  1. Run `转换图片为默认格式【单文件】`.
 - Expected:
   - Images referenced by the current note are batch-converted to `.png`.
   - Each referenced image is processed at most once.
@@ -728,7 +728,7 @@ Status mapping:
 
 - Status: `Implemented`
 - Steps:
-  1. Run `【整库】转换图片为默认格式`.
+  1. Run `转换图片为默认格式【整库】`.
 - Expected:
   - A risk confirmation appears first.
   - Canceling stops the conversion.
@@ -759,31 +759,24 @@ Status mapping:
 
 #### TC-EDIT-001 Rotate 90 Degrees
 
-- Status: `Implemented`
-- Steps:
-  1. Run `Rotate active image 90 degrees` on a landscape image.
+- Status: `Deferred`
 - Expected:
-  - The image is rotated successfully.
-  - Width and height orientation swap.
-  - The image can still be opened.
+  - The current version does not expose a rotate shortcut in the Obsidian command list.
+  - Rotation is verified through the image file context menu.
 
 #### TC-EDIT-002 Horizontal Flip
 
-- Status: `Implemented`
-- Steps:
-  1. Run `Flip active image horizontally`.
+- Status: `Deferred`
 - Expected:
-  - The image is flipped left-to-right.
-  - The image can still be opened.
+  - The current version does not expose a horizontal-flip shortcut in the Obsidian command list.
+  - Horizontal flip is verified through the image file context menu.
 
 #### TC-EDIT-002B Vertical Flip
 
-- Status: `Implemented`
-- Steps:
-  1. Run `Flip active image vertically`.
+- Status: `Deferred`
 - Expected:
-  - The image is flipped top-to-bottom.
-  - The image can still be opened.
+  - The current version does not expose a vertical-flip shortcut in the Obsidian command list.
+  - Vertical flip is verified through the image file context menu.
 
 #### TC-EDIT-003 Rotate From Context Menu
 
@@ -792,7 +785,8 @@ Status mapping:
   1. Right-click the image.
   2. Select `Rotate 90 degrees`.
 - Expected:
-  - The result matches the command-palette rotation.
+  - The image is rotated 90 degrees clockwise.
+  - The image can still be opened.
 
 #### TC-EDIT-004 Flip From Context Menu
 
@@ -801,7 +795,8 @@ Status mapping:
   1. Right-click the image.
   2. Select `Flip horizontal`.
 - Expected:
-  - The result matches the command-palette flip action.
+  - The image is flipped horizontally.
+  - The image can still be opened.
 
 #### TC-EDIT-006 Markdown Preview Auto-refresh
 
@@ -839,32 +834,28 @@ Status mapping:
 
 #### TC-RESIZE-001 Resize To 1920 Bounding Box
 
-- Status: `Implemented`
+- Status: `Deferred`
 - Preconditions:
   - The active image width or height is greater than 1920.
-- Steps:
-  1. Run `Resize active image to 1920px bounding box`.
 - Expected:
-  - The output width and height are both no greater than 1920.
-  - The original aspect ratio remains reasonable.
+  - The current version does not expose a 1920 bounding-box resize command in the Obsidian command list.
+  - This item should not be marked as pass.
 
 #### TC-RESIZE-002 Resize A Small Image
 
-- Status: `Implemented`
+- Status: `Deferred`
 - Preconditions:
   - The image dimensions are smaller than 1920.
-- Steps:
-  1. Run the resize command.
 - Expected:
-  - No crash occurs.
-  - There is no obvious incorrect upscale distortion logic.
+  - The current version does not expose a resize command in the Obsidian command list.
+  - This item should not be marked as pass.
 
 #### TC-RESIZE-003 Advanced Resize Presets
 
-- Status: `Partial`
+- Status: `Deferred`
 - Expected:
-  - The current version has only a fixed preset command.
-  - There is no multi-preset UI and this should not be marked as pass.
+  - The current version does not include a multi-preset UI.
+  - This item should not be marked as pass.
 
 ### 12. Context Menu
 
@@ -1052,7 +1043,7 @@ Status mapping:
 
 - Status: `Implemented`
 - Steps:
-  1. Run `【整库】压缩图片`.
+  1. Run `压缩图片【整库】`.
 - Expected:
   - All supported images in the vault are traversed.
   - A completion notice is returned when the run finishes.
@@ -1159,10 +1150,10 @@ Status mapping:
 
 - Status: `Implemented`
 - Steps:
-  1. Validate file-menu behavior for `png`, `jpg`, `jpeg`, `gif`, `webp`, `bmp`, `svg`, `tif`, `tiff`, and `heic`.
+  1. Validate file-menu behavior for `png`, `jpg`, `jpeg`, `gif`, `webp`, `bmp`, `svg`, `tif`, `tiff`, `heic`, and `avif`.
 - Expected:
   - All of these extensions are recognized as images.
-  - For `svg`, `tif`, `tiff`, and `heic`, actual processing success still depends on runtime decode / encode support and should not be assumed from the extension alone.
+  - For `svg`, `tif`, `tiff`, `heic`, and `avif`, actual processing success still depends on runtime decode / encode support and should not be assumed from the extension alone.
 
 #### TC-FM-002 Non-image Type Detection
 
@@ -1180,6 +1171,32 @@ Status mapping:
   1. Call `saveRemoteImage` in an integration or manual debugging environment.
 - Expected:
   - The remote image is downloaded and saved according to the naming rules.
+
+#### TC-FM-004 Extensionless Remote Image Import
+
+- Status: `Implemented`
+- Preconditions:
+  - The current note contains an extensionless image link such as `![Remote](https://cdn.example.com/render?id=42)`
+- Steps:
+  1. Run `Download external images to local`.
+- Expected:
+  - The plugin decides whether the resource is an image based on the response `content-type`
+  - If it is an image, the resource is imported and the note is rewritten to a local link
+  - If it is not an image, the original link stays unchanged and the import reports a failure
+
+#### TC-FM-005 AVIF Layered Compatibility
+
+- Status: `Implemented`
+- Preconditions:
+  - The vault contains `photo.avif`
+- Steps:
+  1. Reference `photo.avif` from a Markdown note
+  2. Run `Convert images to default format【单文件】`
+  3. Try in-place compress, crop, rotate, or resize on `photo.avif`
+- Expected:
+  - `AVIF` is recognized as an image and can participate in note-scoped conversion
+  - Conversion produces the configured default format and rewrites the note link
+  - In-place compress, crop, rotate, flip, and resize are blocked with guidance to convert to `PNG`, `JPEG`, or `WebP` first
 
 ### 17. Documentation And Status Consistency
 

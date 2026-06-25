@@ -114,4 +114,42 @@ describe('ImageProcessor', () => {
     expect(toBlob).toHaveBeenCalledWith(expect.any(Function), 'image/png', 0.9);
     expect(result.byteLength).toBe(3);
   });
+
+  it('maps tif, bmp, and svg extensions to explicit internal formats', () => {
+    const processor = new ImageProcessor({} as never, () => ({
+      defaultFormat: ImageFormat.WEBP,
+      defaultQuality: 80
+    }) as never);
+    const runtime = processor as unknown as {
+      extensionToFormat: (extension: string) => ImageFormat;
+    };
+
+    expect(runtime.extensionToFormat('tif')).toBe(ImageFormat.TIFF);
+    expect(runtime.extensionToFormat('bmp')).toBe(ImageFormat.BMP);
+    expect(runtime.extensionToFormat('svg')).toBe(ImageFormat.SVG);
+  });
+
+  it('uses the correct source MIME type for AVIF inputs', () => {
+    const processor = new ImageProcessor({} as never, () => ({
+      defaultFormat: ImageFormat.WEBP,
+      defaultQuality: 80
+    }) as never);
+    const runtime = processor as unknown as {
+      extensionToMime: (extension: string) => string;
+    };
+
+    expect(runtime.extensionToMime('avif')).toBe('image/avif');
+  });
+
+  it('requires AVIF files to be converted before in-place edits', () => {
+    const processor = new ImageProcessor({} as never, () => ({
+      defaultFormat: ImageFormat.WEBP,
+      defaultQuality: 80
+    }) as never);
+
+    expect(processor.getInPlaceModificationRestriction({ extension: 'avif' } as never)).toBe(
+      'Convert AVIF to PNG, JPEG, or WebP before editing or compressing it in place'
+    );
+    expect(processor.canModifyInPlace({ extension: 'avif' } as never)).toBe(false);
+  });
 });

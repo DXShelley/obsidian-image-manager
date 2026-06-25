@@ -29,7 +29,7 @@ __export(main_exports, {
   default: () => ImageManagerPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian22 = require("obsidian");
+var import_obsidian20 = require("obsidian");
 
 // src/features/align/align-feature.ts
 var AlignFeature = class {
@@ -46,18 +46,1013 @@ var AlignFeature = class {
 // src/features/batch/batch-feature.ts
 var import_obsidian4 = require("obsidian");
 
+// src/i18n/language.ts
+var SUPPORTED_UI_LANGUAGES = ["zh-CN", "en"];
+var DEFAULT_UI_LANGUAGE = "zh-CN";
+var UI_LANGUAGE_LABELS = {
+  "zh-CN": "\u7B80\u4F53\u4E2D\u6587",
+  en: "English"
+};
+function getUiLanguageOptions() {
+  return UI_LANGUAGE_LABELS;
+}
+function isUiLanguage(value) {
+  return typeof value === "string" && SUPPORTED_UI_LANGUAGES.includes(value);
+}
+function resolveUiLanguage(value) {
+  return isUiLanguage(value) ? value : DEFAULT_UI_LANGUAGE;
+}
+
+// src/i18n/index.ts
+var COMMAND_SCOPE_COPIES = {
+  "zh-CN": {
+    displayLabels: {
+      FILE: "\u3010\u5355\u6587\u4EF6\u3011",
+      FOLDER: "\u3010\u5355\u6587\u4EF6\u5939\u3011",
+      VAULT: "\u3010\u6574\u5E93\u3011"
+    },
+    aliases: {
+      FILE: ["\u3010\u5355\u6587\u4EF6\u3011", "\u5355\u6587\u4EF6\uFF1A", "\u5F53\u524D\u6587\u4EF6\uFF1A", "\u5F53\u524D\u7B14\u8BB0\uFF1A", "\u56FE\u7247\uFF1A"],
+      FOLDER: ["\u3010\u5355\u6587\u4EF6\u5939\u3011", "\u5355\u6587\u4EF6\u5939\uFF1A", "\u5F53\u524D\u6587\u4EF6\u5939\uFF1A"],
+      VAULT: ["\u3010\u6574\u5E93\u3011", "\u6574\u5E93\uFF1A", "\u6574\u4E2A\u4ED3\u5E93\uFF1A"]
+    }
+  },
+  en: {
+    displayLabels: {
+      FILE: "\u3010File\u3011",
+      FOLDER: "\u3010Folder\u3011",
+      VAULT: "\u3010Vault\u3011"
+    },
+    aliases: {
+      FILE: ["\u3010File\u3011", "File:", "Current file:", "Current note:", "Image:"],
+      FOLDER: ["\u3010Folder\u3011", "Folder:", "Current folder:"],
+      VAULT: ["\u3010Vault\u3011", "Vault:", "Entire vault:"]
+    }
+  }
+};
+var ZH_SETTINGS_TAB = {
+  languageLabel: "\u754C\u9762\u8BED\u8A00",
+  languageDescription: "\u5207\u6362\u8BBE\u7F6E\u9875\u4E0E\u529F\u80FD\u72B6\u6001\u7684\u663E\u793A\u8BED\u8A00\u3002\u9ED8\u8BA4\u4E2D\u6587\u3002",
+  header: {
+    title: "Image Manager \u8BBE\u7F6E",
+    subtitle: "\u7BA1\u7406 Obsidian \u56FE\u7247\u4FDD\u5B58\u3001\u8F6C\u6362\u3001\u538B\u7F29\u548C\u6062\u590D\u3002",
+    reset: "\u6062\u590D\u9ED8\u8BA4\u8BBE\u7F6E",
+    resetNotice: "Image Manager \u8BBE\u7F6E\u5DF2\u6062\u590D\u4E3A\u9ED8\u8BA4\u503C"
+  },
+  sections: {
+    naming: {
+      title: "\u4FDD\u5B58\u4E0E\u547D\u540D",
+      description: "\u5148\u5B9A\u4FDD\u5B58\u4F4D\u7F6E\uFF0C\u518D\u5B9A\u6587\u4EF6\u540D\u89C4\u5219\uFF1B\u8FD9\u4E24\u9879\u51B3\u5B9A\u56FE\u7247\u6700\u7EC8\u5982\u4F55\u843D\u76D8\u3002"
+    },
+    convert: {
+      title: "\u8F6C\u6362\u4E0E\u538B\u7F29",
+      description: "\u63A7\u5236\u9ED8\u8BA4\u8F93\u51FA\u8D28\u91CF\u3001\u81EA\u52A8\u8F6C\u6362\u4E0E\u538B\u7F29\u7B56\u7565\u3002"
+    },
+    editor: {
+      title: "\u7C98\u8D34\u4E0E\u7F16\u8F91",
+      description: "\u63A7\u5236\u7C98\u8D34\u63A5\u7BA1\u3001\u53F3\u952E\u7F16\u8F91\u548C\u56FE\u7247\u4EA4\u4E92\u884C\u4E3A\u3002"
+    },
+    gallery: {
+      title: "\u56FE\u7247\u753B\u5ECA",
+      description: "\u63A7\u5236\u753B\u5ECA\u5165\u53E3\u3001\u9ED8\u8BA4\u5E03\u5C40\u548C\u6392\u5E8F\u89C4\u5219\u3002"
+    },
+    compatibility: {
+      title: "\u517C\u5BB9\u6027\u4E0E\u51B2\u7A81\u89C4\u907F",
+      description: "\u68C0\u67E5\u5E73\u53F0\u9650\u5236\u3001\u539F\u751F\u9644\u4EF6\u89C4\u5219\u548C\u5E38\u89C1\u63D2\u4EF6\u51B2\u7A81\u3002"
+    },
+    featureStatus: {
+      title: "\u529F\u80FD\u72B6\u6001",
+      description: "\u533A\u5206\u5F53\u524D\u5DF2\u53EF\u7528\u80FD\u529B\u4E0E\u540E\u7EED\u89C4\u5212\u80FD\u529B\u3002"
+    }
+  },
+  samples: {
+    noteName: "\u9879\u76EE\u5468\u62A5",
+    fileName: "\u9875\u9762\u622A\u56FE",
+    notePath: "Projects/\u9879\u76EE\u5468\u62A5.md",
+    vaultRoot: "(\u4ED3\u5E93\u6839\u76EE\u5F55)"
+  },
+  previews: {
+    outputFolder: "\u5B9E\u9645\u4FDD\u5B58\u4F4D\u7F6E\u9884\u89C8",
+    renamePattern: "\u547D\u540D\u6A21\u677F\u9884\u89C8"
+  },
+  exampleTitles: {
+    outputFolder: "\u5E38\u7528\u4FDD\u5B58\u4F4D\u7F6E",
+    renamePattern: "\u5E38\u7528\u547D\u540D\u89C4\u5219",
+    compressionIgnore: "\u538B\u7F29\u5FFD\u7565\u793A\u4F8B",
+    conversionIgnore: "\u8F6C\u6362\u5FFD\u7565\u793A\u4F8B",
+    presets: "\u63A8\u8350\u7EC4\u5408",
+    variables: "\u53EF\u7528\u53D8\u91CF"
+  },
+  settings: {
+    outputFolderName: "\u56FE\u7247\u4FDD\u5B58\u4F4D\u7F6E",
+    outputFolderDesc: "\u652F\u6301\u76F8\u5BF9\u8DEF\u5F84\u548C\u53D8\u91CF\u6A21\u677F\u3002\u7559\u7A7A\u65F6\u4FDD\u5B58\u5230\u5F53\u524D\u7B14\u8BB0\u76EE\u5F55\u3002",
+    defaultFormatName: "\u9ED8\u8BA4\u56FE\u7247\u683C\u5F0F",
+    defaultFormatDesc: "\u7528\u4E8E\u81EA\u52A8\u8F6C\u6362\u548C\u624B\u52A8\u8F6C\u6362\u7684\u76EE\u6807\u683C\u5F0F\u3002",
+    defaultLinkFormatName: "\u9ED8\u8BA4\u94FE\u63A5\u683C\u5F0F",
+    defaultLinkFormatDesc: "\u51B3\u5B9A\u65B0\u63D2\u5165\u56FE\u7247\u4F7F\u7528\u54EA\u79CD\u94FE\u63A5\u8BED\u6CD5\u3002",
+    defaultPathFormatName: "\u9ED8\u8BA4\u8DEF\u5F84\u683C\u5F0F",
+    defaultPathFormatDesc: "\u51B3\u5B9A\u63D2\u5165\u94FE\u63A5\u65F6\u4F18\u5148\u4F7F\u7528\u54EA\u79CD\u8DEF\u5F84\u3002",
+    markdownPathName: "Markdown \u8DEF\u5F84\u8F93\u51FA\u7B56\u7565",
+    markdownPathDesc: "\u4EC5\u5BF9 Markdown \u56FE\u7247\u94FE\u63A5\u751F\u6548\u3002",
+    renamePatternName: "\u751F\u6210\u7684\u56FE\u7247\u6587\u4EF6\u540D",
+    renamePatternDesc: "\u652F\u6301\u53D8\u91CF\u6A21\u677F\u3002\u7559\u7A7A\u65F6\u56DE\u9000\u4E3A\u539F\u6587\u4EF6\u540D\u3002",
+    enableAutoRenameName: "\u542F\u7528\u81EA\u52A8\u91CD\u547D\u540D",
+    enableAutoRenameDesc: "\u5173\u95ED\u540E\u4FDD\u7559\u539F\u6587\u4EF6\u540D\uFF0C\u4EC5\u5728\u8F6C\u6362\u65F6\u66F4\u65B0\u6269\u5C55\u540D\u3002",
+    renameImagesOnRelocateName: "\u7B14\u8BB0\u6539\u540D\u540E\u540C\u6B65\u91CD\u547D\u540D\u56FE\u7247",
+    renameImagesOnRelocateDesc: "\u4EC5\u5728\u53D7\u7BA1\u76EE\u5F55\u540C\u6B65\u5F00\u542F\u65F6\u751F\u6548\u3002",
+    deleteEmptyFoldersName: "\u5220\u9664\u7A7A\u56FE\u7247\u6587\u4EF6\u5939",
+    deleteEmptyFoldersDesc: "\u53EA\u6E05\u7406\u56FE\u7247\u9644\u4EF6\u76EE\u5F55\u4E2D\u56E0\u8FC1\u79FB\u6216\u5220\u9664\u800C\u7559\u4E0B\u7684\u7A7A\u76EE\u5F55\u3002",
+    deleteOrphanImagesName: "\u5220\u9664\u5B64\u7ACB\u56FE\u7247",
+    deleteOrphanImagesDesc: "\u6267\u884C\u201C\u66F4\u65B0\u56FE\u7247\u94FE\u63A5\u4E0E\u76EE\u5F55\u201D\u65F6\uFF0C\u987A\u5E26\u6E05\u7406\u5F53\u524D\u8303\u56F4\u5185\u672A\u88AB\u5F15\u7528\u7684\u56FE\u7247\u3002",
+    defaultQualityName: "\u9ED8\u8BA4\u5904\u7406\u8D28\u91CF",
+    defaultQualityDesc: "\u7528\u4E8E\u8F6C\u6362\u3001\u65CB\u8F6C\u3001\u7FFB\u8F6C\u548C\u7F29\u653E\u3002",
+    compressionQualityName: "\u538B\u7F29\u8D28\u91CF",
+    compressionQualityDesc: "\u8D8A\u4F4E\u8D8A\u7701\u7A7A\u95F4\uFF0C\u753B\u8D28\u635F\u5931\u4E5F\u8D8A\u660E\u663E\u3002",
+    enableAutoConvertName: "\u7C98\u8D34\u56FE\u7247\u65F6\u81EA\u52A8\u8F6C\u6362\u683C\u5F0F",
+    enableAutoConvertDesc: "\u542F\u7528\u540E\uFF0C\u7C98\u8D34\u56FE\u7247\u4F1A\u5148\u8F6C\u4E3A\u9ED8\u8BA4\u683C\u5F0F\u518D\u4FDD\u5B58\u3002",
+    showOperationNotificationsName: "\u663E\u793A\u64CD\u4F5C\u901A\u77E5",
+    showOperationNotificationsDesc: "\u5173\u95ED\u540E\uFF0C\u4EC5\u4FDD\u7559\u5931\u8D25\u63D0\u793A\u3002",
+    showSpaceSavedNotificationName: "\u538B\u7F29\u540E\u63D0\u793A\u8282\u7701\u7A7A\u95F4",
+    showSpaceSavedNotificationDesc: "\u663E\u793A\u538B\u7F29\u524D\u540E\u5927\u5C0F\u548C\u6BD4\u4F8B\u3002",
+    compressionIgnorePatternName: "\u538B\u7F29\u5FFD\u7565\u6B63\u5219",
+    compressionIgnorePatternDesc: "\u6BCF\u884C\u4E00\u4E2A\u6B63\u5219\uFF1B\u547D\u4E2D\u8DEF\u5F84\u65F6\u8DF3\u8FC7\u538B\u7F29\u3002\u652F\u6301 `#` \u6CE8\u91CA\u3002",
+    conversionIgnorePatternName: "\u8F6C\u6362\u5FFD\u7565\u6B63\u5219",
+    conversionIgnorePatternDesc: "\u6BCF\u884C\u4E00\u4E2A\u6B63\u5219\uFF1B\u547D\u4E2D\u8DEF\u5F84\u65F6\u8DF3\u8FC7\u8F6C\u6362\u3002\u652F\u6301 `#` \u6CE8\u91CA\u3002",
+    compressionThresholdKBName: "\u538B\u7F29\u9608\u503C\uFF08KB\uFF09",
+    compressionThresholdKBDesc: "\u4F4E\u4E8E\u8BE5\u4F53\u79EF\u7684\u56FE\u7247\u8DF3\u8FC7\u538B\u7F29\u3002",
+    enablePasteHandlerName: "\u63A5\u7BA1\u7F16\u8F91\u5668\u56FE\u7247\u7C98\u8D34",
+    enablePasteHandlerDesc: "\u542F\u7528\u540E\uFF0C\u63D2\u4EF6\u4F1A\u63A5\u7BA1\u56FE\u7247\u7C98\u8D34\u5E76\u4F7F\u7528\u672C\u63D2\u4EF6\u89C4\u5219\u4FDD\u5B58\u3002",
+    enableAutoDownloadImagesFromTextName: "\u81EA\u52A8\u4E0B\u8F7D\u6587\u672C\u56FE\u7247\u6E90",
+    enableAutoDownloadImagesFromTextDesc: "\u7C98\u8D34\u56FE\u7247 URL\u3001`file://` \u6216 `data:image` \u65F6\u81EA\u52A8\u4E0B\u8F7D\u5E76\u63D2\u5165\u3002",
+    dropPasteCursorLocationName: "\u63D2\u5165\u56FE\u7247\u540E\u5149\u6807\u4F4D\u7F6E",
+    dropPasteCursorLocationDesc: "\u63A7\u5236\u56FE\u7247\u94FE\u63A5\u63D2\u5165\u540E\uFF0C\u5149\u6807\u505C\u5728\u524D\u9762\u8FD8\u662F\u540E\u9762\u3002",
+    enableContextMenuName: "\u542F\u7528\u6587\u4EF6\u53F3\u952E\u83DC\u5355\u64CD\u4F5C",
+    enableContextMenuDesc: "\u663E\u793A\u590D\u5236\u3001\u753B\u5ECA\u3001\u538B\u7F29\u3001\u8F6C\u6362\u3001\u88C1\u526A\u3001\u65CB\u8F6C\u548C\u7FFB\u8F6C\u7B49\u56FE\u7247\u64CD\u4F5C\u3002",
+    enableImageAlignName: "\u542F\u7528\u56FE\u7247\u9ED8\u8BA4\u5BF9\u9F50",
+    enableImageAlignDesc: "\u4E3A\u6E32\u67D3\u540E\u7684\u56FE\u7247\u9644\u52A0\u9ED8\u8BA4\u5BF9\u9F50\u6837\u5F0F\uFF0C\u4E0D\u4FEE\u6539 Markdown \u6E90\u6587\u3002",
+    imageAlignmentDefaultName: "\u9ED8\u8BA4\u56FE\u7247\u5BF9\u9F50\u65B9\u5F0F",
+    imageAlignmentDefaultDesc: "\u4EC5\u5728\u542F\u7528\u56FE\u7247\u9ED8\u8BA4\u5BF9\u9F50\u65F6\u751F\u6548\u3002",
+    disableImageSelectionName: "\u7981\u7528 Obsidian \u56FE\u7247\u70B9\u51FB\u9009\u4E2D",
+    disableImageSelectionDesc: "\u542F\u7528\u540E\uFF0C\u9884\u89C8\u6A21\u5F0F\u4E0B\u4F18\u5148\u963B\u6B62\u539F\u751F\u70B9\u51FB\u9009\u4E2D\u3002",
+    enableGalleryName: "\u542F\u7528\u56FE\u7247\u753B\u5ECA",
+    enableGalleryDesc: "\u63A7\u5236\u753B\u5ECA\u547D\u4EE4\u3001\u53F3\u952E\u5165\u53E3\u548C\u9605\u8BFB\u89C6\u56FE\u53CC\u51FB\u5165\u53E3\u3002",
+    galleryGridSizeName: "\u753B\u5ECA\u7F51\u683C\u5C3A\u5BF8",
+    galleryGridSizeDesc: "\u51B3\u5B9A\u6BCF\u884C\u663E\u793A\u6570\u91CF\u548C\u7F29\u7565\u56FE\u5927\u5C0F\u3002",
+    gallerySortByName: "\u753B\u5ECA\u9ED8\u8BA4\u6392\u5E8F",
+    gallerySortByDesc: "\u6253\u5F00\u753B\u5ECA\u65F6\u9ED8\u8BA4\u91C7\u7528\u7684\u6392\u5E8F\u65B9\u5F0F\u3002",
+    enableNoteRenameSyncName: "\u7B14\u8BB0\u6539\u540D\u6216\u79FB\u52A8\u65F6\u540C\u6B65\u53D7\u7BA1\u56FE\u7247\u76EE\u5F55",
+    enableNoteRenameSyncDesc: "\u4EC5\u5BF9\u53EF\u5B89\u5168\u8BC6\u522B\u7684\u53D7\u7BA1\u76EE\u5F55\u751F\u6548\u3002"
+  },
+  buttons: {
+    applyPreset: "\u5E94\u7528\u6B64\u7EC4\u5408"
+  },
+  labels: {
+    outputFolderFallback: "(\u8DDF\u968F\u5F53\u524D\u7B14\u8BB0\u76EE\u5F55)",
+    invalidVariables: "\u672A\u8BC6\u522B\u7684\u53D8\u91CF\uFF1A",
+    invalidRegex: "\u65E0\u6548\u6B63\u5219\uFF1A",
+    compatibilityOk: "\u517C\u5BB9",
+    compatibilityWarning: "\u6CE8\u610F"
+  },
+  options: {
+    linkFormat: { wiki: "Wiki \u94FE\u63A5", markdown: "Markdown \u94FE\u63A5" },
+    pathFormat: { shortest: "\u6700\u77ED\u552F\u4E00\u8DEF\u5F84", relative: "\u76F8\u5BF9\u8DEF\u5F84", absolute: "\u7EDD\u5BF9\u8DEF\u5F84" },
+    markdownPathEncodingStrategy: { encoded: "\u5F3A\u5236\u7F16\u7801", readable: "\u4E2D\u6587\u53EF\u8BFB", auto: "\u81EA\u52A8" },
+    dropPasteCursorLocation: { front: "\u505C\u5728\u524D\u9762", back: "\u79FB\u5230\u540E\u9762" },
+    imageAlignment: { none: "\u4E0D\u5904\u7406", left: "\u5DE6\u5BF9\u9F50", center: "\u5C45\u4E2D", right: "\u53F3\u5BF9\u9F50" },
+    galleryGridSize: { small: "\u5C0F", medium: "\u4E2D", large: "\u5927" },
+    gallerySortBy: { date: "\u6700\u65B0\u4F18\u5148", name: "\u6309\u540D\u79F0", size: "\u5927\u56FE\u4F18\u5148" }
+  },
+  variableDescriptions: [
+    { token: "{noteName}", description: "\u5F53\u524D\u7B14\u8BB0\u540D\uFF08\u4E0D\u542B\u6269\u5C55\u540D\uFF09" },
+    { token: "{noteFileName}", description: "\u4E0E {noteName} \u7B49\u4EF7\uFF0C\u9002\u5408\u76EE\u5F55\u6A21\u677F" },
+    { token: "{fileName}", description: "\u539F\u59CB\u56FE\u7247\u6587\u4EF6\u540D\uFF08\u4E0D\u542B\u6269\u5C55\u540D\uFF09" },
+    { token: "{date}", description: "\u5F53\u524D\u65E5\u671F\uFF0C\u683C\u5F0F\u4E3A YYYY-MM-DD" },
+    { token: "{time}", description: "\u5F53\u524D\u65F6\u95F4\uFF0C\u683C\u5F0F\u4E3A HH-MM-SS" },
+    { token: "{random}", description: "\u968F\u673A\u540E\u7F00\uFF0C\u907F\u514D\u91CD\u540D" }
+  ],
+  renameExamples: [
+    { label: "\u7B14\u8BB0\u540D + \u65E5\u671F", value: "{noteName}-{date}", description: "\u9002\u5408\u6309\u7B14\u8BB0\u6C89\u6DC0\u56FE\u7247\u3002" },
+    { label: "\u7B14\u8BB0\u540D + \u65F6\u95F4", value: "{noteName}-{date}-{time}", description: "\u9002\u5408\u8FDE\u7EED\u7C98\u8D34\u622A\u56FE\u3002" },
+    { label: "\u6CBF\u7528\u539F\u56FE\u540D", value: "{fileName}", description: "\u4FDD\u7559\u539F\u59CB\u547D\u540D\u3002" },
+    { label: "\u7B14\u8BB0\u540D + \u968F\u673A\u4E32", value: "{noteName}-{random}", description: "\u907F\u514D\u540C\u65E5\u91CD\u540D\u3002" }
+  ],
+  outputFolderExamples: [
+    { label: "\u8DDF\u968F\u5F53\u524D\u7B14\u8BB0", value: "", description: "\u4FDD\u5B58\u5230\u5F53\u524D\u7B14\u8BB0\u540C\u76EE\u5F55\u3002" },
+    { label: "\u56FA\u5B9A\u9644\u4EF6\u76EE\u5F55", value: "Attachments/Images", description: "\u7EDF\u4E00\u7BA1\u7406\u5168\u5E93\u56FE\u7247\u3002" },
+    { label: "\u7B14\u8BB0\u540C\u7EA7 assets", value: "./assets", description: "\u5728\u7B14\u8BB0\u76EE\u5F55\u4E0B\u521B\u5EFA\u9644\u4EF6\u6587\u4EF6\u5939\u3002" },
+    { label: "\u6309\u7B14\u8BB0\u540D\u5206\u76EE\u5F55", value: "./assets/${noteFileName}", description: "\u6BCF\u7BC7\u7B14\u8BB0\u4E00\u4EFD\u72EC\u7ACB\u76EE\u5F55\u3002" }
+  ],
+  compressionIgnoreExamples: [
+    { label: "\u5FFD\u7565\u539F\u59CB\u76EE\u5F55", value: "^assets/raw/", description: "\u8DF3\u8FC7\u539F\u59CB\u7D20\u6750\u76EE\u5F55\u3002" },
+    { label: "\u5FFD\u7565 GIF", value: "\\.gif$", description: "\u4FDD\u7559\u52A8\u56FE\u539F\u6837\u3002" }
+  ],
+  conversionIgnoreExamples: [
+    { label: "\u5FFD\u7565\u622A\u56FE\u76EE\u5F55", value: "^Screenshots/", description: "\u8DF3\u8FC7\u6307\u5B9A\u76EE\u5F55\u3002" },
+    { label: "\u5FFD\u7565 PNG", value: "\\.png$", description: "\u4FDD\u7559 PNG \u539F\u683C\u5F0F\u3002" }
+  ],
+  rulePresets: [
+    { label: "\u65E5\u5E38\u622A\u56FE", description: "\u6309\u7B14\u8BB0\u5206\u76EE\u5F55\u4FDD\u5B58\u622A\u56FE\u3002", renamePattern: "{noteName}-{date}-{time}", outputFolder: "./assets/${noteFileName}" },
+    { label: "\u7EDF\u4E00\u56FE\u5E93", description: "\u8DE8\u7B14\u8BB0\u590D\u7528\u56FE\u7247\u65F6\u66F4\u7701\u5FC3\u3002", renamePattern: "{date}-{time}-{random}", outputFolder: "Attachments/Images" },
+    { label: "\u4FDD\u7559\u539F\u59CB\u547D\u540D", description: "\u9002\u5408\u6574\u7406\u5916\u90E8\u4E0B\u8F7D\u56FE\u7247\u3002", renamePattern: "{fileName}", outputFolder: "./assets" }
+  ],
+  featureLabels: {
+    rename: "\u81EA\u52A8\u547D\u540D\u4E0E\u8FC1\u79FB",
+    compress: "\u56FE\u7247\u538B\u7F29",
+    convert: "\u683C\u5F0F\u8F6C\u6362",
+    preview: "\u56FE\u7247\u9884\u89C8",
+    editor: "\u5FEB\u901F\u7F16\u8F91",
+    gallery: "\u56FE\u7247\u753B\u5ECA",
+    batch: "\u6279\u91CF\u5904\u7406",
+    recovery: "\u6062\u590D\u4E8B\u52A1",
+    resize: "\u5C3A\u5BF8\u8C03\u6574",
+    "drag-resize": "\u62D6\u62FD\u8C03\u6574\u5C3A\u5BF8",
+    "watermark-removal": "\u53BB\u6C34\u5370",
+    align: "\u56FE\u7247\u5BF9\u9F50",
+    "context-menu": "\u53F3\u952E\u83DC\u5355"
+  },
+  featureStates: { implemented: "\u5DF2\u542F\u7528", scaffolded: "\u89C4\u5212\u4E2D" },
+  featureSummaries: {
+    rename: "\u6309\u53D8\u91CF\u547D\u540D\u56FE\u7247\uFF0C\u5E76\u5728\u7B14\u8BB0\u6539\u540D\u6216\u79FB\u52A8\u65F6\u540C\u6B65\u53D7\u7BA1\u76EE\u5F55\u3002",
+    compress: "\u652F\u6301\u5355\u56FE\u548C\u6279\u91CF\u538B\u7F29\uFF0C\u5E76\u8BB0\u5F55\u538B\u7F29\u5386\u53F2\u907F\u514D\u91CD\u590D\u5904\u7406\u3002",
+    convert: "\u652F\u6301\u9ED8\u8BA4\u683C\u5F0F\u8F6C\u6362\uFF0C\u5E76\u5904\u7406\u91CD\u540D\u76EE\u6807\u6587\u4EF6\u3002",
+    preview: "\u4E3A\u9884\u89C8\u56FE\u63D0\u4F9B\u6807\u8BB0\u548C\u5237\u65B0\u94A9\u5B50\uFF0C\u65B9\u4FBF\u753B\u5ECA\u4E0E\u6837\u5F0F\u63A5\u5165\u3002",
+    editor: "\u63D0\u4F9B\u65CB\u8F6C\u3001\u7FFB\u8F6C\u7B49\u8F7B\u91CF\u7F16\u8F91\u80FD\u529B\uFF1B\u88C1\u526A\u5165\u53E3\u653E\u5728\u53F3\u952E\u83DC\u5355\u4E2D\u3002",
+    gallery: "\u63D0\u4F9B\u5F53\u524D\u56FE\u7247\u3001\u5F53\u524D\u7B14\u8BB0\u548C\u5F53\u524D\u6587\u4EF6\u5939\u7684\u753B\u5ECA\u89C6\u56FE\u3002",
+    batch: "\u652F\u6301\u6309\u7B14\u8BB0\u3001\u6587\u4EF6\u5939\u6216\u6574\u5E93\u6267\u884C\u6279\u91CF\u4EFB\u52A1\u3002",
+    recovery: "\u4E3A\u56FE\u7247\u548C Markdown \u4FEE\u6539\u8BB0\u5F55\u4E8B\u52A1\uFF0C\u652F\u6301\u64A4\u9500\u4E0E\u91CD\u505A\u3002",
+    resize: "\u652F\u6301\u5C06\u56FE\u7247\u7F29\u653E\u5230\u5B89\u5168\u7684\u8FB9\u754C\u5C3A\u5BF8\u3002",
+    "drag-resize": "\u540E\u7EED\u4F1A\u8865\u4E0A\u7F16\u8F91\u5668\u5185\u76F4\u63A5\u62D6\u62FD\u8C03\u6574\u56FE\u7247\u663E\u793A\u5C3A\u5BF8\u7684\u4EA4\u4E92\u3002",
+    "watermark-removal": "\u89C4\u5212\u4E2D\u7684\u5C40\u90E8\u4FEE\u590D\u80FD\u529B\uFF0C\u5F85\u6548\u679C\u548C\u4EA4\u4E92\u8FBE\u6807\u540E\u518D\u6062\u590D\u3002",
+    align: "\u4E3A\u6E32\u67D3\u540E\u7684\u56FE\u7247\u9644\u52A0\u9ED8\u8BA4\u5BF9\u9F50\u6837\u5F0F\u3002",
+    "context-menu": "\u4E3A\u56FE\u7247\u6587\u4EF6\u63D0\u4F9B\u590D\u5236\u3001\u753B\u5ECA\u3001\u538B\u7F29\u3001\u8F6C\u6362\u3001\u88C1\u526A\u548C\u8F7B\u91CF\u7F16\u8F91\u5165\u53E3\u3002"
+  },
+  compatibility: {
+    platformTitle: "\u5F53\u524D\u5E73\u53F0",
+    platformDescription: (platform, canWriteClipboard) => `${platform}\uFF1B\u526A\u8D34\u677F\u590D\u5236${canWriteClipboard ? "\u53EF\u7528" : "\u4E0D\u53EF\u7528"}\u3002`,
+    debugTitle: "\u8C03\u8BD5\u65E5\u5FD7\u6A21\u5F0F",
+    debugEnabled: "\u8C03\u8BD5\u6A21\u5F0F\u5DF2\u5F00\u542F\uFF0C\u4F1A\u8F93\u51FA\u66F4\u591A\u65E5\u5FD7\u3002",
+    debugDisabled: "\u8C03\u8BD5\u6A21\u5F0F\u5173\u95ED\u3002",
+    formatsTitle: "\u53EF\u7F16\u7801\u8F93\u51FA\u683C\u5F0F",
+    formatsAvailable: (formats) => `\u53EF\u8F93\u51FA\uFF1A${formats.join("\u3001")}\u3002GIF\u3001HEIC\u3001TIFF \u4E0D\u4FDD\u8BC1\u91CD\u7F16\u7801\u3002`,
+    formatsUnavailable: "\u672A\u68C0\u6D4B\u5230\u7A33\u5B9A\u8F93\u51FA\u683C\u5F0F\uFF0C\u5EFA\u8BAE\u4FDD\u7559\u539F\u56FE\u3002",
+    pasteConflictTitle: "\u7C98\u8D34\u63A5\u7BA1\u51B2\u7A81",
+    pasteConflictEnabled: "\u7C98\u8D34\u63A5\u7BA1\u5DF2\u542F\u7528\uFF0C\u53EF\u80FD\u4E0E\u9644\u4EF6\u63D2\u4EF6\u91CD\u590D\u5904\u7406\u3002",
+    pasteConflictDisabled: "\u7C98\u8D34\u63A5\u7BA1\u5DF2\u5173\u95ED\u3002",
+    nativeAttachmentTitle: "Obsidian \u539F\u751F\u9644\u4EF6\u76EE\u5F55",
+    nativeAttachmentDescription: (folder) => `Obsidian \u9644\u4EF6\u76EE\u5F55\uFF1A\u201C${folder}\u201D\u3002\u672C\u63D2\u4EF6\u7C98\u8D34\u89C4\u5219\u4F1A\u4F18\u5148\u751F\u6548\u3002`,
+    pluginConflictTitle: (featureLabel) => `${featureLabel} \u4E0E\u63D2\u4EF6\u51B2\u7A81`,
+    pluginConflictDescription: (pluginName, pluginId, description) => `\u5DF2\u542F\u7528\u201C${pluginName}\u201D\uFF08${pluginId}\uFF09\u3002${description}`,
+    renameSyncTitle: "\u7B14\u8BB0\u6539\u540D\u540C\u6B65\u8303\u56F4",
+    renameSyncUnsafe: "\u5F53\u524D\u76EE\u5F55\u89C4\u5219\u4E0D\u53EF\u5B89\u5168\u8FC1\u79FB\uFF0C\u4F1A\u8DF3\u8FC7\u540C\u6B65\u3002",
+    renameSyncSafe: "\u5F53\u524D\u76EE\u5F55\u89C4\u5219\u53EF\u5B89\u5168\u540C\u6B65\u3002",
+    renameSyncDisabled: "\u7B14\u8BB0\u6539\u540D\u540C\u6B65\u5DF2\u5173\u95ED\u3002",
+    conflictFeatureLabels: {
+      "paste-handler": "\u7C98\u8D34\u63A5\u7BA1",
+      "note-rename-sync": "\u7B14\u8BB0\u6539\u540D\u540C\u6B65"
+    }
+  }
+};
+var EN_SETTINGS_TAB = {
+  languageLabel: "Interface Language",
+  languageDescription: "Switch settings language. Default: Chinese.",
+  header: {
+    title: "Image Manager Settings",
+    subtitle: "Manage image storage, conversion, compression, and recovery in Obsidian.",
+    reset: "Reset To Defaults",
+    resetNotice: "Image Manager settings were reset to defaults"
+  },
+  sections: {
+    naming: {
+      title: "Storage And Naming",
+      description: "Choose where images go first, then decide how they are named."
+    },
+    convert: {
+      title: "Convert And Compress",
+      description: "Control default output quality, auto-convert behavior, and compression rules."
+    },
+    editor: {
+      title: "Paste And Editing",
+      description: "Control paste takeover, context-menu editing, and image interaction behavior."
+    },
+    gallery: {
+      title: "Gallery",
+      description: "Control gallery entry points, default layout, and sort order."
+    },
+    compatibility: {
+      title: "Compatibility",
+      description: "Review platform limits, native attachment rules, and likely plugin conflicts."
+    },
+    featureStatus: {
+      title: "Feature Status",
+      description: "See what is shipped now and what is still planned."
+    }
+  },
+  samples: {
+    noteName: "weekly-notes",
+    fileName: "page-capture",
+    notePath: "Projects/weekly-notes.md",
+    vaultRoot: "(vault root)"
+  },
+  previews: {
+    outputFolder: "Resolved save path",
+    renamePattern: "Filename preview"
+  },
+  exampleTitles: {
+    outputFolder: "Common save paths",
+    renamePattern: "Common naming rules",
+    compressionIgnore: "Compression ignore examples",
+    conversionIgnore: "Conversion ignore examples",
+    presets: "Recommended presets",
+    variables: "Available variables"
+  },
+  settings: {
+    outputFolderName: "Image save path",
+    outputFolderDesc: "Supports relative paths and variables. Leave empty to save beside the current note.",
+    defaultFormatName: "Default image format",
+    defaultFormatDesc: "Used by auto-convert and manual convert actions.",
+    defaultLinkFormatName: "Default link format",
+    defaultLinkFormatDesc: "Choose which syntax new image links use.",
+    defaultPathFormatName: "Default path format",
+    defaultPathFormatDesc: "Choose which path style is preferred when inserting links.",
+    markdownPathName: "Markdown path strategy",
+    markdownPathDesc: "Applies only to Markdown image links.",
+    renamePatternName: "Generated image filename",
+    renamePatternDesc: "Supports variables. Leave empty to fall back to the original file name.",
+    enableAutoRenameName: "Enable auto rename",
+    enableAutoRenameDesc: "When off, the original filename is kept unless format conversion changes the extension.",
+    renameImagesOnRelocateName: "Rename images when notes move or rename",
+    renameImagesOnRelocateDesc: "Applies only when managed-folder sync is enabled.",
+    deleteEmptyFoldersName: "Delete empty image folders",
+    deleteEmptyFoldersDesc: "Only removes empty folders left behind inside managed image directories.",
+    deleteOrphanImagesName: "Delete orphan images",
+    deleteOrphanImagesDesc: "Also removes unreferenced images in scope when running link and directory updates.",
+    defaultQualityName: "Default processing quality",
+    defaultQualityDesc: "Used by convert, rotate, flip, and resize operations.",
+    compressionQualityName: "Compression quality",
+    compressionQualityDesc: "Lower values save more space but degrade quality faster.",
+    enableAutoConvertName: "Auto-convert pasted images",
+    enableAutoConvertDesc: "Convert pasted images into the default format before saving them.",
+    showOperationNotificationsName: "Show operation notices",
+    showOperationNotificationsDesc: "When off, only failure notices remain.",
+    showSpaceSavedNotificationName: "Show saved space after compression",
+    showSpaceSavedNotificationDesc: "Show before/after size and ratio after compression.",
+    compressionIgnorePatternName: "Compression ignore regex",
+    compressionIgnorePatternDesc: "One regex per line. Skip compression when a path matches. `#` comments are allowed.",
+    conversionIgnorePatternName: "Conversion ignore regex",
+    conversionIgnorePatternDesc: "One regex per line. Skip conversion when a path matches. `#` comments are allowed.",
+    compressionThresholdKBName: "Compression threshold (KB)",
+    compressionThresholdKBDesc: "Skip compression for images below this size.",
+    enablePasteHandlerName: "Take over editor image paste",
+    enablePasteHandlerDesc: "When enabled, the plugin handles image paste and saves files with its own rules.",
+    enableAutoDownloadImagesFromTextName: "Auto-download text image sources",
+    enableAutoDownloadImagesFromTextDesc: "Automatically fetch pasted image URLs, `file://` paths, or `data:image` payloads.",
+    dropPasteCursorLocationName: "Cursor position after insert",
+    dropPasteCursorLocationDesc: "Choose whether the cursor stays before or moves after the inserted image link.",
+    enableContextMenuName: "Enable file context-menu actions",
+    enableContextMenuDesc: "Show copy, gallery, compress, convert, crop, rotate, and flip actions for image files.",
+    enableImageAlignName: "Enable default image alignment",
+    enableImageAlignDesc: "Apply default alignment styles to rendered images without changing Markdown source.",
+    imageAlignmentDefaultName: "Default image alignment",
+    imageAlignmentDefaultDesc: "Applies only when default image alignment is enabled.",
+    disableImageSelectionName: "Disable Obsidian image click selection",
+    disableImageSelectionDesc: "Prefer blocking native click-to-select in reading view.",
+    enableGalleryName: "Enable image gallery",
+    enableGalleryDesc: "Controls gallery commands, context-menu entry, and reading-view double-click entry.",
+    galleryGridSizeName: "Gallery grid size",
+    galleryGridSizeDesc: "Controls thumbnails per row and their size.",
+    gallerySortByName: "Default gallery sort",
+    gallerySortByDesc: "Choose the default sort order when the gallery opens.",
+    enableNoteRenameSyncName: "Sync managed image folders when notes move or rename",
+    enableNoteRenameSyncDesc: "Applies only to managed folders that can be recognized safely."
+  },
+  buttons: {
+    applyPreset: "Apply preset"
+  },
+  labels: {
+    outputFolderFallback: "(same folder as the current note)",
+    invalidVariables: "Unknown variables: ",
+    invalidRegex: "Invalid regex: ",
+    compatibilityOk: "OK",
+    compatibilityWarning: "Review"
+  },
+  options: {
+    linkFormat: { wiki: "Wiki link", markdown: "Markdown link" },
+    pathFormat: { shortest: "Shortest unique path", relative: "Relative path", absolute: "Absolute path" },
+    markdownPathEncodingStrategy: { encoded: "Always encode", readable: "Readable path", auto: "Automatic" },
+    dropPasteCursorLocation: { front: "Stay before", back: "Move after" },
+    imageAlignment: { none: "Do nothing", left: "Left", center: "Center", right: "Right" },
+    galleryGridSize: { small: "Small", medium: "Medium", large: "Large" },
+    gallerySortBy: { date: "Newest first", name: "By name", size: "Largest first" }
+  },
+  variableDescriptions: [
+    { token: "{noteName}", description: "Current note name without extension" },
+    { token: "{noteFileName}", description: "Alias of {noteName}; useful in folder templates" },
+    { token: "{fileName}", description: "Original image filename without extension" },
+    { token: "{date}", description: "Current date in YYYY-MM-DD" },
+    { token: "{time}", description: "Current time in HH-MM-SS" },
+    { token: "{random}", description: "Random suffix to avoid collisions" }
+  ],
+  renameExamples: [
+    { label: "Note + date", value: "{noteName}-{date}", description: "Good when each note owns its images." },
+    { label: "Note + time", value: "{noteName}-{date}-{time}", description: "Good for frequent screenshots." },
+    { label: "Keep original name", value: "{fileName}", description: "Preserve the incoming filename." },
+    { label: "Note + random", value: "{noteName}-{random}", description: "Avoid same-day collisions." }
+  ],
+  outputFolderExamples: [
+    { label: "Follow current note", value: "", description: "Save beside the current note." },
+    { label: "Fixed attachment folder", value: "Attachments/Images", description: "Centralize images for the whole vault." },
+    { label: "Sibling assets folder", value: "./assets", description: "Create one shared folder beside the note." },
+    { label: "Folder per note", value: "./assets/${noteFileName}", description: "Give each note its own image folder." }
+  ],
+  compressionIgnoreExamples: [
+    { label: "Ignore raw folder", value: "^assets/raw/", description: "Skip original source assets." },
+    { label: "Ignore GIF", value: "\\.gif$", description: "Keep animated GIFs unchanged." }
+  ],
+  conversionIgnoreExamples: [
+    { label: "Ignore screenshots folder", value: "^Screenshots/", description: "Skip a specific directory." },
+    { label: "Ignore PNG", value: "\\.png$", description: "Keep PNG files as PNG." }
+  ],
+  rulePresets: [
+    { label: "Daily screenshots", description: "Store screenshots per note with stable timestamps.", renamePattern: "{noteName}-{date}-{time}", outputFolder: "./assets/${noteFileName}" },
+    { label: "Shared library", description: "Better when images are reused across notes.", renamePattern: "{date}-{time}-{random}", outputFolder: "Attachments/Images" },
+    { label: "Keep source names", description: "Useful for downloaded or imported images.", renamePattern: "{fileName}", outputFolder: "./assets" }
+  ],
+  featureLabels: {
+    rename: "Auto naming and relocation",
+    compress: "Compression",
+    convert: "Format conversion",
+    preview: "Preview hooks",
+    editor: "Quick editing",
+    gallery: "Image gallery",
+    batch: "Batch processing",
+    recovery: "Recovery transactions",
+    resize: "Resize",
+    "drag-resize": "Drag resize",
+    "watermark-removal": "Watermark removal",
+    align: "Image alignment",
+    "context-menu": "Context menu"
+  },
+  featureStates: { implemented: "Shipped", scaffolded: "Planned" },
+  featureSummaries: {
+    rename: "Name images from variables and keep managed folders in sync when notes move or rename.",
+    compress: "Compress single images or batches and avoid rerunning the same file version.",
+    convert: "Convert images into the preferred format while handling filename collisions safely.",
+    preview: "Provide preview and refresh hooks for rendered images and gallery integrations.",
+    editor: "Provide lightweight rotate and flip actions, with crop exposed from the context menu.",
+    gallery: "Open current-image, note-level, and folder-level galleries with useful browsing tools.",
+    batch: "Run scoped tasks across a note, folder, or the whole vault.",
+    recovery: "Persist transactions for image and Markdown changes so undo and redo stay reliable.",
+    resize: "Resize images to a safe boundary preset for large assets.",
+    "drag-resize": "Direct drag-to-resize inside the editor is still planned.",
+    "watermark-removal": "Planned object-removal tooling will only return after quality and interaction reach a practical bar.",
+    align: "Apply configurable default alignment styles to rendered note images.",
+    "context-menu": "Expose copy, gallery, compress, convert, crop, and lightweight edit actions from the file menu."
+  },
+  compatibility: {
+    platformTitle: "Current platform",
+    platformDescription: (platform, canWriteClipboard) => `${platform}; clipboard copy is ${canWriteClipboard ? "available" : "unavailable"}.`,
+    debugTitle: "Debug logging mode",
+    debugEnabled: "Debug mode is on; extra logs are enabled.",
+    debugDisabled: "Debug mode is off.",
+    formatsTitle: "Encodable output formats",
+    formatsAvailable: (formats) => `Can encode: ${formats.join(", ")}. GIF, HEIC, and TIFF may not round-trip.`,
+    formatsUnavailable: "No stable output format detected. Keep originals.",
+    pasteConflictTitle: "Paste takeover conflicts",
+    pasteConflictEnabled: "Paste takeover is on and may overlap with attachment plugins.",
+    pasteConflictDisabled: "Paste takeover is off.",
+    nativeAttachmentTitle: "Native attachment folder",
+    nativeAttachmentDescription: (folder) => `Obsidian attachment folder: "${folder}". Image Manager paste rules take priority.`,
+    pluginConflictTitle: (featureLabel) => `${featureLabel} conflict`,
+    pluginConflictDescription: (pluginName, pluginId, description) => `Detected enabled plugin "${pluginName}" (${pluginId}). ${description}`,
+    renameSyncTitle: "Rename-sync scope",
+    renameSyncUnsafe: "The current output-folder rule is not a safely relocatable managed template, so auto-sync is skipped.",
+    renameSyncSafe: "The current folder rule can sync safely.",
+    renameSyncDisabled: "Note rename sync is off.",
+    conflictFeatureLabels: {
+      "paste-handler": "Paste takeover",
+      "note-rename-sync": "Note rename sync"
+    }
+  }
+};
+var ZH_COMMANDS = {
+  "a1-update-current-note-image-links": "\u66F4\u65B0\u56FE\u7247\u94FE\u63A5\u4E0E\u76EE\u5F55",
+  "a2-import-current-note-external-images": "\u4E0B\u8F7D\u5916\u90E8\u56FE\u7247",
+  "a3-convert-active-image-to-default-format": "\u8F6C\u6362\u4E3A\u9ED8\u8BA4\u683C\u5F0F",
+  "a4-compress-active-image": "\u538B\u7F29\u56FE\u7247",
+  "a5-delete-current-note-extra-images": "\u5220\u9664\u591A\u4F59\u56FE\u7247",
+  "b1-update-current-folder-image-links": "\u66F4\u65B0\u56FE\u7247\u94FE\u63A5\u4E0E\u76EE\u5F55",
+  "b2-import-current-folder-external-images": "\u4E0B\u8F7D\u5916\u90E8\u56FE\u7247",
+  "b3-convert-current-folder-images-to-default-format": "\u8F6C\u6362\u4E3A\u9ED8\u8BA4\u683C\u5F0F",
+  "b4-compress-current-folder-images": "\u538B\u7F29\u56FE\u7247",
+  "b5-delete-current-folder-extra-images": "\u5220\u9664\u591A\u4F59\u56FE\u7247",
+  "c1-update-vault-image-links": "\u66F4\u65B0\u56FE\u7247\u94FE\u63A5\u4E0E\u76EE\u5F55",
+  "c2-import-vault-external-images": "\u4E0B\u8F7D\u5916\u90E8\u56FE\u7247",
+  "c3-convert-vault-images-to-default-format": "\u8F6C\u6362\u4E3A\u9ED8\u8BA4\u683C\u5F0F",
+  "c4-compress-vault-images": "\u538B\u7F29\u56FE\u7247",
+  "c5-delete-vault-extra-images": "\u5220\u9664\u591A\u4F59\u56FE\u7247",
+  "d1-undo-last-image-manager-transaction": "\u64A4\u9500\u56FE\u7247\u4FEE\u6539",
+  "d2-redo-last-image-manager-transaction": "\u91CD\u505A\u56FE\u7247\u4FEE\u6539",
+  "open-current-folder-gallery": "\u6253\u5F00\u753B\u5ECA",
+  "open-current-note-gallery": "\u6253\u5F00\u753B\u5ECA",
+  "rotate-active-image-90": "\u987A\u65F6\u9488\u65CB\u8F6C\u56FE\u7247 90\xB0",
+  "flip-active-image-horizontal": "\u6C34\u5E73\u7FFB\u8F6C\u56FE\u7247",
+  "resize-active-image-to-1920px": "\u7F29\u653E\u56FE\u7247\u5230 1920px \u8FB9\u754C"
+};
+var EN_COMMANDS = {
+  "a1-update-current-note-image-links": "Update image links and folders",
+  "a2-import-current-note-external-images": "Download external images locally",
+  "a3-convert-active-image-to-default-format": "Convert images to default format",
+  "a4-compress-active-image": "Compress images",
+  "a5-delete-current-note-extra-images": "Delete extra image files",
+  "b1-update-current-folder-image-links": "Update image links and folders",
+  "b2-import-current-folder-external-images": "Download external images locally",
+  "b3-convert-current-folder-images-to-default-format": "Convert images to default format",
+  "b4-compress-current-folder-images": "Compress images",
+  "b5-delete-current-folder-extra-images": "Delete extra image files",
+  "c1-update-vault-image-links": "Update image links and folders",
+  "c2-import-vault-external-images": "Download external images locally",
+  "c3-convert-vault-images-to-default-format": "Convert images to default format",
+  "c4-compress-vault-images": "Compress images",
+  "c5-delete-vault-extra-images": "Delete extra image files",
+  "d1-undo-last-image-manager-transaction": "Undo last image change",
+  "d2-redo-last-image-manager-transaction": "Redo last image change",
+  "open-current-folder-gallery": "Open current folder image gallery",
+  "open-current-note-gallery": "Open current note image gallery",
+  "rotate-active-image-90": "Rotate image 90\xB0 clockwise",
+  "flip-active-image-horizontal": "Flip image horizontally",
+  "resize-active-image-to-1920px": "Resize image to 1920px boundary"
+};
+var ZH_UI = {
+  common: {
+    vaultRoot: "\u4ED3\u5E93\u6839\u76EE\u5F55",
+    platforms: {
+      mobile: "\u79FB\u52A8\u7AEF",
+      desktop: "\u684C\u9762\u7AEF",
+      mobileMode: "\u79FB\u52A8\u6A21\u5F0F",
+      desktopMode: "\u684C\u9762\u6A21\u5F0F"
+    }
+  },
+  gallery: {
+    titleForNote: (noteName) => `${noteName} \u4E2D\u7684\u56FE\u7247`,
+    titleForFolder: (folderPath) => `${folderPath} \u4E2D\u7684\u56FE\u7247`,
+    titleForImage: (fileName) => `\u56FE\u7247\uFF1A${fileName}`,
+    searchPlaceholder: "\u6309\u6587\u4EF6\u540D\u7B5B\u9009",
+    sortBy: {
+      date: "\u6700\u65B0\u4F18\u5148",
+      name: "\u6309\u540D\u79F0",
+      size: "\u5927\u56FE\u4F18\u5148"
+    },
+    viewMode: {
+      grid: "\u7F51\u683C",
+      list: "\u5217\u8868"
+    },
+    emptyResults: "\u5F53\u524D\u7B5B\u9009\u6761\u4EF6\u4E0B\u6CA1\u6709\u5339\u914D\u7684\u56FE\u7247\u3002",
+    close: "\u5173\u95ED",
+    previous: "\u4E0A\u4E00\u5F20",
+    next: "\u4E0B\u4E00\u5F20",
+    copyImage: "\u590D\u5236\u56FE\u7247"
+  },
+  imageSelection: {
+    clearSelection: "\u6E05\u7A7A\u9009\u533A",
+    cancel: "\u53D6\u6D88",
+    dragHint: "\u5728\u56FE\u7247\u4E0A\u6309\u4F4F\u9F20\u6807\u5DE6\u952E\u62D6\u62FD\uFF0C\u6846\u51FA\u9700\u8981\u5904\u7406\u7684\u533A\u57DF\u3002",
+    selectionHint: (width, height) => `\u5F53\u524D\u9009\u533A\uFF1A${Math.round(width)} \xD7 ${Math.round(height)} \u50CF\u7D20\uFF08\u9884\u89C8\u5750\u6807\uFF09`
+  },
+  contextMenu: {
+    openInGallery: "\u5728\u753B\u5ECA\u4E2D\u6253\u5F00",
+    copyImageToClipboard: "\u590D\u5236\u56FE\u7247\u5230\u526A\u8D34\u677F",
+    convertToDefaultFormat: "\u8F6C\u6362\u4E3A\u9ED8\u8BA4\u683C\u5F0F",
+    compressImage: "\u538B\u7F29\u56FE\u7247",
+    cropBySelection: "\u62D6\u62FD\u88C1\u526A",
+    rotateClockwise90: "\u987A\u65F6\u9488\u65CB\u8F6C 90\xB0",
+    rotateCounterClockwise90: "\u9006\u65F6\u9488\u65CB\u8F6C 90\xB0",
+    flipHorizontal: "\u6C34\u5E73\u7FFB\u8F6C",
+    flipVertical: "\u5782\u76F4\u7FFB\u8F6C",
+    downloadExternalImage: "\u4E0B\u8F7D\u8BE5\u5916\u90E8\u56FE\u7247",
+    cropDialogTitle: (fileName) => `\u88C1\u526A\u56FE\u7247\uFF1A${fileName}`,
+    cropDialogDescription: "\u62D6\u62FD\u9009\u62E9\u8981\u4FDD\u7559\u7684\u533A\u57DF\uFF0C\u786E\u8BA4\u540E\u4F1A\u6309\u9009\u533A\u88C1\u526A\u5F53\u524D\u56FE\u7247\u3002",
+    cropConfirm: "\u88C1\u526A"
+  },
+  vaultOperation: {
+    title: "\u786E\u8BA4\u6574\u5E93\u64CD\u4F5C",
+    message: (actionName) => `${actionName}\u4F1A\u5904\u7406\u6574\u4E2A\u5E93\u4E2D\u7684\u56FE\u7247\u6216\u7B14\u8BB0\uFF0C\u53EF\u80FD\u4EA7\u751F\u5927\u8303\u56F4\u4FEE\u6539\u3002\u662F\u5426\u7EE7\u7EED\uFF1F`,
+    confirmText: "\u7EE7\u7EED\u6574\u5E93\u64CD\u4F5C",
+    cancelText: "\u53D6\u6D88",
+    actionNames: {
+      linkRewrite: "\u6574\u5E93\u56FE\u7247\u94FE\u63A5\u4E0E\u76EE\u5F55\u66F4\u65B0",
+      externalImport: "\u6574\u5E93\u5916\u90E8\u56FE\u7247\u4E0B\u8F7D",
+      orphanCleanup: "\u6574\u5E93\u591A\u4F59\u56FE\u7247\u5220\u9664",
+      formatConversion: "\u6574\u5E93\u683C\u5F0F\u8F6C\u6362",
+      compression: "\u6574\u5E93\u538B\u7F29"
+    }
+  },
+  conflicts: {
+    featureLabels: {
+      "paste-handler": "\u7C98\u8D34\u63A5\u7BA1",
+      "note-rename-sync": "\u7B14\u8BB0\u6539\u540D\u540C\u6B65"
+    },
+    descriptions: {
+      "paste-handler": "\u8BE5\u63D2\u4EF6\u4E5F\u4F1A\u5904\u7406\u56FE\u7247\u7C98\u8D34\u3001\u9644\u4EF6\u843D\u76D8\u6216\u56FE\u7247\u4E0A\u4F20\uFF0C\u53EF\u80FD\u4E0E\u201C\u7C98\u8D34\u63A5\u7BA1\u201D\u91CD\u590D\u5904\u7406\u540C\u4E00\u5F20\u56FE\u7247\u3002",
+      "note-rename-sync": "\u8BE5\u63D2\u4EF6\u4E5F\u53EF\u80FD\u6539\u5199\u9644\u4EF6\u76EE\u5F55\u6216\u8DDF\u968F\u7B14\u8BB0\u79FB\u52A8\u9644\u4EF6\uFF0C\u53EF\u80FD\u4E0E\u201C\u7B14\u8BB0\u6539\u540D\u540C\u6B65\u201D\u53D1\u751F\u91CD\u590D\u642C\u79FB\u3002"
+    }
+  },
+  transactions: {
+    pasteImport: (noteName) => `\u7C98\u8D34\u5BFC\u5165 ${noteName}`,
+    rewriteActiveNoteImageLinks: (noteName) => `\u91CD\u5199\u6D3B\u52A8\u7B14\u8BB0\u56FE\u7247\u94FE\u63A5 ${noteName}`,
+    convertCurrentNoteImages: "\u8F6C\u6362\u5F53\u524D\u6587\u4EF6\u5F15\u7528\u56FE\u7247",
+    convertFolderImages: (folderPath) => `\u8F6C\u6362\u6587\u4EF6\u5939\u56FE\u7247 ${folderPath}`,
+    convertVaultImages: "\u8F6C\u6362\u6574\u4E2A\u4ED3\u5E93\u56FE\u7247",
+    compressCurrentNoteImages: "\u538B\u7F29\u5F53\u524D\u6587\u4EF6\u5F15\u7528\u56FE\u7247",
+    compressFolderImages: (folderPath) => `\u538B\u7F29\u6587\u4EF6\u5939\u56FE\u7247 ${folderPath}`,
+    compressVaultImages: "\u538B\u7F29\u6574\u4E2A\u4ED3\u5E93\u56FE\u7247",
+    batchUpdateNoteImageLinks: (noteName) => `\u6279\u91CF\u66F4\u65B0\u7B14\u8BB0\u56FE\u7247\u94FE\u63A5 ${noteName}`,
+    importCurrentNoteExternalImages: "\u4E0B\u8F7D\u5F53\u524D\u7B14\u8BB0\u5916\u90E8\u56FE\u7247",
+    deleteCurrentNoteExtraImages: (noteName) => `\u5220\u9664\u7B14\u8BB0\u591A\u4F59\u56FE\u7247 ${noteName}`,
+    batchUpdateFolderImageLinks: (folderPath) => `\u6279\u91CF\u66F4\u65B0\u6587\u4EF6\u5939\u56FE\u7247\u94FE\u63A5 ${folderPath}`,
+    importFolderExternalImages: (folderPath) => `\u4E0B\u8F7D\u6587\u4EF6\u5939\u5916\u90E8\u56FE\u7247 ${folderPath}`,
+    deleteFolderExtraImages: (folderPath) => `\u5220\u9664\u6587\u4EF6\u5939\u591A\u4F59\u56FE\u7247 ${folderPath}`,
+    batchUpdateVaultImageLinks: "\u6279\u91CF\u66F4\u65B0\u6574\u4E2A\u4ED3\u5E93\u56FE\u7247\u94FE\u63A5",
+    importVaultExternalImages: "\u4E0B\u8F7D\u6574\u4E2A\u4ED3\u5E93\u5916\u90E8\u56FE\u7247",
+    deleteVaultExtraImages: "\u5220\u9664\u6574\u4E2A\u4ED3\u5E93\u591A\u4F59\u56FE\u7247",
+    contextConvertImage: (fileName) => `\u53F3\u952E\u8F6C\u6362\u56FE\u7247 ${fileName}`,
+    contextCompressImage: (fileName) => `\u53F3\u952E\u538B\u7F29\u56FE\u7247 ${fileName}`,
+    contextCropImage: (fileName) => `\u53F3\u952E\u88C1\u526A\u56FE\u7247 ${fileName}`,
+    contextRotateImage: (fileName) => `\u53F3\u952E\u65CB\u8F6C\u56FE\u7247 ${fileName}`,
+    contextFlipHorizontalImage: (fileName) => `\u53F3\u952E\u6C34\u5E73\u7FFB\u8F6C\u56FE\u7247 ${fileName}`,
+    contextFlipVerticalImage: (fileName) => `\u53F3\u952E\u5782\u76F4\u7FFB\u8F6C\u56FE\u7247 ${fileName}`,
+    contextDownloadExternalImage: (noteName) => `\u53F3\u952E\u4E0B\u8F7D\u5916\u90E8\u56FE\u7247 ${noteName}`,
+    rotateActiveImage: "\u65CB\u8F6C\u5F53\u524D\u56FE\u7247 90 \u5EA6",
+    flipActiveImageHorizontal: "\u6C34\u5E73\u7FFB\u8F6C\u5F53\u524D\u56FE\u7247",
+    resizeActiveImage: "\u7F29\u653E\u5F53\u524D\u56FE\u7247\u5230 1920px",
+    syncManagedImages: (noteName) => `\u540C\u6B65\u7B14\u8BB0\u8FC1\u79FB\u56FE\u7247 ${noteName}`
+  }
+};
+var EN_UI = {
+  common: {
+    vaultRoot: "vault root",
+    platforms: {
+      mobile: "Mobile",
+      desktop: "Desktop",
+      mobileMode: "Mobile mode",
+      desktopMode: "Desktop mode"
+    }
+  },
+  gallery: {
+    titleForNote: (noteName) => `Images in ${noteName}`,
+    titleForFolder: (folderPath) => `Images in ${folderPath}`,
+    titleForImage: (fileName) => `Image: ${fileName}`,
+    searchPlaceholder: "Filter by file name",
+    sortBy: {
+      date: "Newest first",
+      name: "By name",
+      size: "Largest first"
+    },
+    viewMode: {
+      grid: "Grid",
+      list: "List"
+    },
+    emptyResults: "No images match the current filter.",
+    close: "Close",
+    previous: "Previous",
+    next: "Next",
+    copyImage: "Copy Image"
+  },
+  imageSelection: {
+    clearSelection: "Clear selection",
+    cancel: "Cancel",
+    dragHint: "Click and drag on the image to mark the area to process.",
+    selectionHint: (width, height) => `Selection: ${Math.round(width)} \xD7 ${Math.round(height)} px (preview coordinates)`
+  },
+  contextMenu: {
+    openInGallery: "Open in gallery",
+    copyImageToClipboard: "Copy image to clipboard",
+    convertToDefaultFormat: "Convert to default format",
+    compressImage: "Compress image",
+    cropBySelection: "Crop by selection",
+    rotateClockwise90: "Rotate 90\xB0 clockwise",
+    rotateCounterClockwise90: "Rotate 90\xB0 counterclockwise",
+    flipHorizontal: "Flip horizontally",
+    flipVertical: "Flip vertically",
+    downloadExternalImage: "Download this external image locally",
+    cropDialogTitle: (fileName) => `Crop image: ${fileName}`,
+    cropDialogDescription: "Drag to select the area to keep, then confirm to crop the current image.",
+    cropConfirm: "Crop"
+  },
+  vaultOperation: {
+    title: "Confirm vault-wide operation",
+    message: (actionName) => `${actionName} will process images or notes across the entire vault and may cause broad changes. Continue?`,
+    confirmText: "Continue",
+    cancelText: "Cancel",
+    actionNames: {
+      linkRewrite: "Vault-wide image link and folder update",
+      externalImport: "Vault-wide external image download",
+      orphanCleanup: "Vault-wide extra image cleanup",
+      formatConversion: "Vault-wide format conversion",
+      compression: "Vault-wide compression"
+    }
+  },
+  conflicts: {
+    featureLabels: {
+      "paste-handler": "Paste handling",
+      "note-rename-sync": "Note rename sync"
+    },
+    descriptions: {
+      "paste-handler": "This plugin also handles image paste, attachment persistence, or image upload and may process the same image twice.",
+      "note-rename-sync": "This plugin may also rewrite attachment folders or move attachments with notes and can cause duplicate relocation."
+    }
+  },
+  transactions: {
+    pasteImport: (noteName) => `Paste import ${noteName}`,
+    rewriteActiveNoteImageLinks: (noteName) => `Rewrite active note image links ${noteName}`,
+    convertCurrentNoteImages: "Convert images referenced by the current note",
+    convertFolderImages: (folderPath) => `Convert folder images ${folderPath}`,
+    convertVaultImages: "Convert all vault images",
+    compressCurrentNoteImages: "Compress images referenced by the current note",
+    compressFolderImages: (folderPath) => `Compress folder images ${folderPath}`,
+    compressVaultImages: "Compress all vault images",
+    batchUpdateNoteImageLinks: (noteName) => `Batch update note image links ${noteName}`,
+    importCurrentNoteExternalImages: "Import external images in the current note",
+    deleteCurrentNoteExtraImages: (noteName) => `Delete extra note images ${noteName}`,
+    batchUpdateFolderImageLinks: (folderPath) => `Batch update folder image links ${folderPath}`,
+    importFolderExternalImages: (folderPath) => `Import folder external images ${folderPath}`,
+    deleteFolderExtraImages: (folderPath) => `Delete extra folder images ${folderPath}`,
+    batchUpdateVaultImageLinks: "Batch update vault image links",
+    importVaultExternalImages: "Import vault external images",
+    deleteVaultExtraImages: "Delete extra vault images",
+    contextConvertImage: (fileName) => `Context convert image ${fileName}`,
+    contextCompressImage: (fileName) => `Context compress image ${fileName}`,
+    contextCropImage: (fileName) => `Context crop image ${fileName}`,
+    contextRotateImage: (fileName) => `Context rotate image ${fileName}`,
+    contextFlipHorizontalImage: (fileName) => `Context flip image horizontally ${fileName}`,
+    contextFlipVerticalImage: (fileName) => `Context flip image vertically ${fileName}`,
+    contextDownloadExternalImage: (noteName) => `Context import external image ${noteName}`,
+    rotateActiveImage: "Rotate current image 90\xB0",
+    flipActiveImageHorizontal: "Flip current image horizontally",
+    resizeActiveImage: "Resize current image to 1920px",
+    syncManagedImages: (noteName) => `Sync managed images for ${noteName}`
+  }
+};
+var ZH_NOTICES = {
+  loaded: "Image Manager \u5DF2\u52A0\u8F7D",
+  failedToProcessPastedImages: "\u5904\u7406\u7C98\u8D34\u56FE\u7247\u5931\u8D25",
+  failedToSavePastedImages: "\u4FDD\u5B58\u7C98\u8D34\u56FE\u7247\u5931\u8D25",
+  failedToSavePastedImage: (fileName) => `\u4FDD\u5B58\u7C98\u8D34\u56FE\u7247\u5931\u8D25\uFF1A${fileName}`,
+  processedPastedImages: (successCount, failedCount) => `\u5DF2\u5904\u7406 ${successCount} \u5F20\u7C98\u8D34\u56FE\u7247\uFF0C\u5931\u8D25 ${failedCount} \u5F20`,
+  noActiveFolder: "\u6CA1\u6709\u5F53\u524D\u6587\u4EF6\u5939",
+  noActiveNote: "\u6CA1\u6709\u5F53\u524D\u7B14\u8BB0",
+  noActiveImageFile: "\u8BF7\u5148\u6253\u5F00\u4E00\u4E2A\u56FE\u7247\u6587\u4EF6",
+  noActiveNoteFile: "\u8BF7\u5148\u6253\u5F00\u4E00\u4E2A\u7B14\u8BB0\u6587\u4EF6",
+  galleryDisabled: "\u8BBE\u7F6E\u4E2D\u5DF2\u7981\u7528\u753B\u5ECA\u529F\u80FD",
+  convertedToFormat: (format) => `\u5DF2\u8F6C\u6362\u4E3A ${format}`,
+  noImagesFound: "\u6CA1\u6709\u627E\u5230\u53EF\u5904\u7406\u7684\u56FE\u7247",
+  batchJobAlreadyActive: "\u5DF2\u6709\u56FE\u7247\u6279\u5904\u7406\u4EFB\u52A1\u6B63\u5728\u8FD0\u884C",
+  imageResized: "\u56FE\u7247\u5DF2\u7F29\u653E",
+  imageCompressed: "\u56FE\u7247\u5DF2\u538B\u7F29",
+  imageRotated: "\u56FE\u7247\u5DF2\u65CB\u8F6C",
+  imageFlippedHorizontal: "\u56FE\u7247\u5DF2\u6C34\u5E73\u7FFB\u8F6C",
+  imageFlippedVertical: "\u56FE\u7247\u5DF2\u5782\u76F4\u7FFB\u8F6C",
+  imageCropped: "\u56FE\u7247\u5DF2\u88C1\u526A",
+  copyImageUnavailable: "\u5F53\u524D\u5E73\u53F0\u4E0D\u652F\u6301\u590D\u5236\u56FE\u7247",
+  imageCopied: "\u56FE\u7247\u5DF2\u590D\u5236",
+  failedToCopyImage: "\u590D\u5236\u56FE\u7247\u5230\u526A\u8D34\u677F\u5931\u8D25",
+  imageFileUnavailable: "\u56FE\u7247\u6587\u4EF6\u5DF2\u4E0D\u5B58\u5728",
+  noUndoTransaction: "\u6CA1\u6709\u53EF\u6062\u590D\u7684\u56FE\u7247\u7BA1\u7406\u4E8B\u52A1",
+  undoCompleted: (label) => `\u5DF2\u6062\u590D\uFF1A${label}`,
+  undoFailed: "\u64A4\u9500\u4E0A\u4E00\u6761\u56FE\u7247\u7BA1\u7406\u4E8B\u52A1\u5931\u8D25",
+  noRedoTransaction: "\u6CA1\u6709\u53EF\u91CD\u505A\u7684\u56FE\u7247\u7BA1\u7406\u4E8B\u52A1",
+  redoCompleted: (label) => `\u5DF2\u91CD\u505A\uFF1A${label}`,
+  redoFailed: "\u91CD\u505A\u4E0A\u4E00\u6761\u56FE\u7247\u7BA1\u7406\u4E8B\u52A1\u5931\u8D25",
+  managedImagesSynced: (count) => `\u5DF2\u540C\u6B65 ${count} \u4E2A\u53D7\u7BA1\u56FE\u7247\u6587\u4EF6`,
+  failedToSyncManagedImages: "\u540C\u6B65\u6539\u540D\u6216\u79FB\u52A8\u7B14\u8BB0\u7684\u53D7\u7BA1\u56FE\u7247\u5931\u8D25",
+  commandFailed: (commandName) => `\u547D\u4EE4\u6267\u884C\u5931\u8D25\uFF1A${commandName}`,
+  batchLinkRewriteFailed: "\u6279\u91CF\u66F4\u65B0\u56FE\u7247\u94FE\u63A5\u5931\u8D25",
+  batchExternalImageImportFailed: "\u6279\u91CF\u4E0B\u8F7D\u5916\u90E8\u56FE\u7247\u5931\u8D25",
+  orphanCleanupFailed: "\u6E05\u7406\u591A\u4F59\u56FE\u7247\u5931\u8D25",
+  recoveryHistoryReset: "Image Manager \u6062\u590D\u5386\u53F2\u635F\u574F\uFF0C\u5DF2\u81EA\u52A8\u91CD\u7F6E",
+  selectAreaFirst: "\u8BF7\u5148\u62D6\u62FD\u9009\u62E9\u4E00\u4E2A\u533A\u57DF",
+  compressionSummary: (before, after, ratio, direction, label) => `${label}\uFF1A${before} -> ${after}\uFF08${ratio} ${direction}\uFF09`,
+  compressionDirectionReduction: "\u51CF\u5C0F",
+  compressionDirectionIncrease: "\u589E\u5927",
+  noImagesSaved: "\u6CA1\u6709\u4FDD\u5B58\u4EFB\u4F55\u56FE\u7247",
+  savedSingleImage: (path) => `\u56FE\u7247\u5DF2\u4FDD\u5B58\u5230 ${path}`,
+  savedImagesToFolder: (count, folder) => `\u5DF2\u4FDD\u5B58 ${count} \u5F20\u56FE\u7247\u5230 ${folder}`,
+  savedImagesAcrossFolders: (count, folderCount) => `\u5DF2\u4FDD\u5B58 ${count} \u5F20\u56FE\u7247\uFF0C\u5206\u5E03\u5728 ${folderCount} \u4E2A\u6587\u4EF6\u5939`,
+  conversionIgnored: (fileName, pattern) => `\u5DF2\u8DF3\u8FC7\u8F6C\u6362 ${fileName}\uFF1A\u5339\u914D\u5FFD\u7565\u89C4\u5219\u201C${pattern}\u201D`,
+  compressionIgnored: (fileName, pattern) => `\u5DF2\u8DF3\u8FC7\u538B\u7F29 ${fileName}\uFF1A\u5339\u914D\u5FFD\u7565\u89C4\u5219\u201C${pattern}\u201D`,
+  compressionBelowThreshold: (fileName) => `\u5DF2\u8DF3\u8FC7\u538B\u7F29 ${fileName}\uFF1A\u4F4E\u4E8E\u4F53\u79EF\u9608\u503C`,
+  compressionAlreadyProcessed: (fileName) => `\u5DF2\u8DF3\u8FC7\u538B\u7F29 ${fileName}\uFF1A\u5F53\u524D\u7248\u672C\u5DF2\u538B\u7F29\u8FC7`,
+  compressionShouldNotRecompress: (fileName) => `\u5DF2\u8DF3\u8FC7\u538B\u7F29 ${fileName}\uFF1A\u5F53\u524D\u7248\u672C\u4E0D\u5E94\u91CD\u590D\u538B\u7F29`,
+  compressionNoGain: (fileName) => `\u5DF2\u8DF3\u8FC7\u538B\u7F29 ${fileName}\uFF1A\u6CA1\u6709\u751F\u6210\u66F4\u5C0F\u7684\u8F93\u51FA`,
+  noAutoConvertFallback: "\u6CA1\u6709\u7C98\u8D34\u56FE\u7247\u56DE\u9000\u5230\u539F\u59CB\u683C\u5F0F",
+  autoConvertFallbackMixed: (total, ignoredCount, failedCount) => `${total} \u5F20\u7C98\u8D34\u56FE\u7247\u672A\u8F6C\u6362\uFF1A${ignoredCount} \u5F20\u547D\u4E2D\u5FFD\u7565\u89C4\u5219\uFF0C${failedCount} \u5F20\u8F6C\u6362\u5931\u8D25`,
+  autoConvertFallbackIgnored: (ignoredCount) => `${ignoredCount} \u5F20\u7C98\u8D34\u56FE\u7247\u672A\u8F6C\u6362\uFF1A\u547D\u4E2D\u8F6C\u6362\u5FFD\u7565\u89C4\u5219`,
+  autoConvertFallbackFailed: (failedCount) => `${failedCount} \u5F20\u7C98\u8D34\u56FE\u7247\u672A\u8F6C\u6362\uFF1A\u672A\u80FD\u8F6C\u6362\u5230\u76EE\u6807\u683C\u5F0F`,
+  batchLinkUpdateEmptyWithDeletes: (deletedImages, deletedFolders, failedCount) => {
+    const extras = [`\u5220\u9664 ${deletedImages} \u5F20\u56FE\u7247`];
+    if (deletedFolders > 0) {
+      extras.push(`\u5220\u9664 ${deletedFolders} \u4E2A\u7A7A\u6587\u4EF6\u5939`);
+    }
+    if (failedCount > 0) {
+      extras.push(`\u5931\u8D25 ${failedCount} \u9879`);
+    }
+    return `\u6279\u91CF\u66F4\u65B0\u56FE\u7247\u94FE\u63A5\u5B8C\u6210\uFF1A0 \u4E2A\u6587\u4EF6\uFF0C0 \u4E2A\u94FE\u63A5\u66F4\u65B0\uFF1B${extras.join("\uFF0C")}`;
+  },
+  batchLinkUpdateEmptyFailed: (failedCount) => `\u6279\u91CF\u66F4\u65B0\u56FE\u7247\u94FE\u63A5\u5B8C\u6210\uFF1A0 \u4E2A\u6587\u4EF6\u66F4\u65B0\uFF0C\u5931\u8D25 ${failedCount} \u9879`,
+  noImageLinksUpdated: "\u6CA1\u6709\u9700\u8981\u66F4\u65B0\u7684\u56FE\u7247\u94FE\u63A5",
+  batchLinkPreviewItem: (notePath, replaced) => `${notePath}\uFF08${replaced} \u4E2A\u94FE\u63A5\uFF09`,
+  batchLinkMore: (count) => `\u53E6\u6709 ${count} \u9879`,
+  batchLinkMoved: (count) => `\u79FB\u52A8 ${count} \u5F20\u56FE\u7247`,
+  batchLinkDownloaded: (count) => `\u4E0B\u8F7D ${count} \u5F20\u56FE\u7247`,
+  batchLinkDeleted: (count) => `\u5220\u9664 ${count} \u5F20\u56FE\u7247`,
+  batchLinkRemovedFolders: (count) => `\u5220\u9664 ${count} \u4E2A\u7A7A\u6587\u4EF6\u5939`,
+  batchFailedCount: (count) => `\u5931\u8D25 ${count} \u9879`,
+  batchLinkUpdateFinished: (fileCount, linkCount, previews, suffix) => `\u6279\u91CF\u66F4\u65B0\u56FE\u7247\u94FE\u63A5\u5B8C\u6210\uFF1A${fileCount} \u4E2A\u6587\u4EF6\uFF0C${linkCount} \u4E2A\u94FE\u63A5\u66F4\u65B0\uFF1A${previews}${suffix}`,
+  batchCompressionNone: "\u6CA1\u6709\u9700\u8981\u538B\u7F29\u7684\u56FE\u7247",
+  batchCompressionFinished: (fileCount) => `\u6279\u91CF\u538B\u7F29\u5B8C\u6210\uFF1A${fileCount} \u5F20\u56FE\u7247`,
+  batchCompressionFinishedWithDelta: (fileCount, before, after, ratio, direction) => `\u6279\u91CF\u538B\u7F29\u5B8C\u6210\uFF1A${fileCount} \u5F20\u56FE\u7247\uFF0C${before} -> ${after}\uFF08${ratio} ${direction}\uFF09`,
+  externalImportEmptyFailed: (failedCount) => `\u5916\u90E8\u56FE\u7247\u5BFC\u5165\u5B8C\u6210\uFF1A0 \u4E2A\u6587\u4EF6\uFF0C\u5931\u8D25 ${failedCount} \u9879`,
+  noExternalImageLinksFound: "\u6CA1\u6709\u627E\u5230\u5916\u90E8\u56FE\u7247\u94FE\u63A5",
+  externalImportDownloaded: (count) => `\u4E0B\u8F7D ${count} \u5F20\u56FE\u7247`,
+  externalImportFinished: (fileCount, linkCount, previews, suffix) => `\u5916\u90E8\u56FE\u7247\u5BFC\u5165\u5B8C\u6210\uFF1A${fileCount} \u4E2A\u6587\u4EF6\uFF0C${linkCount} \u4E2A\u94FE\u63A5\u66F4\u65B0\uFF1A${previews}${suffix}`,
+  noMatchingExternalImageLink: "\u7B14\u8BB0\u4E2D\u6CA1\u6709\u627E\u5230\u5339\u914D\u7684\u5916\u90E8\u56FE\u7247\u94FE\u63A5",
+  singleExternalImportFinished: (replaced, downloaded) => `\u5916\u90E8\u56FE\u7247\u5BFC\u5165\u5B8C\u6210\uFF1A\u66F4\u65B0 ${replaced} \u4E2A\u94FE\u63A5\uFF0C\u4E0B\u8F7D ${downloaded} \u5F20\u56FE\u7247`,
+  batchConversionFinished: (imageCount, targetFormat) => `\u6279\u91CF\u8F6C\u6362\u5B8C\u6210\uFF1A${imageCount} \u5F20\u56FE\u7247 -> ${targetFormat}`,
+  orphanCleanupEmptyFailed: (failedCount) => `\u6E05\u7406\u591A\u4F59\u56FE\u7247\u5B8C\u6210\uFF1A\u5220\u9664 0 \u5F20\u56FE\u7247\uFF0C\u5931\u8D25 ${failedCount} \u9879`,
+  noExtraImagesFound: "\u6CA1\u6709\u627E\u5230\u591A\u4F59\u56FE\u7247\u6587\u4EF6",
+  orphanCleanupRemovedImages: (count) => `\u5220\u9664 ${count} \u5F20\u56FE\u7247`,
+  orphanCleanupRelocatedImages: (count) => `\u79FB\u52A8 ${count} \u5F20\u56FE\u7247\u5230\u88AB\u5F15\u7528\u7B14\u8BB0\u6240\u5728\u6587\u4EF6\u5939`,
+  orphanCleanupPreservedImages: (count) => `\u4FDD\u7559 ${count} \u5F20\u4ECD\u88AB\u5176\u4ED6\u7B14\u8BB0\u5F15\u7528\u7684\u56FE\u7247`,
+  orphanCleanupRemovedFolders: (count) => `\u5220\u9664 ${count} \u4E2A\u7A7A\u6587\u4EF6\u5939`,
+  orphanCleanupFinished: (segments) => `\u6E05\u7406\u591A\u4F59\u56FE\u7247\u5B8C\u6210\uFF1A${segments}`,
+  pluginConflictPreviewItem: (featureLabel, pluginName) => `${featureLabel} vs ${pluginName}`,
+  pluginConflictMore: (count) => `\uFF1B\u53E6\u6709 ${count} \u9879`,
+  pluginConflictSummary: (preview, suffix) => `\u68C0\u6D4B\u5230\u6F5C\u5728\u63D2\u4EF6\u51B2\u7A81\uFF1A${preview}${suffix}\u3002\u53EF\u5728 Image Manager \u8BBE\u7F6E\u7684\u201C\u517C\u5BB9\u6027\u4E0E\u51B2\u7A81\u89C4\u907F\u201D\u4E2D\u67E5\u770B\u3002`
+};
+var EN_NOTICES = {
+  loaded: "Image Manager loaded",
+  failedToProcessPastedImages: "Failed to process pasted images",
+  failedToSavePastedImages: "Failed to save pasted images",
+  failedToSavePastedImage: (fileName) => `Failed to save pasted image: ${fileName}`,
+  processedPastedImages: (successCount, failedCount) => `Processed ${successCount} pasted image(s), failed ${failedCount}`,
+  noActiveFolder: "No active folder",
+  noActiveNote: "No active note",
+  noActiveImageFile: "Open an image file first",
+  noActiveNoteFile: "Open a note file first",
+  galleryDisabled: "Gallery is disabled in settings",
+  convertedToFormat: (format) => `Converted to ${format}`,
+  noImagesFound: "No images found",
+  batchJobAlreadyActive: "An image batch job is already active",
+  imageResized: "Image resized",
+  imageCompressed: "Image compressed",
+  imageRotated: "Image rotated",
+  imageFlippedHorizontal: "Image flipped horizontally",
+  imageFlippedVertical: "Image flipped vertically",
+  imageCropped: "Image cropped",
+  copyImageUnavailable: "Copy image is not available on this platform",
+  imageCopied: "Image copied",
+  failedToCopyImage: "Failed to copy image to clipboard",
+  imageFileUnavailable: "Image file is no longer available",
+  noUndoTransaction: "No recoverable Image Manager transaction is available",
+  undoCompleted: (label) => `Restored: ${label}`,
+  undoFailed: "Failed to undo the last Image Manager transaction",
+  noRedoTransaction: "No redoable Image Manager transaction is available",
+  redoCompleted: (label) => `Redone: ${label}`,
+  redoFailed: "Failed to redo the last Image Manager transaction",
+  managedImagesSynced: (count) => `Synced ${count} managed image${count === 1 ? "" : "s"}`,
+  failedToSyncManagedImages: "Failed to sync managed images for the renamed or moved note",
+  commandFailed: (commandName) => `Command failed: ${commandName}`,
+  batchLinkRewriteFailed: "Batch link rewrite failed",
+  batchExternalImageImportFailed: "Batch external image import failed",
+  orphanCleanupFailed: "Orphan image cleanup failed",
+  recoveryHistoryReset: "Image Manager recovery history is unreadable and has been reset",
+  selectAreaFirst: "Drag to select an area first",
+  compressionSummary: (before, after, ratio, direction, label) => `${label}: ${before} -> ${after} (${ratio} ${direction})`,
+  compressionDirectionReduction: "reduction",
+  compressionDirectionIncrease: "increase",
+  noImagesSaved: "No images were saved",
+  savedSingleImage: (path) => `Saved image to ${path}`,
+  savedImagesToFolder: (count, folder) => `Saved ${count} image${count === 1 ? "" : "s"} to ${folder}`,
+  savedImagesAcrossFolders: (count, folderCount) => `Saved ${count} image${count === 1 ? "" : "s"} across ${folderCount} folder${folderCount === 1 ? "" : "s"}`,
+  conversionIgnored: (fileName, pattern) => `Skipped conversion for ${fileName}: matched ignore rule "${pattern}"`,
+  compressionIgnored: (fileName, pattern) => `Skipped compression for ${fileName}: matched ignore rule "${pattern}"`,
+  compressionBelowThreshold: (fileName) => `Skipped compression for ${fileName}: below size threshold`,
+  compressionAlreadyProcessed: (fileName) => `Skipped compression for ${fileName}: current file version was already compressed`,
+  compressionShouldNotRecompress: (fileName) => `Skipped compression for ${fileName}: current file version should not be recompressed`,
+  compressionNoGain: (fileName) => `Skipped compression for ${fileName}: no smaller output was produced`,
+  noAutoConvertFallback: "No pasted images fell back to their original format",
+  autoConvertFallbackMixed: (total, ignoredCount, failedCount) => `Pasted ${total} image(s) without conversion: ${ignoredCount} matched ignore rules, ${failedCount} failed to convert`,
+  autoConvertFallbackIgnored: (ignoredCount) => `Pasted ${ignoredCount} image(s) without conversion: matched conversion ignore rules`,
+  autoConvertFallbackFailed: (failedCount) => `Pasted ${failedCount} image(s) without conversion: failed to convert to the requested format`,
+  batchLinkUpdateEmptyWithDeletes: (deletedImages, deletedFolders, failedCount) => {
+    const extras = [`deleted ${deletedImages} image(s)`];
+    if (deletedFolders > 0) {
+      extras.push(`removed ${deletedFolders} empty folder(s)`);
+    }
+    if (failedCount > 0) {
+      extras.push(`${failedCount} failed`);
+    }
+    return `Batch link update finished: 0 file(s), 0 link(s) updated; ${extras.join(", ")}`;
+  },
+  batchLinkUpdateEmptyFailed: (failedCount) => `Batch link update finished: 0 file(s) updated, ${failedCount} failed`,
+  noImageLinksUpdated: "No image links needed updating",
+  batchLinkPreviewItem: (notePath, replaced) => `${notePath} (${replaced} link${replaced === 1 ? "" : "s"})`,
+  batchLinkMore: (count) => `+${count} more`,
+  batchLinkMoved: (count) => `moved ${count} image(s)`,
+  batchLinkDownloaded: (count) => `downloaded ${count} image(s)`,
+  batchLinkDeleted: (count) => `deleted ${count} image(s)`,
+  batchLinkRemovedFolders: (count) => `removed ${count} empty folder(s)`,
+  batchFailedCount: (count) => `${count} failed`,
+  batchLinkUpdateFinished: (fileCount, linkCount, previews, suffix) => `Batch link update finished: ${fileCount} file(s), ${linkCount} link(s) updated: ${previews}${suffix}`,
+  batchCompressionNone: "No images required compression",
+  batchCompressionFinished: (fileCount) => `Batch compression finished: ${fileCount} image(s)`,
+  batchCompressionFinishedWithDelta: (fileCount, before, after, ratio, direction) => `Batch compression finished: ${fileCount} image(s), ${before} -> ${after} (${ratio} ${direction})`,
+  externalImportEmptyFailed: (failedCount) => `External image import finished: 0 file(s), ${failedCount} failed`,
+  noExternalImageLinksFound: "No external image links found",
+  externalImportDownloaded: (count) => `downloaded ${count} image(s)`,
+  externalImportFinished: (fileCount, linkCount, previews, suffix) => `External image import finished: ${fileCount} file(s), ${linkCount} link(s) updated: ${previews}${suffix}`,
+  noMatchingExternalImageLink: "No matching external image link found in the note",
+  singleExternalImportFinished: (replaced, downloaded) => `External image import finished: ${replaced} link(s) updated, downloaded ${downloaded} image(s)`,
+  batchConversionFinished: (imageCount, targetFormat) => `Batch conversion finished: ${imageCount} image(s) -> ${targetFormat}`,
+  orphanCleanupEmptyFailed: (failedCount) => `Extra image cleanup finished: 0 image(s) removed, ${failedCount} failed`,
+  noExtraImagesFound: "No extra image files found",
+  orphanCleanupRemovedImages: (count) => `removed ${count} image(s)`,
+  orphanCleanupRelocatedImages: (count) => `moved ${count} image(s) to referenced note folder(s)`,
+  orphanCleanupPreservedImages: (count) => `kept ${count} image(s) still referenced by other notes`,
+  orphanCleanupRemovedFolders: (count) => `removed ${count} empty folder(s)`,
+  orphanCleanupFinished: (segments) => `Extra image cleanup finished: ${segments}`,
+  pluginConflictPreviewItem: (featureLabel, pluginName) => `${featureLabel} vs ${pluginName}`,
+  pluginConflictMore: (count) => `; ${count} more`,
+  pluginConflictSummary: (preview, suffix) => `Potential plugin conflicts detected: ${preview}${suffix}. Review them in Image Manager settings under Compatibility.`
+};
+var LOCALES = {
+  "zh-CN": {
+    settingsTab: ZH_SETTINGS_TAB,
+    commands: ZH_COMMANDS,
+    ui: ZH_UI,
+    notices: ZH_NOTICES
+  },
+  en: {
+    settingsTab: EN_SETTINGS_TAB,
+    commands: EN_COMMANDS,
+    ui: EN_UI,
+    notices: EN_NOTICES
+  }
+};
+function getCommandScopeCopy(language) {
+  return COMMAND_SCOPE_COPIES[resolveUiLanguage(language)];
+}
+function getCommandScopeAliases() {
+  const aliases = {
+    FILE: [],
+    FOLDER: [],
+    VAULT: []
+  };
+  for (const copy of Object.values(COMMAND_SCOPE_COPIES)) {
+    for (const scope of Object.keys(aliases)) {
+      aliases[scope].push(...copy.aliases[scope]);
+    }
+  }
+  return aliases;
+}
+function getCommandScopeDisplayLabels() {
+  return Object.values(COMMAND_SCOPE_COPIES).flatMap((copy) => Object.values(copy.displayLabels));
+}
+function getLocaleBundle(language) {
+  var _a;
+  return (_a = LOCALES[language]) != null ? _a : LOCALES[DEFAULT_UI_LANGUAGE];
+}
+function getSettingTabCopy(language) {
+  return getLocaleBundle(language).settingsTab;
+}
+function getLocalizedCommandName(commandId, language) {
+  var _a;
+  return (_a = getLocaleBundle(language).commands[commandId]) != null ? _a : null;
+}
+function getDefaultCommandName(commandId) {
+  var _a;
+  return (_a = getLocalizedCommandName(commandId, DEFAULT_UI_LANGUAGE)) != null ? _a : commandId;
+}
+function getUiCopy(language) {
+  return getLocaleBundle(language).ui;
+}
+function getNoticeCopy(language) {
+  return getLocaleBundle(language).notices;
+}
+
 // src/types/settings.ts
 var ImageFormat = /* @__PURE__ */ ((ImageFormat2) => {
   ImageFormat2["WEBP"] = "webp";
   ImageFormat2["JPEG"] = "jpeg";
   ImageFormat2["PNG"] = "png";
+  ImageFormat2["BMP"] = "bmp";
   ImageFormat2["GIF"] = "gif";
   ImageFormat2["HEIC"] = "heic";
+  ImageFormat2["SVG"] = "svg";
   ImageFormat2["TIFF"] = "tiff";
   return ImageFormat2;
 })(ImageFormat || {});
 var DEFAULT_SETTINGS = {
-  uiLanguage: "zh-CN",
+  uiLanguage: DEFAULT_UI_LANGUAGE,
   defaultFormat: "webp" /* WEBP */,
   defaultQuality: 80,
   defaultLinkFormat: "wiki" /* WIKI */,
@@ -92,7 +1087,7 @@ var DEFAULT_SETTINGS = {
 // src/utils/command-logging.ts
 var import_obsidian = require("obsidian");
 async function executeLoggedCommand(context, meta, run) {
-  var _a, _b, _c;
+  var _a, _b, _c, _d;
   context.services.logger.refreshMode(`command:${meta.commandId}`);
   context.services.logger.debug("Command started", {
     commandId: meta.commandId,
@@ -107,13 +1102,15 @@ async function executeLoggedCommand(context, meta, run) {
       ...(_b = meta.payload) != null ? _b : {}
     });
   } catch (error) {
+    const language = resolveUiLanguage(context.services.settings.getSettings().uiLanguage);
+    const commandName = (_c = getLocalizedCommandName(meta.commandId, language)) != null ? _c : meta.commandName;
     console.error(`Image Manager command failed: ${meta.commandName}`, error);
     context.services.logger.error("Command failed", error, {
       commandId: meta.commandId,
       commandName: meta.commandName,
-      ...(_c = meta.payload) != null ? _c : {}
+      ...(_d = meta.payload) != null ? _d : {}
     });
-    new import_obsidian.Notice(`\u547D\u4EE4\u6267\u884C\u5931\u8D25\uFF1A${meta.commandName}`);
+    new import_obsidian.Notice(getNoticeCopy(language).commandFailed(commandName));
   }
 }
 function logSkippedCommand(context, meta) {
@@ -234,54 +1231,67 @@ function formatBytes(bytes) {
   }
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
-function formatCompressionSummary(before, after, label = "Image compressed") {
+function formatCompressionSummary(before, after, settings, label) {
+  const notices = getNoticeCopy(resolveUiLanguage(settings.uiLanguage));
   const ratio = before > 0 ? Math.abs(before - after) / before * 100 : 0;
-  const direction = after <= before ? "reduction" : "increase";
-  return `${label}: ${formatBytes(before)} -> ${formatBytes(after)} (${ratio.toFixed(1)}% ${direction})`;
+  const direction = after <= before ? notices.compressionDirectionReduction : notices.compressionDirectionIncrease;
+  return notices.compressionSummary(
+    formatBytes(before),
+    formatBytes(after),
+    `${ratio.toFixed(1)}%`,
+    direction,
+    label != null ? label : notices.imageCompressed
+  );
 }
-function formatSavedLocationNotice(paths) {
+function formatSavedLocationNotice(paths, settings) {
+  var _a, _b;
+  const language = resolveUiLanguage(settings.uiLanguage);
+  const notices = getNoticeCopy(language);
+  const ui = getUiCopy(language);
   if (paths.length === 0) {
-    return "No images were saved";
+    return notices.noImagesSaved;
   }
   if (paths.length === 1) {
-    return `Saved image to ${paths[0]}`;
+    return notices.savedSingleImage((_a = paths[0]) != null ? _a : "");
   }
-  const folders = [...new Set(paths.map((path) => getParentPath(path) || "vault root"))];
+  const folders = [...new Set(paths.map((path) => getParentPath(path) || ui.common.vaultRoot))];
   if (folders.length === 1) {
-    return `Saved ${paths.length} images to ${folders[0]}`;
+    return notices.savedImagesToFolder(paths.length, (_b = folders[0]) != null ? _b : "");
   }
-  return `Saved ${paths.length} images across ${folders.length} folders`;
+  return notices.savedImagesAcrossFolders(paths.length, folders.length);
 }
-function formatConversionIgnoredNotice(fileName, pattern) {
-  return `Skipped conversion for ${fileName}: matched ignore rule "${pattern}"`;
+function formatConversionIgnoredNotice(fileName, pattern, settings) {
+  return getNoticeCopy(resolveUiLanguage(settings.uiLanguage)).conversionIgnored(fileName, pattern);
 }
-function formatCompressionIgnoredNotice(fileName, pattern) {
-  return `Skipped compression for ${fileName}: matched ignore rule "${pattern}"`;
+function formatCompressionIgnoredNotice(fileName, pattern, settings) {
+  return getNoticeCopy(resolveUiLanguage(settings.uiLanguage)).compressionIgnored(fileName, pattern);
 }
-function formatCompressionBelowThresholdNotice(fileName) {
-  return `Skipped compression for ${fileName}: below size threshold`;
+function formatCompressionBelowThresholdNotice(fileName, settings) {
+  return getNoticeCopy(resolveUiLanguage(settings.uiLanguage)).compressionBelowThreshold(fileName);
 }
-function formatCompressionProcessedNotice(fileName, status) {
+function formatCompressionProcessedNotice(fileName, status, settings) {
+  const notices = getNoticeCopy(resolveUiLanguage(settings.uiLanguage));
   if (status === "compressed") {
-    return `Skipped compression for ${fileName}: current file version was already compressed`;
+    return notices.compressionAlreadyProcessed(fileName);
   }
-  return `Skipped compression for ${fileName}: current file version should not be recompressed`;
+  return notices.compressionShouldNotRecompress(fileName);
 }
-function formatCompressionNoGainNotice(fileName) {
-  return `Skipped compression for ${fileName}: no smaller output was produced`;
+function formatCompressionNoGainNotice(fileName, settings) {
+  return getNoticeCopy(resolveUiLanguage(settings.uiLanguage)).compressionNoGain(fileName);
 }
-function formatAutoConvertFallbackNotice(ignoredCount, failedCount) {
+function formatAutoConvertFallbackNotice(ignoredCount, failedCount, settings) {
+  const notices = getNoticeCopy(resolveUiLanguage(settings.uiLanguage));
   const total = ignoredCount + failedCount;
   if (total === 0) {
-    return "No pasted images fell back to their original format";
+    return notices.noAutoConvertFallback;
   }
   if (ignoredCount > 0 && failedCount > 0) {
-    return `Pasted ${total} image(s) without conversion: ${ignoredCount} matched ignore rules, ${failedCount} failed to convert`;
+    return notices.autoConvertFallbackMixed(total, ignoredCount, failedCount);
   }
   if (ignoredCount > 0) {
-    return `Pasted ${ignoredCount} image(s) without conversion: matched conversion ignore rules`;
+    return notices.autoConvertFallbackIgnored(ignoredCount);
   }
-  return `Pasted ${failedCount} image(s) without conversion: failed to convert to the requested format`;
+  return notices.autoConvertFallbackFailed(failedCount);
 }
 function showOperationNotice(settings, message) {
   if (!settings.showOperationNotifications) {
@@ -291,103 +1301,109 @@ function showOperationNotice(settings, message) {
 }
 
 // src/utils/batch-operation-feedback.ts
+function getNotices(language) {
+  return getNoticeCopy(language != null ? language : DEFAULT_UI_LANGUAGE);
+}
 function formatBatchLinkRewriteNotice(options) {
+  const notices = getNotices(options.language);
   const { items, rewrittenLinks, movedImages, downloadedImages, deletedImages, deletedFolders, failedCount } = options;
   if (items.length === 0) {
     if (deletedImages > 0) {
-      const extras2 = [`deleted ${deletedImages} image(s)`];
-      if (deletedFolders > 0) {
-        extras2.push(`removed ${deletedFolders} empty folder(s)`);
-      }
-      if (failedCount > 0) {
-        extras2.push(`${failedCount} failed`);
-      }
-      return `Batch link update finished: 0 file(s), 0 link(s) updated; ${extras2.join(", ")}`;
+      return notices.batchLinkUpdateEmptyWithDeletes(deletedImages, deletedFolders, failedCount);
     }
-    return failedCount > 0 ? `Batch link update finished: 0 file(s) updated, ${failedCount} failed` : "No image links needed updating";
+    return failedCount > 0 ? notices.batchLinkUpdateEmptyFailed(failedCount) : notices.noImageLinksUpdated;
   }
-  const previews = items.slice(0, 3).map((item) => `${item.notePath} (${item.replaced} link${item.replaced === 1 ? "" : "s"})`);
+  const previews = items.slice(0, 3).map((item) => notices.batchLinkPreviewItem(item.notePath, item.replaced));
   if (items.length > 3) {
-    previews.push(`+${items.length - 3} more`);
+    previews.push(notices.batchLinkMore(items.length - 3));
   }
   const extras = [];
   if (movedImages > 0) {
-    extras.push(`moved ${movedImages} image(s)`);
+    extras.push(notices.batchLinkMoved(movedImages));
   }
   if (downloadedImages > 0) {
-    extras.push(`downloaded ${downloadedImages} image(s)`);
+    extras.push(notices.batchLinkDownloaded(downloadedImages));
   }
   if (deletedImages > 0) {
-    extras.push(`deleted ${deletedImages} image(s)`);
+    extras.push(notices.batchLinkDeleted(deletedImages));
   }
   if (deletedFolders > 0) {
-    extras.push(`removed ${deletedFolders} empty folder(s)`);
+    extras.push(notices.batchLinkRemovedFolders(deletedFolders));
   }
   if (failedCount > 0) {
-    extras.push(`${failedCount} failed`);
+    extras.push(notices.batchFailedCount(failedCount));
   }
   const suffix = extras.length > 0 ? `; ${extras.join(", ")}` : "";
-  return `Batch link update finished: ${items.length} file(s), ${rewrittenLinks} link(s) updated: ${previews.join(", ")}${suffix}`;
+  return notices.batchLinkUpdateFinished(items.length, rewrittenLinks, previews.join(", "), suffix);
 }
 function formatBatchCompressionNotice(options) {
+  const notices = getNotices(options.language);
   const { fileCount, beforeBytes, afterBytes, showSpaceSaved } = options;
   if (fileCount === 0) {
-    return "No images required compression";
+    return notices.batchCompressionNone;
   }
   if (!showSpaceSaved) {
-    return `Batch compression finished: ${fileCount} image(s)`;
+    return notices.batchCompressionFinished(fileCount);
   }
   const ratio = beforeBytes > 0 ? Math.abs(beforeBytes - afterBytes) / beforeBytes * 100 : 0;
-  const direction = afterBytes <= beforeBytes ? "reduction" : "increase";
-  return `Batch compression finished: ${fileCount} image(s), ${formatBytes(beforeBytes)} -> ${formatBytes(afterBytes)} (${ratio.toFixed(1)}% ${direction})`;
+  const direction = afterBytes <= beforeBytes ? notices.compressionDirectionReduction : notices.compressionDirectionIncrease;
+  return notices.batchCompressionFinishedWithDelta(
+    fileCount,
+    formatBytes(beforeBytes),
+    formatBytes(afterBytes),
+    `${ratio.toFixed(1)}%`,
+    direction
+  );
 }
 function formatBatchExternalImageImportNotice(options) {
+  const notices = getNotices(options.language);
   const { items, importedLinks, downloadedImages, failedCount } = options;
   if (items.length === 0) {
     if (failedCount > 0) {
-      return `External image import finished: 0 file(s), ${failedCount} failed`;
+      return notices.externalImportEmptyFailed(failedCount);
     }
-    return "No external image links found";
+    return notices.noExternalImageLinksFound;
   }
-  const previews = items.slice(0, 3).map((item) => `${item.notePath} (${item.replaced} link${item.replaced === 1 ? "" : "s"})`);
+  const previews = items.slice(0, 3).map((item) => notices.batchLinkPreviewItem(item.notePath, item.replaced));
   if (items.length > 3) {
-    previews.push(`+${items.length - 3} more`);
+    previews.push(notices.batchLinkMore(items.length - 3));
   }
   const extras = [];
   if (downloadedImages > 0) {
-    extras.push(`downloaded ${downloadedImages} image(s)`);
+    extras.push(notices.externalImportDownloaded(downloadedImages));
   }
   if (failedCount > 0) {
-    extras.push(`${failedCount} failed`);
+    extras.push(notices.batchFailedCount(failedCount));
   }
   const suffix = extras.length > 0 ? `; ${extras.join(", ")}` : "";
-  return `External image import finished: ${items.length} file(s), ${importedLinks} link(s) updated: ${previews.join(", ")}${suffix}`;
+  return notices.externalImportFinished(items.length, importedLinks, previews.join(", "), suffix);
 }
 function formatBatchConversionNotice(options) {
-  return `Batch conversion finished: ${options.imageCount} image(s) -> ${options.targetFormat}`;
+  return getNotices(options.language).batchConversionFinished(options.imageCount, options.targetFormat);
 }
 function formatBatchOrphanCleanupNotice(options) {
+  const notices = getNotices(options.language);
   const { deletedImages, deletedFolders, relocatedImages, preservedImages, failedCount } = options;
   if (deletedImages === 0 && relocatedImages === 0 && preservedImages === 0) {
-    return failedCount > 0 ? `Extra image cleanup finished: 0 image(s) removed, ${failedCount} failed` : "No extra image files found";
+    return failedCount > 0 ? notices.orphanCleanupEmptyFailed(failedCount) : notices.noExtraImagesFound;
   }
   const segments = [];
   if (deletedImages > 0) {
-    segments.push(`removed ${deletedImages} image(s)`);
+    segments.push(notices.orphanCleanupRemovedImages(deletedImages));
   }
   if (relocatedImages > 0) {
-    segments.push(`moved ${relocatedImages} image(s) to referenced note folder(s)`);
+    segments.push(notices.orphanCleanupRelocatedImages(relocatedImages));
   }
   if (preservedImages > 0) {
-    segments.push(`kept ${preservedImages} image(s) still referenced by other notes`);
+    segments.push(notices.orphanCleanupPreservedImages(preservedImages));
   }
   if (deletedFolders > 0) {
-    segments.push(`removed ${deletedFolders} empty folder(s)`);
+    segments.push(notices.orphanCleanupRemovedFolders(deletedFolders));
   }
   if (failedCount > 0) {
-    segments.push(`${failedCount} failed`);
+    segments.push(notices.batchFailedCount(failedCount));
   }
-  return `Extra image cleanup finished: ${segments.join("; ")}`;
+  return notices.orphanCleanupFinished(segments.join("; "));
 }
 
 // src/ui/modals/risk-confirm-modal.ts
@@ -405,19 +1421,18 @@ var RiskConfirmModal = class extends import_obsidian3.Modal {
     __publicField(this, "settled", false);
   }
   onOpen() {
-    var _a, _b;
     this.contentEl.empty();
     this.contentEl.createEl("h2", { text: this.options.title });
     this.contentEl.createEl("p", { text: this.options.message });
     const actions = this.contentEl.createDiv({ cls: "image-manager-risk-confirm-actions" });
     const cancelButton = actions.createEl("button", {
-      text: (_a = this.options.cancelText) != null ? _a : "\u53D6\u6D88"
+      text: this.options.cancelText
     });
     cancelButton.type = "button";
     cancelButton.addEventListener("click", () => this.settle(false));
     const confirmButton = actions.createEl("button", {
       cls: "mod-cta",
-      text: (_b = this.options.confirmText) != null ? _b : "\u7EE7\u7EED"
+      text: this.options.confirmText
     });
     confirmButton.type = "button";
     confirmButton.addEventListener("click", () => this.settle(true));
@@ -439,12 +1454,13 @@ var RiskConfirmModal = class extends import_obsidian3.Modal {
 };
 
 // src/utils/vault-operation.ts
-async function confirmVaultScopeOperation(app, actionName) {
+async function confirmVaultScopeOperation(app, language, actionName) {
+  const copy = getUiCopy(language).vaultOperation;
   return confirmRiskAction(app, {
-    title: "\u786E\u8BA4\u6574\u5E93\u64CD\u4F5C",
-    message: `${actionName}\u4F1A\u5904\u7406\u6574\u4E2A\u5E93\u4E2D\u7684\u56FE\u7247\u6216\u7B14\u8BB0\uFF0C\u53EF\u80FD\u4EA7\u751F\u5927\u8303\u56F4\u4FEE\u6539\u3002\u662F\u5426\u7EE7\u7EED\uFF1F`,
-    confirmText: "\u7EE7\u7EED\u6574\u5E93\u64CD\u4F5C",
-    cancelText: "\u53D6\u6D88"
+    title: copy.title,
+    message: copy.message(actionName),
+    confirmText: copy.confirmText,
+    cancelText: copy.cancelText
   });
 }
 
@@ -459,7 +1475,7 @@ var BatchFeature = class {
   async register(context) {
     const noteCommand = {
       commandId: "a1-update-current-note-image-links",
-      commandName: "\u66F4\u65B0\u56FE\u7247\u94FE\u63A5\u4E0E\u76EE\u5F55"
+      commandName: getDefaultCommandName("a1-update-current-note-image-links")
     };
     context.plugin.addCommand({
       id: noteCommand.commandId,
@@ -471,13 +1487,16 @@ var BatchFeature = class {
               ...noteCommand,
               reason: "No active note"
             });
-            showOperationNotice(context.services.settings.getSettings(), "No active note");
+            const settings = context.services.settings.getSettings();
+            showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noActiveNote);
             return;
           }
           const noteFile = view.file;
           await context.services.recovery.runTransaction(
             {
-              label: `\u6279\u91CF\u66F4\u65B0\u7B14\u8BB0\u56FE\u7247\u94FE\u63A5 ${noteFile.basename}`,
+              label: getUiCopy(context.services.settings.getSettings().uiLanguage).transactions.batchUpdateNoteImageLinks(
+                noteFile.basename
+              ),
               trigger: "batch",
               scope: "single-note"
             },
@@ -490,7 +1509,7 @@ var BatchFeature = class {
     });
     const noteImportCommand = {
       commandId: "a2-import-current-note-external-images",
-      commandName: "\u4E0B\u8F7D\u5916\u90E8\u56FE\u7247\u5230\u672C\u5730"
+      commandName: getDefaultCommandName("a2-import-current-note-external-images")
     };
     context.plugin.addCommand({
       id: noteImportCommand.commandId,
@@ -499,7 +1518,7 @@ var BatchFeature = class {
         void executeLoggedCommand(context, noteImportCommand, async () => {
           await context.services.recovery.runTransaction(
             {
-              label: "\u4E0B\u8F7D\u5F53\u524D\u7B14\u8BB0\u5916\u90E8\u56FE\u7247",
+              label: getUiCopy(context.services.settings.getSettings().uiLanguage).transactions.importCurrentNoteExternalImages,
               trigger: "batch",
               scope: "single-note"
             },
@@ -514,7 +1533,7 @@ var BatchFeature = class {
     });
     const noteCleanupCommand = {
       commandId: "a5-delete-current-note-extra-images",
-      commandName: "\u5220\u9664\u591A\u4F59\u56FE\u7247\u6587\u4EF6"
+      commandName: getDefaultCommandName("a5-delete-current-note-extra-images")
     };
     context.plugin.addCommand({
       id: noteCleanupCommand.commandId,
@@ -526,13 +1545,14 @@ var BatchFeature = class {
               ...noteCleanupCommand,
               reason: "No active note"
             });
-            showOperationNotice(context.services.settings.getSettings(), "No active note");
+            const settings = context.services.settings.getSettings();
+            showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noActiveNote);
             return;
           }
           const noteFile = view.file;
           await context.services.recovery.runTransaction(
             {
-              label: `\u5220\u9664\u7B14\u8BB0\u591A\u4F59\u56FE\u7247 ${noteFile.basename}`,
+              label: getUiCopy(context.services.settings.getSettings().uiLanguage).transactions.deleteCurrentNoteExtraImages(noteFile.basename),
               trigger: "batch",
               scope: "single-note"
             },
@@ -545,7 +1565,7 @@ var BatchFeature = class {
     });
     const folderCommand = {
       commandId: "b1-update-current-folder-image-links",
-      commandName: "\u66F4\u65B0\u56FE\u7247\u94FE\u63A5\u4E0E\u76EE\u5F55"
+      commandName: getDefaultCommandName("b1-update-current-folder-image-links")
     };
     context.plugin.addCommand({
       id: folderCommand.commandId,
@@ -559,12 +1579,15 @@ var BatchFeature = class {
               ...folderCommand,
               reason: "No active folder"
             });
-            showOperationNotice(context.services.settings.getSettings(), "No active folder");
+            const settings = context.services.settings.getSettings();
+            showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noActiveFolder);
             return;
           }
           await context.services.recovery.runTransaction(
             {
-              label: `\u6279\u91CF\u66F4\u65B0\u6587\u4EF6\u5939\u56FE\u7247\u94FE\u63A5 ${folder.path || "vault root"}`,
+              label: getUiCopy(context.services.settings.getSettings().uiLanguage).transactions.batchUpdateFolderImageLinks(
+                folder.path || getUiCopy(context.services.settings.getSettings().uiLanguage).common.vaultRoot
+              ),
               trigger: "batch",
               scope: "folder"
             },
@@ -577,7 +1600,7 @@ var BatchFeature = class {
     });
     const folderImportCommand = {
       commandId: "b2-import-current-folder-external-images",
-      commandName: "\u4E0B\u8F7D\u5916\u90E8\u56FE\u7247\u5230\u672C\u5730"
+      commandName: getDefaultCommandName("b2-import-current-folder-external-images")
     };
     context.plugin.addCommand({
       id: folderImportCommand.commandId,
@@ -591,12 +1614,15 @@ var BatchFeature = class {
               ...folderImportCommand,
               reason: "No active folder"
             });
-            showOperationNotice(context.services.settings.getSettings(), "No active folder");
+            const settings = context.services.settings.getSettings();
+            showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noActiveFolder);
             return;
           }
           await context.services.recovery.runTransaction(
             {
-              label: `\u4E0B\u8F7D\u6587\u4EF6\u5939\u5916\u90E8\u56FE\u7247 ${folder.path || "vault root"}`,
+              label: getUiCopy(context.services.settings.getSettings().uiLanguage).transactions.importFolderExternalImages(
+                folder.path || getUiCopy(context.services.settings.getSettings().uiLanguage).common.vaultRoot
+              ),
               trigger: "batch",
               scope: "folder"
             },
@@ -609,7 +1635,7 @@ var BatchFeature = class {
     });
     const folderCleanupCommand = {
       commandId: "b5-delete-current-folder-extra-images",
-      commandName: "\u5220\u9664\u591A\u4F59\u56FE\u7247\u6587\u4EF6"
+      commandName: getDefaultCommandName("b5-delete-current-folder-extra-images")
     };
     context.plugin.addCommand({
       id: folderCleanupCommand.commandId,
@@ -623,12 +1649,15 @@ var BatchFeature = class {
               ...folderCleanupCommand,
               reason: "No active folder"
             });
-            showOperationNotice(context.services.settings.getSettings(), "No active folder");
+            const settings = context.services.settings.getSettings();
+            showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noActiveFolder);
             return;
           }
           await context.services.recovery.runTransaction(
             {
-              label: `\u5220\u9664\u6587\u4EF6\u5939\u591A\u4F59\u56FE\u7247 ${folder.path || "vault root"}`,
+              label: getUiCopy(context.services.settings.getSettings().uiLanguage).transactions.deleteFolderExtraImages(
+                folder.path || getUiCopy(context.services.settings.getSettings().uiLanguage).common.vaultRoot
+              ),
               trigger: "batch",
               scope: "folder"
             },
@@ -641,19 +1670,20 @@ var BatchFeature = class {
     });
     const vaultCommand = {
       commandId: "c1-update-vault-image-links",
-      commandName: "\u66F4\u65B0\u56FE\u7247\u94FE\u63A5\u4E0E\u76EE\u5F55"
+      commandName: getDefaultCommandName("c1-update-vault-image-links")
     };
     context.plugin.addCommand({
       id: vaultCommand.commandId,
       name: vaultCommand.commandName,
       callback: () => {
         void executeLoggedCommand(context, vaultCommand, async () => {
-          if (!await confirmVaultScopeOperation(context.app, "\u6574\u5E93\u56FE\u7247\u94FE\u63A5\u4E0E\u76EE\u5F55\u66F4\u65B0")) {
+          const ui = getUiCopy(context.services.settings.getSettings().uiLanguage);
+          if (!await confirmVaultScopeOperation(context.app, context.services.settings.getSettings().uiLanguage, ui.vaultOperation.actionNames.linkRewrite)) {
             return;
           }
           await context.services.recovery.runTransaction(
             {
-              label: "\u6279\u91CF\u66F4\u65B0\u6574\u4E2A\u4ED3\u5E93\u56FE\u7247\u94FE\u63A5",
+              label: ui.transactions.batchUpdateVaultImageLinks,
               trigger: "batch",
               scope: "vault"
             },
@@ -666,19 +1696,20 @@ var BatchFeature = class {
     });
     const vaultImportCommand = {
       commandId: "c2-import-vault-external-images",
-      commandName: "\u4E0B\u8F7D\u5916\u90E8\u56FE\u7247\u5230\u672C\u5730"
+      commandName: getDefaultCommandName("c2-import-vault-external-images")
     };
     context.plugin.addCommand({
       id: vaultImportCommand.commandId,
       name: vaultImportCommand.commandName,
       callback: () => {
         void executeLoggedCommand(context, vaultImportCommand, async () => {
-          if (!await confirmVaultScopeOperation(context.app, "\u6574\u5E93\u5916\u90E8\u56FE\u7247\u4E0B\u8F7D")) {
+          const ui = getUiCopy(context.services.settings.getSettings().uiLanguage);
+          if (!await confirmVaultScopeOperation(context.app, context.services.settings.getSettings().uiLanguage, ui.vaultOperation.actionNames.externalImport)) {
             return;
           }
           await context.services.recovery.runTransaction(
             {
-              label: "\u4E0B\u8F7D\u6574\u4E2A\u4ED3\u5E93\u5916\u90E8\u56FE\u7247",
+              label: ui.transactions.importVaultExternalImages,
               trigger: "batch",
               scope: "vault"
             },
@@ -691,19 +1722,20 @@ var BatchFeature = class {
     });
     const vaultCleanupCommand = {
       commandId: "c5-delete-vault-extra-images",
-      commandName: "\u5220\u9664\u591A\u4F59\u56FE\u7247\u6587\u4EF6"
+      commandName: getDefaultCommandName("c5-delete-vault-extra-images")
     };
     context.plugin.addCommand({
       id: vaultCleanupCommand.commandId,
       name: vaultCleanupCommand.commandName,
       callback: () => {
         void executeLoggedCommand(context, vaultCleanupCommand, async () => {
-          if (!await confirmVaultScopeOperation(context.app, "\u6574\u5E93\u591A\u4F59\u56FE\u7247\u5220\u9664")) {
+          const ui = getUiCopy(context.services.settings.getSettings().uiLanguage);
+          if (!await confirmVaultScopeOperation(context.app, context.services.settings.getSettings().uiLanguage, ui.vaultOperation.actionNames.orphanCleanup)) {
             return;
           }
           await context.services.recovery.runTransaction(
             {
-              label: "\u5220\u9664\u6574\u4E2A\u4ED3\u5E93\u591A\u4F59\u56FE\u7247",
+              label: ui.transactions.deleteVaultExtraImages,
               trigger: "batch",
               scope: "vault"
             },
@@ -718,7 +1750,8 @@ var BatchFeature = class {
   async runLinkRewriteBatch(context, scope, source) {
     context.services.logger.refreshMode("batch-update-links");
     if (this.hasActiveBatch(context)) {
-      showOperationNotice(context.services.settings.getSettings(), "An image batch job is already active");
+      const settings = context.services.settings.getSettings();
+      showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).batchJobAlreadyActive);
       return;
     }
     try {
@@ -793,7 +1826,8 @@ var BatchFeature = class {
           downloadedImages,
           deletedImages,
           deletedFolders,
-          failedCount: report.failed
+          failedCount: report.failed,
+          language: context.services.settings.getSettings().uiLanguage
         })
       );
     } catch (error) {
@@ -802,13 +1836,14 @@ var BatchFeature = class {
         scope,
         sourcePath: source == null ? void 0 : source.path
       });
-      new import_obsidian4.Notice(error instanceof Error ? error.message : "Batch link rewrite failed");
+      new import_obsidian4.Notice(error instanceof Error ? error.message : getNoticeCopy(context.services.settings.getSettings().uiLanguage).batchLinkRewriteFailed);
     }
   }
   async runExternalImageImportBatch(context, scope, source) {
     context.services.logger.refreshMode("batch-import-external-images");
     if (this.hasActiveBatch(context)) {
-      showOperationNotice(context.services.settings.getSettings(), "An image batch job is already active");
+      const settings = context.services.settings.getSettings();
+      showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).batchJobAlreadyActive);
       return;
     }
     try {
@@ -861,7 +1896,8 @@ var BatchFeature = class {
           })),
           importedLinks,
           downloadedImages,
-          failedCount: report.failed
+          failedCount: report.failed,
+          language: context.services.settings.getSettings().uiLanguage
         })
       );
     } catch (error) {
@@ -870,14 +1906,15 @@ var BatchFeature = class {
         scope,
         sourcePath: source == null ? void 0 : source.path
       });
-      new import_obsidian4.Notice(error instanceof Error ? error.message : "Batch external image import failed");
+      new import_obsidian4.Notice(error instanceof Error ? error.message : getNoticeCopy(context.services.settings.getSettings().uiLanguage).batchExternalImageImportFailed);
     }
   }
   async runOrphanCleanupBatch(context, scope, source) {
     var _a, _b, _c, _d;
     context.services.logger.refreshMode("batch-delete-extra-images");
     if (this.hasActiveBatch(context)) {
-      showOperationNotice(context.services.settings.getSettings(), "An image batch job is already active");
+      const settings = context.services.settings.getSettings();
+      showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).batchJobAlreadyActive);
       return;
     }
     try {
@@ -885,14 +1922,16 @@ var BatchFeature = class {
       switch (scope) {
         case "current-note" /* CURRENT_NOTE */:
           if (!(source instanceof import_obsidian4.TFile)) {
-            showOperationNotice(context.services.settings.getSettings(), "No active note");
+            const settings = context.services.settings.getSettings();
+            showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noActiveNote);
             return;
           }
           result = await context.services.fileManager.deleteOrphanImagesForNote(source);
           break;
         case "folder" /* FOLDER */:
           if (!(source instanceof import_obsidian4.TFolder)) {
-            showOperationNotice(context.services.settings.getSettings(), "No active folder");
+            const settings = context.services.settings.getSettings();
+            showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noActiveFolder);
             return;
           }
           result = await context.services.fileManager.deleteOrphanImagesInFolder(source);
@@ -917,7 +1956,8 @@ var BatchFeature = class {
           deletedFolders: result.deletedFolders,
           relocatedImages: (_c = result.relocatedImages) != null ? _c : 0,
           preservedImages: (_d = result.preservedImages) != null ? _d : 0,
-          failedCount: 0
+          failedCount: 0,
+          language: context.services.settings.getSettings().uiLanguage
         })
       );
     } catch (error) {
@@ -926,7 +1966,7 @@ var BatchFeature = class {
         scope,
         sourcePath: source == null ? void 0 : source.path
       });
-      new import_obsidian4.Notice(error instanceof Error ? error.message : "Orphan image cleanup failed");
+      new import_obsidian4.Notice(error instanceof Error ? error.message : getNoticeCopy(context.services.settings.getSettings().uiLanguage).orphanCleanupFailed);
     }
   }
   resolveNotes(context, scope, source) {
@@ -952,7 +1992,8 @@ var BatchFeature = class {
         ...command,
         reason: "No active note file"
       });
-      showOperationNotice(context.services.settings.getSettings(), "Open a note file first");
+      const settings = context.services.settings.getSettings();
+      showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noActiveNoteFile);
       return;
     }
     await callback(file);
@@ -1137,7 +2178,7 @@ var CompressFeature = class {
   async register(context) {
     const activeCommand = {
       commandId: "a4-compress-active-image",
-      commandName: "\u3010\u5355\u6587\u4EF6\u3011\u538B\u7F29\u56FE\u7247"
+      commandName: getDefaultCommandName("a4-compress-active-image")
     };
     context.plugin.addCommand({
       id: activeCommand.commandId,
@@ -1146,7 +2187,7 @@ var CompressFeature = class {
         void executeLoggedCommand(context, activeCommand, async () => {
           await context.services.recovery.runTransaction(
             {
-              label: "\u538B\u7F29\u5F53\u524D\u6587\u4EF6\u5F15\u7528\u56FE\u7247",
+              label: getUiCopy(context.services.settings.getSettings().uiLanguage).transactions.compressCurrentNoteImages,
               trigger: "compress",
               scope: "single-note"
             },
@@ -1161,7 +2202,7 @@ var CompressFeature = class {
     });
     const folderCommand = {
       commandId: "b4-compress-current-folder-images",
-      commandName: "\u3010\u5355\u6587\u4EF6\u5939\u3011\u538B\u7F29\u56FE\u7247"
+      commandName: getDefaultCommandName("b4-compress-current-folder-images")
     };
     context.plugin.addCommand({
       id: folderCommand.commandId,
@@ -1175,12 +2216,15 @@ var CompressFeature = class {
               ...folderCommand,
               reason: "No active folder"
             });
-            showOperationNotice(context.services.settings.getSettings(), "No active folder");
+            const settings = context.services.settings.getSettings();
+            showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noActiveFolder);
             return;
           }
           await context.services.recovery.runTransaction(
             {
-              label: `\u538B\u7F29\u6587\u4EF6\u5939\u56FE\u7247 ${folder.path || "vault root"}`,
+              label: getUiCopy(context.services.settings.getSettings().uiLanguage).transactions.compressFolderImages(
+                folder.path || getUiCopy(context.services.settings.getSettings().uiLanguage).common.vaultRoot
+              ),
               trigger: "compress",
               scope: "folder"
             },
@@ -1193,19 +2237,20 @@ var CompressFeature = class {
     });
     const vaultCommand = {
       commandId: "c4-compress-vault-images",
-      commandName: "\u3010\u6574\u5E93\u3011\u538B\u7F29\u56FE\u7247"
+      commandName: getDefaultCommandName("c4-compress-vault-images")
     };
     context.plugin.addCommand({
       id: vaultCommand.commandId,
       name: vaultCommand.commandName,
       callback: () => {
         void executeLoggedCommand(context, vaultCommand, async () => {
-          if (!await confirmVaultScopeOperation(context.app, "\u6574\u5E93\u538B\u7F29")) {
+          const ui = getUiCopy(context.services.settings.getSettings().uiLanguage);
+          if (!await confirmVaultScopeOperation(context.app, context.services.settings.getSettings().uiLanguage, ui.vaultOperation.actionNames.compression)) {
             return;
           }
           await context.services.recovery.runTransaction(
             {
-              label: "\u538B\u7F29\u6574\u4E2A\u4ED3\u5E93\u56FE\u7247",
+              label: ui.transactions.compressVaultImages,
               trigger: "compress",
               scope: "vault"
             },
@@ -1255,7 +2300,8 @@ var CompressFeature = class {
         fileCount: compressedCount,
         beforeBytes: beforeTotal,
         afterBytes: afterTotal,
-        showSpaceSaved: context.services.settings.getSettings().showSpaceSavedNotification
+        showSpaceSaved: context.services.settings.getSettings().showSpaceSavedNotification,
+        language: context.services.settings.getSettings().uiLanguage
       })
     );
   }
@@ -1267,14 +2313,16 @@ var CompressFeature = class {
     }
     const result = await this.compressAndReplace(context, file);
     if (!result) {
-      showOperationNotice(context.services.settings.getSettings(), formatCompressionNoGainNotice(file.name));
+      const settings2 = context.services.settings.getSettings();
+      showOperationNotice(settings2, formatCompressionNoGainNotice(file.name, settings2));
       return;
     }
-    if (context.services.settings.getSettings().showSpaceSavedNotification) {
-      showOperationNotice(context.services.settings.getSettings(), formatCompressionSummary(result.before, result.after));
+    const settings = context.services.settings.getSettings();
+    if (settings.showSpaceSavedNotification) {
+      showOperationNotice(settings, formatCompressionSummary(result.before, result.after, settings));
       return;
     }
-    showOperationNotice(context.services.settings.getSettings(), "Image compressed");
+    showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).imageCompressed);
   }
   async withActiveNoteFile(context, command, callback) {
     const view = context.app.workspace.getActiveViewOfType(import_obsidian5.MarkdownView);
@@ -1284,13 +2332,24 @@ var CompressFeature = class {
         ...command,
         reason: "No active note file"
       });
-      showOperationNotice(context.services.settings.getSettings(), "Open a note file first");
+      const settings = context.services.settings.getSettings();
+      showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noActiveNoteFile);
       return;
     }
     await callback(file);
   }
   async getCompressionSkipState(context, file) {
     const settings = context.services.settings.getSettings();
+    const restriction = context.services.imageProcessor.getInPlaceModificationRestriction(file);
+    if (restriction) {
+      context.services.logger.debug("Skipping compression because the format requires conversion before in-place edits", {
+        filePath: file.path,
+        reason: restriction
+      });
+      return {
+        message: restriction
+      };
+    }
     const thresholdBytes = settings.compressionThresholdKB * 1024;
     if (thresholdBytes > 0 && file.stat.size < thresholdBytes) {
       context.services.logger.debug("Skipping compression because file is below threshold", {
@@ -1299,7 +2358,7 @@ var CompressFeature = class {
         thresholdBytes
       });
       return {
-        message: formatCompressionBelowThresholdNotice(file.name)
+        message: formatCompressionBelowThresholdNotice(file.name, settings)
       };
     }
     const ignored = matchRegexIgnorePattern(settings.compressionIgnorePattern, file.path);
@@ -1309,7 +2368,7 @@ var CompressFeature = class {
         pattern: ignored.source
       });
       return {
-        message: formatCompressionIgnoredNotice(file.name, ignored.source)
+        message: formatCompressionIgnoredNotice(file.name, ignored.source, settings)
       };
     }
     const processedStatus = await context.services.compressionTracker.getCurrentStatus(file);
@@ -1319,7 +2378,7 @@ var CompressFeature = class {
         status: processedStatus
       });
       return {
-        message: formatCompressionProcessedNotice(file.name, processedStatus)
+        message: formatCompressionProcessedNotice(file.name, processedStatus, settings)
       };
     }
     return null;
@@ -1364,23 +2423,26 @@ function formatBytes2(bytes) {
   }
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
-var ImageGalleryModal = class extends import_obsidian6.Modal {
+var _ImageGalleryModal = class _ImageGalleryModal extends import_obsidian6.Modal {
   constructor(app, options) {
-    var _a;
+    var _a, _b;
     super(app);
     __publicField(this, "title");
+    __publicField(this, "ui");
     __publicField(this, "images");
     __publicField(this, "sortBy");
     __publicField(this, "gridSize");
     __publicField(this, "initialSelectedImagePath");
-    __publicField(this, "onCopyMarkdownLink");
+    __publicField(this, "lightboxCloseBehavior");
     __publicField(this, "onCopyImageToClipboard");
     __publicField(this, "filterText", "");
     __publicField(this, "viewMode", "grid");
     __publicField(this, "filteredImages", []);
     __publicField(this, "selectedImagePath", null);
+    __publicField(this, "lightboxZoom", 1);
     __publicField(this, "resultsEl");
     __publicField(this, "lightboxEl");
+    __publicField(this, "lightboxViewportEl");
     __publicField(this, "lightboxImageEl");
     __publicField(this, "lightboxTitleEl");
     __publicField(this, "lightboxMetaEl");
@@ -1388,12 +2450,51 @@ var ImageGalleryModal = class extends import_obsidian6.Modal {
     __publicField(this, "lightboxActionsEl");
     __publicField(this, "lightboxPrevButton");
     __publicField(this, "lightboxNextButton");
+    __publicField(this, "lightboxZoomOutButton");
+    __publicField(this, "lightboxZoomResetButton");
+    __publicField(this, "lightboxZoomInButton");
+    __publicField(this, "lightboxPointerId", null);
+    __publicField(this, "isLightboxDragging", false);
+    __publicField(this, "lightboxDragStartX", 0);
+    __publicField(this, "lightboxDragStartY", 0);
+    __publicField(this, "lightboxDragScrollLeft", 0);
+    __publicField(this, "lightboxDragScrollTop", 0);
+    __publicField(this, "onLightboxPointerDown", (event) => {
+      var _a, _b;
+      if (event.button !== 0 || !this.canPanLightbox()) {
+        return;
+      }
+      this.lightboxPointerId = event.pointerId;
+      this.isLightboxDragging = true;
+      this.lightboxDragStartX = event.clientX;
+      this.lightboxDragStartY = event.clientY;
+      this.lightboxDragScrollLeft = this.lightboxViewportEl.scrollLeft;
+      this.lightboxDragScrollTop = this.lightboxViewportEl.scrollTop;
+      this.lightboxViewportEl.classList.add("is-dragging");
+      (_b = (_a = this.lightboxViewportEl).setPointerCapture) == null ? void 0 : _b.call(_a, event.pointerId);
+      event.preventDefault();
+    });
+    __publicField(this, "onLightboxPointerMove", (event) => {
+      if (!this.isLightboxDragging || this.lightboxPointerId !== event.pointerId) {
+        return;
+      }
+      this.lightboxViewportEl.scrollLeft = this.lightboxDragScrollLeft - (event.clientX - this.lightboxDragStartX);
+      this.lightboxViewportEl.scrollTop = this.lightboxDragScrollTop - (event.clientY - this.lightboxDragStartY);
+      event.preventDefault();
+    });
+    __publicField(this, "onLightboxPointerUp", (event) => {
+      if (this.lightboxPointerId !== event.pointerId) {
+        return;
+      }
+      this.resetLightboxDrag();
+    });
     this.title = options.title;
+    this.ui = options.ui;
     this.images = options.images;
     this.sortBy = options.defaultSortBy;
     this.gridSize = options.defaultGridSize;
     this.initialSelectedImagePath = (_a = options.initialSelectedImagePath) != null ? _a : null;
-    this.onCopyMarkdownLink = options.onCopyMarkdownLink;
+    this.lightboxCloseBehavior = (_b = options.lightboxCloseBehavior) != null ? _b : "return-to-gallery";
     this.onCopyImageToClipboard = options.onCopyImageToClipboard;
   }
   onOpen() {
@@ -1405,7 +2506,7 @@ var ImageGalleryModal = class extends import_obsidian6.Modal {
     const search = toolbar.createEl("input", {
       cls: "image-manager-gallery-search",
       type: "search",
-      placeholder: "Filter images by name"
+      placeholder: this.ui.searchPlaceholder
     });
     search.addEventListener("input", () => {
       this.filterText = search.value.trim().toLowerCase();
@@ -1413,9 +2514,9 @@ var ImageGalleryModal = class extends import_obsidian6.Modal {
     });
     const sortSelect = toolbar.createEl("select", { cls: "image-manager-gallery-select" });
     [
-      ["date" /* DATE */, "Newest first"],
-      ["name" /* NAME */, "Name"],
-      ["size" /* SIZE */, "Largest first"]
+      ["date" /* DATE */, this.ui.sortBy.date],
+      ["name" /* NAME */, this.ui.sortBy.name],
+      ["size" /* SIZE */, this.ui.sortBy.size]
     ].forEach(([value, label]) => {
       const option = sortSelect.createEl("option", { value, text: label });
       option.selected = value === this.sortBy;
@@ -1426,8 +2527,8 @@ var ImageGalleryModal = class extends import_obsidian6.Modal {
     });
     const viewToggle = toolbar.createDiv({ cls: "image-manager-gallery-toggle" });
     for (const [mode, label] of [
-      ["grid", "Grid"],
-      ["list", "List"]
+      ["grid", this.ui.viewMode.grid],
+      ["list", this.ui.viewMode.list]
     ]) {
       const button = viewToggle.createEl("button", {
         cls: `image-manager-gallery-button${mode === this.viewMode ? " is-active" : ""}`,
@@ -1483,10 +2584,10 @@ var ImageGalleryModal = class extends import_obsidian6.Modal {
       this.renderItemActions(item, image);
     });
     if (filtered.length === 0) {
-      this.resultsEl.createEl("p", { text: "No images match the current filter." });
+      this.resultsEl.createEl("p", { text: this.ui.emptyResults });
     }
     if (this.selectedImagePath && !filtered.some((image) => image.path === this.selectedImagePath)) {
-      this.closeLightbox();
+      this.clearLightboxSelection();
       return;
     }
     if (this.selectedImagePath) {
@@ -1497,7 +2598,7 @@ var ImageGalleryModal = class extends import_obsidian6.Modal {
     this.lightboxEl = this.contentEl.createDiv({ cls: "image-manager-gallery-lightbox" });
     this.lightboxEl.addEventListener("click", (event) => {
       if (event.target === this.lightboxEl) {
-        this.closeLightbox();
+        this.dismissLightbox();
       }
     });
     const panel = this.lightboxEl.createDiv({ cls: "image-manager-gallery-lightbox__panel" });
@@ -1505,35 +2606,71 @@ var ImageGalleryModal = class extends import_obsidian6.Modal {
     const titleWrap = header.createDiv({ cls: "image-manager-gallery-lightbox__title" });
     this.lightboxTitleEl = titleWrap.createEl("strong", { text: "" });
     this.lightboxMetaEl = titleWrap.createEl("span", { text: "" });
-    const controls = header.createDiv({ cls: "image-manager-gallery-lightbox__controls" });
-    this.lightboxCounterEl = controls.createEl("span", {
+    const headerMeta = header.createDiv({ cls: "image-manager-gallery-lightbox__header-meta" });
+    this.lightboxCounterEl = headerMeta.createEl("span", {
       cls: "image-manager-gallery-lightbox__counter",
       text: ""
     });
-    this.lightboxActionsEl = controls.createDiv({ cls: "image-manager-gallery-lightbox__actions" });
-    const closeButton = controls.createEl("button", {
+    const closeButton = headerMeta.createEl("button", {
       cls: "image-manager-gallery-lightbox__close",
-      text: "Close"
+      text: this.ui.close
     });
     closeButton.type = "button";
-    closeButton.addEventListener("click", () => this.closeLightbox());
+    closeButton.addEventListener("click", () => this.dismissLightbox());
     const body = panel.createDiv({ cls: "image-manager-gallery-lightbox__body" });
-    this.lightboxPrevButton = body.createEl("button", {
-      cls: "image-manager-gallery-lightbox__nav",
-      text: "Prev"
-    });
-    this.lightboxPrevButton.type = "button";
-    this.lightboxPrevButton.addEventListener("click", () => this.stepLightbox(-1));
-    this.lightboxImageEl = body.createEl("img", {
+    this.lightboxViewportEl = body.createDiv({ cls: "image-manager-gallery-lightbox__viewport" });
+    this.lightboxViewportEl.addEventListener(
+      "wheel",
+      (event) => {
+        event.preventDefault();
+        const delta = event.deltaY < 0 ? _ImageGalleryModal.ZOOM_STEP : -_ImageGalleryModal.ZOOM_STEP;
+        this.adjustZoom(delta);
+      },
+      { passive: false }
+    );
+    this.lightboxViewportEl.addEventListener("pointerdown", this.onLightboxPointerDown);
+    this.lightboxViewportEl.addEventListener("pointermove", this.onLightboxPointerMove);
+    this.lightboxViewportEl.addEventListener("pointerup", this.onLightboxPointerUp);
+    this.lightboxViewportEl.addEventListener("pointercancel", this.onLightboxPointerUp);
+    this.lightboxImageEl = this.lightboxViewportEl.createEl("img", {
       cls: "image-manager-gallery-lightbox__image",
       attr: { alt: "" }
     });
-    this.lightboxNextButton = body.createEl("button", {
+    this.lightboxImageEl.addEventListener("load", () => this.updateLightboxPanUi());
+    const footer = panel.createDiv({ cls: "image-manager-gallery-lightbox__footer" });
+    const footerNav = footer.createDiv({ cls: "image-manager-gallery-lightbox__controls" });
+    this.lightboxPrevButton = footerNav.createEl("button", {
       cls: "image-manager-gallery-lightbox__nav",
-      text: "Next"
+      text: this.ui.previous
+    });
+    this.lightboxPrevButton.type = "button";
+    this.lightboxPrevButton.addEventListener("click", () => this.stepLightbox(-1));
+    this.lightboxActionsEl = footerNav.createDiv({ cls: "image-manager-gallery-lightbox__actions" });
+    this.lightboxNextButton = footerNav.createEl("button", {
+      cls: "image-manager-gallery-lightbox__nav",
+      text: this.ui.next
     });
     this.lightboxNextButton.type = "button";
     this.lightboxNextButton.addEventListener("click", () => this.stepLightbox(1));
+    const footerZoom = footer.createDiv({ cls: "image-manager-gallery-lightbox__controls" });
+    this.lightboxZoomOutButton = footerZoom.createEl("button", {
+      cls: "image-manager-gallery-lightbox__zoom-button",
+      text: "\u2212"
+    });
+    this.lightboxZoomOutButton.type = "button";
+    this.lightboxZoomOutButton.addEventListener("click", () => this.adjustZoom(-_ImageGalleryModal.ZOOM_STEP));
+    this.lightboxZoomResetButton = footerZoom.createEl("button", {
+      cls: "image-manager-gallery-lightbox__zoom-button",
+      text: "100%"
+    });
+    this.lightboxZoomResetButton.type = "button";
+    this.lightboxZoomResetButton.addEventListener("click", () => this.setZoom(1));
+    this.lightboxZoomInButton = footerZoom.createEl("button", {
+      cls: "image-manager-gallery-lightbox__zoom-button",
+      text: "+"
+    });
+    this.lightboxZoomInButton.type = "button";
+    this.lightboxZoomInButton.addEventListener("click", () => this.adjustZoom(_ImageGalleryModal.ZOOM_STEP));
   }
   openLightbox(index) {
     const image = this.filteredImages[index];
@@ -1541,10 +2678,20 @@ var ImageGalleryModal = class extends import_obsidian6.Modal {
       return;
     }
     this.selectedImagePath = image.path;
+    this.setZoom(1);
     this.renderLightbox();
   }
-  closeLightbox() {
+  dismissLightbox() {
+    if (this.lightboxCloseBehavior === "close-modal") {
+      this.close();
+      return;
+    }
+    this.clearLightboxSelection();
+  }
+  clearLightboxSelection() {
     this.selectedImagePath = null;
+    this.setZoom(1);
+    this.resetLightboxDrag();
     this.lightboxEl.removeClass("is-open");
   }
   stepLightbox(delta) {
@@ -1558,6 +2705,7 @@ var ImageGalleryModal = class extends import_obsidian6.Modal {
       return;
     }
     this.selectedImagePath = nextImage.path;
+    this.setZoom(1);
     this.renderLightbox();
   }
   renderLightbox() {
@@ -1565,7 +2713,7 @@ var ImageGalleryModal = class extends import_obsidian6.Modal {
     const selectedIndex = this.getSelectedImageIndex();
     const image = selectedIndex >= 0 ? this.filteredImages[selectedIndex] : null;
     if (!(image == null ? void 0 : image.resourcePath)) {
-      this.closeLightbox();
+      this.clearLightboxSelection();
       return;
     }
     this.lightboxTitleEl.setText(image.name);
@@ -1576,13 +2724,15 @@ var ImageGalleryModal = class extends import_obsidian6.Modal {
     this.lightboxImageEl.alt = image.name;
     this.lightboxPrevButton.disabled = selectedIndex <= 0;
     this.lightboxNextButton.disabled = selectedIndex >= this.filteredImages.length - 1;
+    this.resetLightboxDrag();
+    this.updateZoomUi();
     this.lightboxEl.addClass("is-open");
   }
   getSelectedImageIndex() {
     return this.selectedImagePath ? this.filteredImages.findIndex((image) => image.path === this.selectedImagePath) : -1;
   }
   renderItemActions(container, image) {
-    if (!this.onCopyMarkdownLink && !this.onCopyImageToClipboard) {
+    if (!this.onCopyImageToClipboard) {
       return;
     }
     const actions = container.createDiv({ cls: "image-manager-gallery-actions" });
@@ -1593,23 +2743,10 @@ var ImageGalleryModal = class extends import_obsidian6.Modal {
     this.appendActionButtons(this.lightboxActionsEl, image);
   }
   appendActionButtons(container, image) {
-    if (this.onCopyMarkdownLink) {
-      const button = container.createEl("button", {
-        cls: "image-manager-gallery-action",
-        text: "Copy Markdown"
-      });
-      button.type = "button";
-      button.addEventListener("click", (event) => {
-        var _a;
-        event.preventDefault();
-        event.stopPropagation();
-        void ((_a = this.onCopyMarkdownLink) == null ? void 0 : _a.call(this, image));
-      });
-    }
     if (this.onCopyImageToClipboard) {
       const button = container.createEl("button", {
         cls: "image-manager-gallery-action",
-        text: "Copy Image"
+        text: this.ui.copyImage
       });
       button.type = "button";
       button.addEventListener("click", (event) => {
@@ -1620,15 +2757,60 @@ var ImageGalleryModal = class extends import_obsidian6.Modal {
       });
     }
   }
+  adjustZoom(delta) {
+    this.setZoom(this.lightboxZoom + delta);
+  }
+  setZoom(nextZoom) {
+    this.lightboxZoom = Math.min(_ImageGalleryModal.MAX_ZOOM, Math.max(_ImageGalleryModal.MIN_ZOOM, nextZoom));
+    if (!this.canPanLightbox()) {
+      this.resetLightboxDrag();
+    }
+    this.updateZoomUi();
+  }
+  updateZoomUi() {
+    if (!this.lightboxImageEl || !this.lightboxZoomResetButton || !this.lightboxZoomOutButton || !this.lightboxZoomInButton) {
+      return;
+    }
+    this.lightboxImageEl.style.transform = `scale(${this.lightboxZoom})`;
+    this.lightboxZoomResetButton.setText(`${Math.round(this.lightboxZoom * 100)}%`);
+    this.lightboxZoomOutButton.disabled = this.lightboxZoom <= _ImageGalleryModal.MIN_ZOOM;
+    this.lightboxZoomInButton.disabled = this.lightboxZoom >= _ImageGalleryModal.MAX_ZOOM;
+    this.updateLightboxPanUi();
+  }
+  canPanLightbox() {
+    return this.lightboxZoom > 1 && (this.lightboxViewportEl.scrollWidth > this.lightboxViewportEl.clientWidth || this.lightboxViewportEl.scrollHeight > this.lightboxViewportEl.clientHeight);
+  }
+  resetLightboxDrag() {
+    var _a, _b;
+    if (this.lightboxPointerId !== null) {
+      (_b = (_a = this.lightboxViewportEl).releasePointerCapture) == null ? void 0 : _b.call(_a, this.lightboxPointerId);
+    }
+    this.lightboxPointerId = null;
+    this.isLightboxDragging = false;
+    this.lightboxViewportEl.classList.remove("is-dragging");
+    this.updateLightboxPanUi();
+  }
+  updateLightboxPanUi() {
+    if (!this.lightboxViewportEl) {
+      return;
+    }
+    this.lightboxViewportEl.classList.toggle("is-pannable", this.canPanLightbox());
+  }
 };
+__publicField(_ImageGalleryModal, "MIN_ZOOM", 0.5);
+__publicField(_ImageGalleryModal, "MAX_ZOOM", 4);
+__publicField(_ImageGalleryModal, "ZOOM_STEP", 0.25);
+var ImageGalleryModal = _ImageGalleryModal;
 
 // src/services/image-processor/format-support.ts
 var MIME_BY_FORMAT = {
   ["webp" /* WEBP */]: "image/webp",
   ["jpeg" /* JPEG */]: "image/jpeg",
   ["png" /* PNG */]: "image/png",
+  ["bmp" /* BMP */]: "image/bmp",
   ["gif" /* GIF */]: "image/gif",
   ["heic" /* HEIC */]: "image/heic",
+  ["svg" /* SVG */]: "image/svg+xml",
   ["tiff" /* TIFF */]: "image/tiff"
 };
 
@@ -1651,8 +2833,10 @@ var OUTPUT_MIME_BY_FORMAT = {
   ["webp" /* WEBP */]: "image/webp",
   ["jpeg" /* JPEG */]: "image/jpeg",
   ["png" /* PNG */]: "image/png",
+  ["bmp" /* BMP */]: "image/bmp",
   ["gif" /* GIF */]: "image/gif",
   ["heic" /* HEIC */]: "image/heic",
+  ["svg" /* SVG */]: "image/svg+xml",
   ["tiff" /* TIFF */]: "image/tiff"
 };
 var outputFormatSupportCache = /* @__PURE__ */ new Map();
@@ -1707,7 +2891,8 @@ function getAttachmentFolderSetting(app) {
   const configured = (_a = vaultWithConfig.getConfig) == null ? void 0 : _a.call(vaultWithConfig, "attachmentFolderPath");
   return typeof configured === "string" ? configured : null;
 }
-function describeCurrentPlatform() {
+function describeCurrentPlatform(language = "zh-CN") {
+  const platforms = getUiCopy(language).common.platforms;
   if (import_obsidian7.Platform.isIosApp) {
     return "iOS";
   }
@@ -1715,12 +2900,15 @@ function describeCurrentPlatform() {
     return "Android";
   }
   if (import_obsidian7.Platform.isMobileApp) {
-    return "\u79FB\u52A8\u7AEF";
+    return platforms.mobile;
   }
   if (import_obsidian7.Platform.isDesktopApp) {
-    return "\u684C\u9762\u7AEF";
+    return platforms.desktop;
   }
-  return import_obsidian7.Platform.isMobile ? "\u79FB\u52A8\u6A21\u5F0F" : "\u684C\u9762\u6A21\u5F0F";
+  if (import_obsidian7.Platform.isMobile) {
+    return platforms.mobileMode;
+  }
+  return platforms.desktopMode;
 }
 function detectCanvasOutputSupport(format) {
   if (typeof document === "undefined") {
@@ -1787,6 +2975,7 @@ function scanStorageForDebugFlag(storage) {
 
 // src/utils/clipboard.ts
 var SOURCE_MIME_BY_EXTENSION = {
+  avif: "image/avif",
   bmp: "image/bmp",
   gif: "image/gif",
   heic: "image/heic",
@@ -1860,72 +3049,56 @@ function shouldAttemptClipboardMimeType(mimeType) {
 // src/features/gallery/gallery-actions.ts
 async function openGalleryForFiles(context, options) {
   const settings = context.services.settings.getSettings();
+  const ui = getUiCopy(settings.uiLanguage);
   const images = await Promise.all(options.files.map((file) => context.services.imageProcessor.getImageInfo(file)));
   new ImageGalleryModal(context.app, {
     title: options.title,
+    ui: ui.gallery,
     images: sortImages(images, settings.gallerySortBy),
     defaultSortBy: settings.gallerySortBy,
     defaultGridSize: settings.galleryGridSize,
     initialSelectedImagePath: options.initialSelectedImagePath,
-    onCopyMarkdownLink: async (image) => {
-      await copyMarkdownImageLink(context, image, options.linkSourceFile);
-    },
+    lightboxCloseBehavior: options.lightboxCloseBehavior,
     onCopyImageToClipboard: async (image) => {
       await copyImageToClipboard(context, image);
     }
   }).open();
 }
-async function openSingleImageGallery(context, imageFile, linkSourceFile) {
+async function openSingleImageGallery(context, imageFile, linkSourceFile, options) {
   const sourceNote = resolveSingleImageGallerySourceFile(context, imageFile.path, linkSourceFile);
   if (sourceNote) {
     const files = await context.services.fileManager.getImagesInNote(sourceNote);
     if (files.some((file) => file.path === imageFile.path)) {
+      const ui2 = getUiCopy(context.services.settings.getSettings().uiLanguage);
       await openGalleryForFiles(context, {
-        title: `Images in ${sourceNote.basename}`,
+        title: ui2.gallery.titleForNote(sourceNote.basename),
         files,
         initialSelectedImagePath: imageFile.path,
-        linkSourceFile: sourceNote
+        linkSourceFile: sourceNote,
+        lightboxCloseBehavior: options == null ? void 0 : options.lightboxCloseBehavior
       });
       return;
     }
   }
+  const ui = getUiCopy(context.services.settings.getSettings().uiLanguage);
   await openGalleryForFiles(context, {
-    title: `Image: ${imageFile.name}`,
+    title: ui.gallery.titleForImage(imageFile.name),
     files: [imageFile],
     initialSelectedImagePath: imageFile.path,
-    linkSourceFile
+    linkSourceFile,
+    lightboxCloseBehavior: options == null ? void 0 : options.lightboxCloseBehavior
   });
-}
-async function copyMarkdownImageLink(context, image, preferredSourceFile) {
-  var _a;
-  const settings = context.services.settings.getSettings();
-  if (typeof navigator === "undefined" || typeof ((_a = navigator.clipboard) == null ? void 0 : _a.writeText) !== "function") {
-    showOperationNotice(settings, "Copy markdown link is not available on this platform");
-    return;
-  }
-  const file = resolveImageFile(context, image.path);
-  if (!file) {
-    showOperationNotice(settings, "Image file is no longer available");
-    return;
-  }
-  const sourceFile = resolveMarkdownSourceFile(context, preferredSourceFile);
-  const link = context.services.linkFormatter.formatLink(file.path, sourceFile != null ? sourceFile : file, {
-    format: "markdown" /* MARKDOWN */,
-    pathFormat: sourceFile ? settings.defaultPathFormat : "absolute" /* ABSOLUTE */,
-    markdownPathEncodingStrategy: settings.markdownPathEncodingStrategy
-  });
-  await navigator.clipboard.writeText(link);
-  showOperationNotice(settings, "Markdown image link copied");
 }
 async function copyImageToClipboard(context, image) {
   const settings = context.services.settings.getSettings();
+  const notices = getNoticeCopy(settings.uiLanguage);
   if (!canWriteImageToClipboard()) {
-    showOperationNotice(settings, "Copy image is not available on this platform");
+    showOperationNotice(settings, notices.copyImageUnavailable);
     return;
   }
   const file = resolveImageFile(context, image.path);
   if (!file) {
-    showOperationNotice(settings, "Image file is no longer available");
+    showOperationNotice(settings, notices.imageFileUnavailable);
     return;
   }
   try {
@@ -1934,12 +3107,12 @@ async function copyImageToClipboard(context, image) {
       filePath: file.path,
       mimeType
     });
-    showOperationNotice(settings, "Image copied");
+    showOperationNotice(settings, notices.imageCopied);
   } catch (error) {
     context.services.logger.error("Failed to copy image to clipboard", error, {
       filePath: file.path
     });
-    showOperationNotice(settings, "Failed to copy image to clipboard");
+    showOperationNotice(settings, notices.failedToCopyImage);
   }
 }
 function resolveImageFile(context, imagePath) {
@@ -2078,13 +3251,13 @@ var ImageSelectionModal = class extends import_obsidian9.Modal {
       window.removeEventListener("mouseup", handleUp);
     });
     const actions = this.contentEl.createDiv({ cls: "image-manager-selection-modal__actions" });
-    const clearButton = actions.createEl("button", { text: "\u6E05\u7A7A\u9009\u533A" });
+    const clearButton = actions.createEl("button", { text: this.options.ui.clearSelection });
     clearButton.type = "button";
     clearButton.addEventListener("click", () => {
       this.currentSelection = null;
       this.renderSelection();
     });
-    const cancelButton = actions.createEl("button", { text: "\u53D6\u6D88" });
+    const cancelButton = actions.createEl("button", { text: this.options.ui.cancel });
     cancelButton.type = "button";
     cancelButton.addEventListener("click", () => {
       this.cancel();
@@ -2097,7 +3270,7 @@ var ImageSelectionModal = class extends import_obsidian9.Modal {
     confirmButton.addEventListener("click", () => {
       const selection = this.resolveSelectionInImagePixels();
       if (!selection) {
-        new import_obsidian9.Notice("\u8BF7\u5148\u62D6\u62FD\u9009\u62E9\u4E00\u4E2A\u533A\u57DF");
+        new import_obsidian9.Notice(this.options.emptySelectionNotice);
         return;
       }
       this.resolved = true;
@@ -2147,10 +3320,10 @@ var ImageSelectionModal = class extends import_obsidian9.Modal {
   }
   updateHint(selection) {
     if (!selection || selection.width <= 0 || selection.height <= 0) {
-      this.hintEl.setText("\u5728\u56FE\u7247\u4E0A\u6309\u4F4F\u9F20\u6807\u5DE6\u952E\u62D6\u62FD\uFF0C\u6846\u51FA\u9700\u8981\u5904\u7406\u7684\u533A\u57DF\u3002");
+      this.hintEl.setText(this.options.ui.dragHint);
       return;
     }
-    this.hintEl.setText(`\u5F53\u524D\u9009\u533A\uFF1A${Math.round(selection.width)} \xD7 ${Math.round(selection.height)} \u50CF\u7D20\uFF08\u9884\u89C8\u5750\u6807\uFF09`);
+    this.hintEl.setText(this.options.ui.selectionHint(selection.width, selection.height));
   }
   resolveSelectionInImagePixels() {
     const selection = this.currentSelection;
@@ -2209,27 +3382,47 @@ var ContextMenuFeature = class {
     );
   }
   addImageMenuItems(context, menu, file) {
+    const inPlaceRestriction = context.services.imageProcessor.getInPlaceModificationRestriction(file);
+    const ui = getUiCopy(context.services.settings.getSettings().uiLanguage);
     menu.addSeparator();
     menu.addItem((item) => {
-      item.setTitle("\u5728\u753B\u5ECA\u4E2D\u6253\u5F00").setIcon("images").onClick(() => {
+      item.setTitle(ui.contextMenu.openInGallery).setIcon("images").onClick(() => {
         context.services.logger.refreshMode("context-menu-gallery");
         void this.openImageGallery(context, file);
       });
     });
     if (canWriteImageToClipboard()) {
       menu.addItem((item) => {
-        item.setTitle("\u590D\u5236\u56FE\u7247\u5230\u526A\u8D34\u677F").setIcon("copy").onClick(() => {
+        item.setTitle(ui.contextMenu.copyImageToClipboard).setIcon("copy").onClick(() => {
           context.services.logger.refreshMode("context-menu-copy");
           void this.copyImageToClipboard(context, file);
         });
       });
     }
     menu.addItem((item) => {
-      item.setTitle("\u538B\u7F29\u56FE\u7247").setIcon("archive").onClick(() => {
+      item.setTitle(ui.contextMenu.convertToDefaultFormat).setIcon("image").onClick(() => {
+        context.services.logger.refreshMode("context-menu-convert");
+        void context.services.recovery.runTransaction(
+          {
+            label: ui.transactions.contextConvertImage(file.name),
+            trigger: "context-menu",
+            scope: "single-file"
+          },
+          async () => {
+            await this.convertImage(context, file, context.services.settings.getSettings().defaultFormat);
+          }
+        );
+      });
+    });
+    if (inPlaceRestriction) {
+      return;
+    }
+    menu.addItem((item) => {
+      item.setTitle(ui.contextMenu.compressImage).setIcon("archive").onClick(() => {
         context.services.logger.refreshMode("context-menu-compress");
         void context.services.recovery.runTransaction(
           {
-            label: `\u53F3\u952E\u538B\u7F29\u56FE\u7247 ${file.name}`,
+            label: ui.transactions.contextCompressImage(file.name),
             trigger: "context-menu",
             scope: "single-file"
           },
@@ -2240,94 +3433,116 @@ var ContextMenuFeature = class {
       });
     });
     menu.addItem((item) => {
-      item.setTitle("\u8F6C\u6362\u4E3A\u9ED8\u8BA4\u683C\u5F0F").setIcon("image").onClick(() => {
-        context.services.logger.refreshMode("context-menu-convert");
-        void context.services.recovery.runTransaction(
-          {
-            label: `\u53F3\u952E\u8F6C\u6362\u56FE\u7247 ${file.name}`,
-            trigger: "context-menu",
-            scope: "single-file"
-          },
-          async () => {
-            await this.convertImage(context, file, context.services.settings.getSettings().defaultFormat);
-          }
-        );
-      });
-    });
-    menu.addItem((item) => {
-      item.setTitle("\u62D6\u62FD\u88C1\u526A").setIcon("scissors").onClick(() => {
+      item.setTitle(ui.contextMenu.cropBySelection).setIcon("scissors").onClick(() => {
         context.services.logger.refreshMode("context-menu-crop");
         void this.cropImage(context, file);
       });
     });
     menu.addItem((item) => {
-      item.setTitle("\u987A\u65F6\u9488\u65CB\u8F6C 90\xB0").setIcon("rotate-cw").onClick(() => {
+      item.setTitle(ui.contextMenu.rotateClockwise90).setIcon("rotate-cw").onClick(() => {
         context.services.logger.refreshMode("context-menu-rotate");
         void context.services.recovery.runTransaction(
           {
-            label: `\u53F3\u952E\u65CB\u8F6C\u56FE\u7247 ${file.name}`,
+            label: ui.transactions.contextRotateImage(file.name),
             trigger: "context-menu",
             scope: "single-file"
           },
           async () => {
-            await this.replaceImage(context, file, () => context.services.imageProcessor.rotate(file, 90), "Image rotated");
+            await this.replaceImage(
+              context,
+              file,
+              () => context.services.imageProcessor.rotate(file, 90),
+              getNoticeCopy(context.services.settings.getSettings().uiLanguage).imageRotated
+            );
           }
         );
       });
     });
     menu.addItem((item) => {
-      item.setTitle("\u6C34\u5E73\u7FFB\u8F6C").setIcon("flip-horizontal").onClick(() => {
-        context.services.logger.refreshMode("context-menu-flip");
+      item.setTitle(ui.contextMenu.rotateCounterClockwise90).setIcon("rotate-ccw").onClick(() => {
+        context.services.logger.refreshMode("context-menu-rotate");
         void context.services.recovery.runTransaction(
           {
-            label: `\u53F3\u952E\u6C34\u5E73\u7FFB\u8F6C\u56FE\u7247 ${file.name}`,
+            label: ui.transactions.contextRotateImage(file.name),
             trigger: "context-menu",
             scope: "single-file"
           },
           async () => {
-            await this.replaceImage(context, file, () => context.services.imageProcessor.flip(file, "horizontal"), "Image flipped horizontally");
+            await this.replaceImage(
+              context,
+              file,
+              () => context.services.imageProcessor.rotate(file, 270),
+              getNoticeCopy(context.services.settings.getSettings().uiLanguage).imageRotated
+            );
           }
         );
       });
     });
     menu.addItem((item) => {
-      item.setTitle("\u5782\u76F4\u7FFB\u8F6C").setIcon("flip-vertical").onClick(() => {
+      item.setTitle(ui.contextMenu.flipHorizontal).setIcon("flip-horizontal").onClick(() => {
         context.services.logger.refreshMode("context-menu-flip");
         void context.services.recovery.runTransaction(
           {
-            label: `\u53F3\u952E\u5782\u76F4\u7FFB\u8F6C\u56FE\u7247 ${file.name}`,
+            label: ui.transactions.contextFlipHorizontalImage(file.name),
             trigger: "context-menu",
             scope: "single-file"
           },
           async () => {
-            await this.replaceImage(context, file, () => context.services.imageProcessor.flip(file, "vertical"), "Image flipped vertically");
+            await this.replaceImage(
+              context,
+              file,
+              () => context.services.imageProcessor.flip(file, "horizontal"),
+              getNoticeCopy(context.services.settings.getSettings().uiLanguage).imageFlippedHorizontal
+            );
+          }
+        );
+      });
+    });
+    menu.addItem((item) => {
+      item.setTitle(ui.contextMenu.flipVertical).setIcon("flip-vertical").onClick(() => {
+        context.services.logger.refreshMode("context-menu-flip");
+        void context.services.recovery.runTransaction(
+          {
+            label: ui.transactions.contextFlipVerticalImage(file.name),
+            trigger: "context-menu",
+            scope: "single-file"
+          },
+          async () => {
+            await this.replaceImage(
+              context,
+              file,
+              () => context.services.imageProcessor.flip(file, "vertical"),
+              getNoticeCopy(context.services.settings.getSettings().uiLanguage).imageFlippedVertical
+            );
           }
         );
       });
     });
   }
   async openImageGallery(context, file) {
-    if (!context.services.settings.getSettings().enableGallery) {
-      showOperationNotice(context.services.settings.getSettings(), "Gallery is disabled in settings");
+    const settings = context.services.settings.getSettings();
+    if (!settings.enableGallery) {
+      showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).galleryDisabled);
       return;
     }
-    await openSingleImageGallery(context, file);
+    await openSingleImageGallery(context, file, void 0, {
+      lightboxCloseBehavior: "close-modal"
+    });
   }
   async convertImage(context, file, format) {
+    const settings = context.services.settings.getSettings();
+    const notices = getNoticeCopy(settings.uiLanguage);
     context.services.logger.debug("Converting image from context menu", {
       filePath: file.path,
       targetFormat: format
     });
-    const ignored = matchRegexIgnorePattern(context.services.settings.getSettings().conversionIgnorePattern, file.path);
+    const ignored = matchRegexIgnorePattern(settings.conversionIgnorePattern, file.path);
     if (ignored) {
       context.services.logger.debug("Skipping context menu conversion because file matches ignore pattern", {
         filePath: file.path,
         pattern: ignored.source
       });
-      showOperationNotice(
-        context.services.settings.getSettings(),
-        formatConversionIgnoredNotice(file.name, ignored.source)
-      );
+      showOperationNotice(settings, formatConversionIgnoredNotice(file.name, ignored.source, settings));
       return;
     }
     const buffer = await context.services.imageProcessor.convert(file, format);
@@ -2341,25 +3556,27 @@ var ContextMenuFeature = class {
       filePath: file.path,
       targetPath
     });
-    showOperationNotice(context.services.settings.getSettings(), `Converted to ${format}`);
+    showOperationNotice(settings, notices.convertedToFormat(format));
   }
   async cropImage(context, file) {
+    const ui = getUiCopy(context.services.settings.getSettings().uiLanguage);
     const selection = await this.pickSelection(context, file, {
-      title: `\u88C1\u526A\u56FE\u7247\uFF1A${file.name}`,
-      description: "\u62D6\u62FD\u9009\u62E9\u8981\u4FDD\u7559\u7684\u533A\u57DF\uFF0C\u786E\u8BA4\u540E\u4F1A\u6309\u9009\u533A\u88C1\u526A\u5F53\u524D\u56FE\u7247\u3002",
-      confirmLabel: "\u88C1\u526A"
+      title: ui.contextMenu.cropDialogTitle(file.name),
+      description: ui.contextMenu.cropDialogDescription,
+      confirmLabel: ui.contextMenu.cropConfirm,
+      emptySelectionNotice: getNoticeCopy(context.services.settings.getSettings().uiLanguage).selectAreaFirst
     });
     if (!selection) {
       return;
     }
     await context.services.recovery.runTransaction(
       {
-        label: `\u53F3\u952E\u88C1\u526A\u56FE\u7247 ${file.name}`,
+        label: ui.transactions.contextCropImage(file.name),
         trigger: "context-menu",
         scope: "single-file"
       },
       async () => {
-        await this.replaceImage(context, file, () => context.services.imageProcessor.crop(file, selection), "Image cropped");
+        await this.replaceImage(context, file, () => context.services.imageProcessor.crop(file, selection), getNoticeCopy(context.services.settings.getSettings().uiLanguage).imageCropped);
       }
     );
   }
@@ -2380,7 +3597,7 @@ var ContextMenuFeature = class {
     const settings = context.services.settings.getSettings();
     const thresholdBytes = settings.compressionThresholdKB * 1024;
     if (thresholdBytes > 0 && file.stat.size < thresholdBytes) {
-      showOperationNotice(settings, formatCompressionBelowThresholdNotice(file.name));
+      showOperationNotice(settings, formatCompressionBelowThresholdNotice(file.name, settings));
       return;
     }
     const ignored = matchRegexIgnorePattern(settings.compressionIgnorePattern, file.path);
@@ -2389,7 +3606,7 @@ var ContextMenuFeature = class {
         filePath: file.path,
         pattern: ignored.source
       });
-      showOperationNotice(settings, formatCompressionIgnoredNotice(file.name, ignored.source));
+      showOperationNotice(settings, formatCompressionIgnoredNotice(file.name, ignored.source, settings));
       return;
     }
     const processedStatus = await context.services.compressionTracker.getCurrentStatus(file);
@@ -2398,7 +3615,7 @@ var ContextMenuFeature = class {
         filePath: file.path,
         status: processedStatus
       });
-      showOperationNotice(settings, formatCompressionProcessedNotice(file.name, processedStatus));
+      showOperationNotice(settings, formatCompressionProcessedNotice(file.name, processedStatus, settings));
       return;
     }
     const before = file.stat.size;
@@ -2410,24 +3627,26 @@ var ContextMenuFeature = class {
         afterBytes: buffer.byteLength
       });
       await context.services.compressionTracker.markNotBeneficial(file);
-      showOperationNotice(settings, formatCompressionNoGainNotice(file.name));
+      showOperationNotice(settings, formatCompressionNoGainNotice(file.name, settings));
       return;
     }
     const modifiedAt = Date.now();
     await context.services.fileManager.replaceFile(file, buffer, file.path, modifiedAt);
     await context.services.compressionTracker.markCompressed(file.path, buffer.byteLength, modifiedAt);
     if (settings.showSpaceSavedNotification) {
-      showOperationNotice(settings, formatCompressionSummary(before, buffer.byteLength));
+      showOperationNotice(settings, formatCompressionSummary(before, buffer.byteLength, settings));
       return;
     }
-    showOperationNotice(settings, "Image compressed");
+    showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).imageCompressed);
   }
   async copyImageToClipboard(context, file) {
+    const settings = context.services.settings.getSettings();
+    const notices = getNoticeCopy(settings.uiLanguage);
     if (!canWriteImageToClipboard()) {
       context.services.logger.warn("Clipboard image copy is unavailable on this platform", {
         filePath: file.path
       });
-      showOperationNotice(context.services.settings.getSettings(), "Copy image is not available on this platform");
+      showOperationNotice(settings, notices.copyImageUnavailable);
       return;
     }
     try {
@@ -2436,12 +3655,12 @@ var ContextMenuFeature = class {
         filePath: file.path,
         mimeType
       });
-      showOperationNotice(context.services.settings.getSettings(), "Image copied");
+      showOperationNotice(settings, notices.imageCopied);
     } catch (error) {
       context.services.logger.error("Failed to copy image to clipboard", error, {
         filePath: file.path
       });
-      showOperationNotice(context.services.settings.getSettings(), "Failed to copy image to clipboard");
+      showOperationNotice(settings, notices.failedToCopyImage);
     }
   }
   async pickSelection(context, file, options) {
@@ -2449,7 +3668,9 @@ var ContextMenuFeature = class {
       file,
       title: options.title,
       description: options.description,
-      confirmLabel: options.confirmLabel
+      confirmLabel: options.confirmLabel,
+      emptySelectionNotice: options.emptySelectionNotice,
+      ui: getUiCopy(context.services.settings.getSettings().uiLanguage).imageSelection
     });
   }
 };
@@ -2466,7 +3687,7 @@ var ConvertFeature = class {
   async register(context) {
     const activeCommand = {
       commandId: "a3-convert-active-image-to-default-format",
-      commandName: "\u8F6C\u6362\u56FE\u7247\u4E3A\u9ED8\u8BA4\u683C\u5F0F"
+      commandName: getDefaultCommandName("a3-convert-active-image-to-default-format")
     };
     context.plugin.addCommand({
       id: activeCommand.commandId,
@@ -2475,7 +3696,7 @@ var ConvertFeature = class {
         void executeLoggedCommand(context, activeCommand, async () => {
           await context.services.recovery.runTransaction(
             {
-              label: "\u8F6C\u6362\u5F53\u524D\u6587\u4EF6\u5F15\u7528\u56FE\u7247",
+              label: getUiCopy(context.services.settings.getSettings().uiLanguage).transactions.convertCurrentNoteImages,
               trigger: "convert",
               scope: "single-note"
             },
@@ -2490,7 +3711,7 @@ var ConvertFeature = class {
     });
     const folderCommand = {
       commandId: "b3-convert-current-folder-images-to-default-format",
-      commandName: "\u8F6C\u6362\u56FE\u7247\u4E3A\u9ED8\u8BA4\u683C\u5F0F"
+      commandName: getDefaultCommandName("b3-convert-current-folder-images-to-default-format")
     };
     context.plugin.addCommand({
       id: folderCommand.commandId,
@@ -2504,12 +3725,15 @@ var ConvertFeature = class {
               ...folderCommand,
               reason: "No active folder"
             });
-            showOperationNotice(context.services.settings.getSettings(), "No active folder");
+            const settings = context.services.settings.getSettings();
+            showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noActiveFolder);
             return;
           }
           await context.services.recovery.runTransaction(
             {
-              label: `\u8F6C\u6362\u6587\u4EF6\u5939\u56FE\u7247 ${folder.path || "vault root"}`,
+              label: getUiCopy(context.services.settings.getSettings().uiLanguage).transactions.convertFolderImages(
+                folder.path || getUiCopy(context.services.settings.getSettings().uiLanguage).common.vaultRoot
+              ),
               trigger: "convert",
               scope: "folder"
             },
@@ -2522,19 +3746,20 @@ var ConvertFeature = class {
     });
     const vaultCommand = {
       commandId: "c3-convert-vault-images-to-default-format",
-      commandName: "\u8F6C\u6362\u56FE\u7247\u4E3A\u9ED8\u8BA4\u683C\u5F0F"
+      commandName: getDefaultCommandName("c3-convert-vault-images-to-default-format")
     };
     context.plugin.addCommand({
       id: vaultCommand.commandId,
       name: vaultCommand.commandName,
       callback: () => {
         void executeLoggedCommand(context, vaultCommand, async () => {
-          if (!await confirmVaultScopeOperation(context.app, "\u6574\u5E93\u683C\u5F0F\u8F6C\u6362")) {
+          const ui = getUiCopy(context.services.settings.getSettings().uiLanguage);
+          if (!await confirmVaultScopeOperation(context.app, context.services.settings.getSettings().uiLanguage, ui.vaultOperation.actionNames.formatConversion)) {
             return;
           }
           await context.services.recovery.runTransaction(
             {
-              label: "\u8F6C\u6362\u6574\u4E2A\u4ED3\u5E93\u56FE\u7247",
+              label: ui.transactions.convertVaultImages,
               trigger: "convert",
               scope: "vault"
             },
@@ -2553,7 +3778,7 @@ var ConvertFeature = class {
       if (options.notifySkip !== false) {
         showOperationNotice(
           context.services.settings.getSettings(),
-          formatConversionIgnoredNotice(file.name, ignored.source)
+          formatConversionIgnoredNotice(file.name, ignored.source, context.services.settings.getSettings())
         );
       }
       return file;
@@ -2566,7 +3791,8 @@ var ConvertFeature = class {
     );
     const created = await context.services.fileManager.replaceFile(file, buffer, targetPath);
     if (options.notify !== false) {
-      showOperationNotice(context.services.settings.getSettings(), `Converted to ${format}`);
+      const settings = context.services.settings.getSettings();
+      showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).convertedToFormat(format));
     }
     return created;
   }
@@ -2598,14 +3824,16 @@ var ConvertFeature = class {
       }
     });
     if (files.length === 0 || convertedCount === 0) {
-      showOperationNotice(context.services.settings.getSettings(), "No images found");
+      const settings = context.services.settings.getSettings();
+      showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noImagesFound);
       return;
     }
     showOperationNotice(
       context.services.settings.getSettings(),
       formatBatchConversionNotice({
         imageCount: convertedCount,
-        targetFormat: format
+        targetFormat: format,
+        language: context.services.settings.getSettings().uiLanguage
       })
     );
   }
@@ -2617,7 +3845,8 @@ var ConvertFeature = class {
         ...command,
         reason: "No active note file"
       });
-      showOperationNotice(context.services.settings.getSettings(), "Open a note file first");
+      const settings = context.services.settings.getSettings();
+      showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noActiveNoteFile);
       return;
     }
     await callback(file);
@@ -2633,86 +3862,8 @@ var ConvertFeature = class {
   }
 };
 
-// src/features/editor/editor-feature.ts
-var import_obsidian12 = require("obsidian");
-var EditorFeature = class {
-  constructor() {
-    __publicField(this, "id", "editor");
-    __publicField(this, "name", "Image Editor");
-    __publicField(this, "summary", "Provide quick rotate and flip commands for active image files.");
-    __publicField(this, "state", "implemented");
-  }
-  async register(context) {
-    const rotateCommand = {
-      commandId: "rotate-active-image-90",
-      commandName: "\u987A\u65F6\u9488\u65CB\u8F6C\u56FE\u7247 90\xB0"
-    };
-    context.plugin.addCommand({
-      id: rotateCommand.commandId,
-      name: rotateCommand.commandName,
-      callback: () => {
-        void executeLoggedCommand(context, rotateCommand, async () => {
-          await context.services.recovery.runTransaction(
-            {
-              label: "\u65CB\u8F6C\u5F53\u524D\u56FE\u7247 90 \u5EA6",
-              trigger: "rotate",
-              scope: "single-file"
-            },
-            async () => {
-              await this.withActiveImageFile(context, rotateCommand, async (file) => {
-                await this.replaceImage(context, file, () => context.services.imageProcessor.rotate(file, 90), "Image rotated");
-              });
-            }
-          );
-        });
-      }
-    });
-    const flipCommand = {
-      commandId: "flip-active-image-horizontal",
-      commandName: "\u6C34\u5E73\u7FFB\u8F6C\u56FE\u7247"
-    };
-    context.plugin.addCommand({
-      id: flipCommand.commandId,
-      name: flipCommand.commandName,
-      callback: () => {
-        void executeLoggedCommand(context, flipCommand, async () => {
-          await context.services.recovery.runTransaction(
-            {
-              label: "\u6C34\u5E73\u7FFB\u8F6C\u5F53\u524D\u56FE\u7247",
-              trigger: "flip",
-              scope: "single-file"
-            },
-            async () => {
-              await this.withActiveImageFile(context, flipCommand, async (file) => {
-                await this.replaceImage(context, file, () => context.services.imageProcessor.flip(file, "horizontal"), "Image flipped horizontally");
-              });
-            }
-          );
-        });
-      }
-    });
-  }
-  async replaceImage(context, file, processor, message) {
-    const buffer = await processor();
-    await context.services.fileManager.replaceFile(file, buffer);
-    showOperationNotice(context.services.settings.getSettings(), message);
-  }
-  async withActiveImageFile(context, command, callback) {
-    const file = context.app.workspace.getActiveFile();
-    if (!(file instanceof import_obsidian12.TFile) || !context.services.fileManager.isImageFile(file)) {
-      logSkippedCommand(context, {
-        ...command,
-        reason: "No active image file"
-      });
-      showOperationNotice(context.services.settings.getSettings(), "Open an image file first");
-      return;
-    }
-    await callback(file);
-  }
-};
-
 // src/features/gallery/gallery-feature.ts
-var import_obsidian13 = require("obsidian");
+var import_obsidian12 = require("obsidian");
 var GalleryFeature = class {
   constructor() {
     __publicField(this, "id", "gallery");
@@ -2721,34 +3872,9 @@ var GalleryFeature = class {
     __publicField(this, "state", "implemented");
   }
   async register(context) {
-    const imageCommand = {
-      commandId: "open-active-image-gallery",
-      commandName: "\u6253\u5F00\u5F53\u524D\u56FE\u7247\u753B\u5ECA"
-    };
-    context.plugin.addCommand({
-      id: imageCommand.commandId,
-      name: imageCommand.commandName,
-      callback: () => {
-        void executeLoggedCommand(context, imageCommand, async () => {
-          if (!this.ensureGalleryEnabled(context, imageCommand)) {
-            return;
-          }
-          const file = context.app.workspace.getActiveFile();
-          if (!(file instanceof import_obsidian13.TFile) || !context.services.fileManager.isImageFile(file)) {
-            logSkippedCommand(context, {
-              ...imageCommand,
-              reason: "No active image file"
-            });
-            showOperationNotice(context.services.settings.getSettings(), "Open an image file first");
-            return;
-          }
-          await openSingleImageGallery(context, file);
-        });
-      }
-    });
     const noteCommand = {
       commandId: "open-current-note-gallery",
-      commandName: "\u6253\u5F00\u56FE\u7247\u753B\u5ECA"
+      commandName: getDefaultCommandName("open-current-note-gallery")
     };
     context.plugin.addCommand({
       id: noteCommand.commandId,
@@ -2758,13 +3884,14 @@ var GalleryFeature = class {
           if (!this.ensureGalleryEnabled(context, noteCommand)) {
             return;
           }
-          const view = context.app.workspace.getActiveViewOfType(import_obsidian13.MarkdownView);
+          const view = context.app.workspace.getActiveViewOfType(import_obsidian12.MarkdownView);
           if (!(view == null ? void 0 : view.file)) {
             logSkippedCommand(context, {
               ...noteCommand,
               reason: "No active note"
             });
-            showOperationNotice(context.services.settings.getSettings(), "No active note");
+            const settings = context.services.settings.getSettings();
+            showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noActiveNote);
             return;
           }
           await this.openNoteGallery(context, view.file);
@@ -2773,7 +3900,7 @@ var GalleryFeature = class {
     });
     const folderCommand = {
       commandId: "open-current-folder-gallery",
-      commandName: "\u6253\u5F00\u56FE\u7247\u753B\u5ECA"
+      commandName: getDefaultCommandName("open-current-folder-gallery")
     };
     context.plugin.addCommand({
       id: folderCommand.commandId,
@@ -2790,7 +3917,8 @@ var GalleryFeature = class {
               ...folderCommand,
               reason: "No active folder"
             });
-            showOperationNotice(context.services.settings.getSettings(), "No active folder");
+            const settings = context.services.settings.getSettings();
+            showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noActiveFolder);
             return;
           }
           await this.openFolderGallery(context, folder);
@@ -2800,15 +3928,18 @@ var GalleryFeature = class {
   }
   async openNoteGallery(context, noteFile) {
     const files = await context.services.fileManager.getImagesInNote(noteFile);
+    const language = context.services.settings.getSettings().uiLanguage;
     await openGalleryForFiles(context, {
-      title: `Images in ${noteFile.basename}`,
+      title: getUiCopy(language).gallery.titleForNote(noteFile.basename),
       files,
       linkSourceFile: noteFile
     });
   }
   async openFolderGallery(context, folder) {
+    const language = context.services.settings.getSettings().uiLanguage;
+    const ui = getUiCopy(language);
     await openGalleryForFiles(context, {
-      title: `Images in ${folder.path || "vault root"}`,
+      title: ui.gallery.titleForFolder(folder.path || ui.common.vaultRoot),
       files: context.services.fileManager.getImagesInFolder(folder),
       linkSourceFile: this.getActiveMarkdownFile(context)
     });
@@ -2821,17 +3952,18 @@ var GalleryFeature = class {
       ...command,
       reason: "Gallery is disabled"
     });
-    showOperationNotice(context.services.settings.getSettings(), "Gallery is disabled in settings");
+    const settings = context.services.settings.getSettings();
+    showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).galleryDisabled);
     return false;
   }
   getActiveMarkdownFile(context) {
-    const view = context.app.workspace.getActiveViewOfType(import_obsidian13.MarkdownView);
-    return (view == null ? void 0 : view.file) instanceof import_obsidian13.TFile ? view.file : null;
+    const view = context.app.workspace.getActiveViewOfType(import_obsidian12.MarkdownView);
+    return (view == null ? void 0 : view.file) instanceof import_obsidian12.TFile ? view.file : null;
   }
 };
 
 // src/features/preview/preview-feature.ts
-var import_obsidian14 = require("obsidian");
+var import_obsidian13 = require("obsidian");
 
 // src/utils/link-resolution.ts
 function getParsedLinkResolutionCandidates(parsed) {
@@ -2870,14 +4002,14 @@ function decodeLinkPathSafely(path) {
 var import_promises = require("fs/promises");
 var import_path = require("path");
 var import_url = require("url");
-var IMAGE_FILE_EXTENSION_REGEX = /\.(png|jpe?g|gif|webp|bmp|svg|tiff?|heic)$/i;
+var IMAGE_FILE_EXTENSION_REGEX = /\.(png|jpe?g|gif|webp|bmp|svg|tiff?|heic|avif)$/i;
 var DATA_IMAGE_URL_REGEX = /^data:(image\/[a-z0-9.+-]+);base64,([a-z0-9+/=\s]+)$/i;
-function parseTextImageSources(text) {
+function parseTextImageSources(text, options = {}) {
   const candidates = text.split(/\r?\n/).map((line) => line.trim()).filter((line) => line.length > 0);
   if (candidates.length === 0) {
     return [];
   }
-  const sources = candidates.map((line) => parseSingleTextImageSource(line));
+  const sources = candidates.map((line) => parseSingleTextImageSource(line, options));
   if (sources.some((source) => source === null)) {
     return [];
   }
@@ -2893,7 +4025,7 @@ async function resolveTextImageSource(source) {
       return resolveDataImageSource(source);
   }
 }
-function parseSingleTextImageSource(value) {
+function parseSingleTextImageSource(value, options) {
   const dataSource = parseDataImageSource(value);
   if (dataSource !== null) {
     return dataSource;
@@ -2917,14 +4049,21 @@ function parseSingleTextImageSource(value) {
   if (/^https?:\/\//i.test(value)) {
     try {
       const url = new URL(value);
-      const name = decodeURIComponent((0, import_path.basename)(url.pathname));
-      if (!name || !IMAGE_FILE_EXTENSION_REGEX.test(name)) {
+      const name = getRemoteSourceFileName(url);
+      if (name && IMAGE_FILE_EXTENSION_REGEX.test(name)) {
+        return {
+          kind: "remote",
+          value,
+          originalName: name
+        };
+      }
+      if (!options.allowExtensionlessRemote) {
         return null;
       }
       return {
         kind: "remote",
         value,
-        originalName: name
+        originalName: name || "downloaded-image"
       };
     } catch (e) {
       return null;
@@ -2943,6 +4082,9 @@ function parseDataImageSource(value) {
     return null;
   }
   const extension = mimeTypeToExtension(mimeType);
+  if (!extension) {
+    return null;
+  }
   return {
     kind: "data",
     value,
@@ -2984,10 +4126,15 @@ async function resolveDataImageSource(source) {
   };
 }
 function ensureFileNameExtension(fileName, mimeType) {
-  if ((0, import_path.extname)(fileName)) {
+  if (IMAGE_FILE_EXTENSION_REGEX.test(fileName)) {
     return fileName;
   }
-  return `${fileName}.${mimeTypeToExtension(mimeType)}`;
+  const extension = mimeTypeToExtension(mimeType);
+  if (!extension) {
+    throw new Error(`Unsupported remote image format: ${mimeType}`);
+  }
+  const normalizedBaseName = (0, import_path.extname)(fileName) ? fileName.slice(0, -(0, import_path.extname)(fileName).length) : fileName;
+  return `${normalizedBaseName || "downloaded-image"}.${extension}`;
 }
 function mimeTypeToExtension(mimeType) {
   switch (mimeType.toLowerCase()) {
@@ -3008,9 +4155,18 @@ function mimeTypeToExtension(mimeType) {
       return "tiff";
     case "image/heic":
       return "heic";
+    case "image/avif":
+      return "avif";
     default:
-      return "png";
+      return null;
   }
+}
+function getRemoteSourceFileName(url) {
+  const pathName = decodeURIComponent((0, import_path.basename)(url.pathname));
+  if (pathName === "" || pathName === "/" || pathName === ".") {
+    return "";
+  }
+  return pathName;
 }
 function decodeBase64ToArrayBuffer(value) {
   const sanitized = value.replace(/\s+/g, "");
@@ -3036,20 +4192,23 @@ var PreviewFeature = class {
         this.applyPreviewSettings(context, image);
         const sourceNote = this.resolveSourceNote(context, markdownContext);
         const target = this.resolveLinkedImageFile(context, markdownContext, image);
-        if (!(target instanceof import_obsidian14.TFile) || !context.services.fileManager.isImageFile(target)) {
+        if (!(target instanceof import_obsidian13.TFile) || !context.services.fileManager.isImageFile(target)) {
           this.registerExternalImageContextMenu(context, element, markdownContext, image, sourceNote);
           continue;
         }
         image.setAttribute("src", this.buildFreshResourcePath(context, target));
         image.setAttribute("data-image-manager-path", target.path);
         image.addEventListener("dblclick", (event) => {
-          if (!context.services.settings.getSettings().enableGallery) {
-            showOperationNotice(context.services.settings.getSettings(), "Gallery is disabled in settings");
+          const settings = context.services.settings.getSettings();
+          if (!settings.enableGallery) {
+            showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).galleryDisabled);
             return;
           }
           event.preventDefault();
           event.stopPropagation();
-          void openSingleImageGallery(context, target, sourceNote);
+          void openSingleImageGallery(context, target, sourceNote, {
+            lightboxCloseBehavior: "close-modal"
+          });
         });
       }
     });
@@ -3065,13 +4224,14 @@ var PreviewFeature = class {
       }
       event.preventDefault();
       event.stopPropagation();
-      const menu = new import_obsidian14.Menu();
+      const menu = new import_obsidian13.Menu();
+      const ui = getUiCopy(context.services.settings.getSettings().uiLanguage);
       menu.addItem((item) => {
-        item.setTitle("\u4E0B\u8F7D\u8BE5\u5916\u90E8\u56FE\u7247\u5230\u672C\u5730").setIcon("download").onClick(() => {
+        item.setTitle(ui.contextMenu.downloadExternalImage).setIcon("download").onClick(() => {
           context.services.logger.refreshMode("preview-import-external-image");
           void context.services.recovery.runTransaction(
             {
-              label: `\u53F3\u952E\u4E0B\u8F7D\u5916\u90E8\u56FE\u7247 ${sourceNote.basename}`,
+              label: ui.transactions.contextDownloadExternalImage(sourceNote.basename),
               trigger: "context-menu",
               scope: "single-note"
             },
@@ -3093,16 +4253,12 @@ var PreviewFeature = class {
                 externalSource
               );
               if (result.replaced === 0 && result.downloaded === 0) {
-                showOperationNotice(
-                  context.services.settings.getSettings(),
-                  "No matching external image link found in the note"
-                );
+                const settings2 = context.services.settings.getSettings();
+                showOperationNotice(settings2, getNoticeCopy(settings2.uiLanguage).noMatchingExternalImageLink);
                 return;
               }
-              showOperationNotice(
-                context.services.settings.getSettings(),
-                `External image import finished: ${result.replaced} link(s) updated, downloaded ${result.downloaded} image(s)`
-              );
+              const settings = context.services.settings.getSettings();
+              showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).singleExternalImportFinished(result.replaced, result.downloaded));
             }
           );
         });
@@ -3118,7 +4274,7 @@ var PreviewFeature = class {
     }
     for (const candidate of getRawLinkResolutionCandidates(rawTarget)) {
       const target = context.app.metadataCache.getFirstLinkpathDest(candidate, markdownContext.sourcePath);
-      if (target instanceof import_obsidian14.TFile) {
+      if (target instanceof import_obsidian13.TFile) {
         return target;
       }
     }
@@ -3157,7 +4313,7 @@ var PreviewFeature = class {
   }
   resolveSourceNote(context, markdownContext) {
     const abstract = context.app.vault.getAbstractFileByPath(markdownContext.sourcePath);
-    return abstract instanceof import_obsidian14.TFile && abstract.extension.toLowerCase() === "md" ? abstract : null;
+    return abstract instanceof import_obsidian13.TFile && abstract.extension.toLowerCase() === "md" ? abstract : null;
   }
   getImportableExternalImageSource(image) {
     var _a;
@@ -3165,7 +4321,9 @@ var PreviewFeature = class {
     if (!rawSource) {
       return null;
     }
-    const sources = parseTextImageSources(rawSource);
+    const sources = parseTextImageSources(rawSource, {
+      allowExtensionlessRemote: true
+    });
     const [source] = sources;
     return sources.length === 1 && source ? source.value : null;
   }
@@ -3184,7 +4342,7 @@ var PreviewFeature = class {
 };
 
 // src/features/recovery/recovery-feature.ts
-var import_obsidian15 = require("obsidian");
+var import_obsidian14 = require("obsidian");
 var RecoveryFeature = class {
   constructor() {
     __publicField(this, "id", "recovery");
@@ -3195,14 +4353,14 @@ var RecoveryFeature = class {
   async register(context) {
     context.plugin.addCommand({
       id: "d1-undo-last-image-manager-transaction",
-      name: "\u6062\u590D\uFF1A\u64A4\u9500\u4E0A\u4E00\u6B65\u56FE\u7247\u7BA1\u7406\u4FEE\u6539",
+      name: getDefaultCommandName("d1-undo-last-image-manager-transaction"),
       callback: () => {
         void this.undoLastTransaction(context);
       }
     });
     context.plugin.addCommand({
       id: "d2-redo-last-image-manager-transaction",
-      name: "\u6062\u590D\uFF1A\u91CD\u505A\u4E0A\u4E00\u6B65\u56FE\u7247\u7BA1\u7406\u4FEE\u6539",
+      name: getDefaultCommandName("d2-redo-last-image-manager-transaction"),
       callback: () => {
         void this.redoLastTransaction(context);
       }
@@ -3210,42 +4368,40 @@ var RecoveryFeature = class {
   }
   async undoLastTransaction(context) {
     try {
+      const settings = context.services.settings.getSettings();
+      const notices = getNoticeCopy(settings.uiLanguage);
       const restored = await context.services.recovery.undoLastTransaction();
       if (!restored) {
-        showOperationNotice(context.services.settings.getSettings(), "\u6CA1\u6709\u53EF\u6062\u590D\u7684\u56FE\u7247\u7BA1\u7406\u4E8B\u52A1");
+        showOperationNotice(settings, notices.noUndoTransaction);
         return;
       }
-      showOperationNotice(
-        context.services.settings.getSettings(),
-        `\u5DF2\u6062\u590D\uFF1A${restored.label}`
-      );
+      showOperationNotice(settings, notices.undoCompleted(restored.label));
     } catch (error) {
       console.error("Image Manager failed to undo the last transaction", error);
       context.services.logger.error("Recovery undo failed", error);
-      new import_obsidian15.Notice(error instanceof Error ? error.message : "Failed to undo the last Image Manager transaction");
+      new import_obsidian14.Notice(error instanceof Error ? error.message : getNoticeCopy(context.services.settings.getSettings().uiLanguage).undoFailed);
     }
   }
   async redoLastTransaction(context) {
     try {
+      const settings = context.services.settings.getSettings();
+      const notices = getNoticeCopy(settings.uiLanguage);
       const restored = await context.services.recovery.redoLastUndoneTransaction();
       if (!restored) {
-        showOperationNotice(context.services.settings.getSettings(), "\u6CA1\u6709\u53EF\u91CD\u505A\u7684\u56FE\u7247\u7BA1\u7406\u4E8B\u52A1");
+        showOperationNotice(settings, notices.noRedoTransaction);
         return;
       }
-      showOperationNotice(
-        context.services.settings.getSettings(),
-        `\u5DF2\u91CD\u505A\uFF1A${restored.label}`
-      );
+      showOperationNotice(settings, notices.redoCompleted(restored.label));
     } catch (error) {
       console.error("Image Manager failed to redo the last transaction", error);
       context.services.logger.error("Recovery redo failed", error);
-      new import_obsidian15.Notice(error instanceof Error ? error.message : "Failed to redo the last Image Manager transaction");
+      new import_obsidian14.Notice(error instanceof Error ? error.message : getNoticeCopy(context.services.settings.getSettings().uiLanguage).redoFailed);
     }
   }
 };
 
 // src/features/rename/rename-feature.ts
-var import_obsidian16 = require("obsidian");
+var import_obsidian15 = require("obsidian");
 var RenameFeature = class {
   constructor() {
     __publicField(this, "id", "rename");
@@ -3256,7 +4412,7 @@ var RenameFeature = class {
   async register(context) {
     context.plugin.registerEvent(
       context.app.vault.on("rename", (file, oldPath) => {
-        if (!(file instanceof import_obsidian16.TFile) || file.extension !== "md") {
+        if (!(file instanceof import_obsidian15.TFile) || file.extension !== "md") {
           return;
         }
         void this.syncManagedImagesForNote(context, file, oldPath);
@@ -3279,14 +4435,17 @@ var RenameFeature = class {
       });
       const movedCount = await context.services.recovery.runTransaction(
         {
-          label: `\u540C\u6B65\u7B14\u8BB0\u8FC1\u79FB\u56FE\u7247 ${noteFile.basename}`,
+          label: getUiCopy(context.services.settings.getSettings().uiLanguage).transactions.syncManagedImages(
+            noteFile.basename
+          ),
           trigger: "note-rename-sync",
           scope: "auto"
         },
         async () => context.services.fileManager.syncManagedImagesForNote(noteFile, oldPath)
       );
       if (movedCount > 0) {
-        showOperationNotice(context.services.settings.getSettings(), `Synced ${movedCount} managed image${movedCount === 1 ? "" : "s"}`);
+        const settings = context.services.settings.getSettings();
+        showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).managedImagesSynced(movedCount));
       }
       context.services.logger.debug("Completed note rename sync", {
         notePath: noteFile.path,
@@ -3299,68 +4458,19 @@ var RenameFeature = class {
         notePath: noteFile.path,
         oldPath
       });
-      new import_obsidian16.Notice("Failed to sync managed images for the renamed or moved note");
+      new import_obsidian15.Notice(getNoticeCopy(context.services.settings.getSettings().uiLanguage).failedToSyncManagedImages);
     }
-  }
-};
-
-// src/features/resize/resize-feature.ts
-var import_obsidian17 = require("obsidian");
-var ResizeFeature = class {
-  constructor() {
-    __publicField(this, "id", "resize");
-    __publicField(this, "name", "Resize");
-    __publicField(this, "summary", "Resize active image files with a safe preset for large assets.");
-    __publicField(this, "state", "implemented");
-  }
-  async register(context) {
-    const resizeCommand = {
-      commandId: "resize-active-image-to-1920px",
-      commandName: "\u7F29\u653E\u56FE\u7247\u5230 1920px \u8FB9\u754C"
-    };
-    context.plugin.addCommand({
-      id: resizeCommand.commandId,
-      name: resizeCommand.commandName,
-      callback: () => {
-        void executeLoggedCommand(context, resizeCommand, async () => {
-          await context.services.recovery.runTransaction(
-            {
-              label: "\u7F29\u653E\u5F53\u524D\u56FE\u7247\u5230 1920px",
-              trigger: "resize",
-              scope: "single-file"
-            },
-            async () => {
-              await this.withActiveImageFile(context, resizeCommand, async (file) => {
-                const buffer = await context.services.imageProcessor.resize(file, 1920, 1920);
-                await context.services.fileManager.replaceFile(file, buffer);
-                showOperationNotice(context.services.settings.getSettings(), "Image resized");
-              });
-            }
-          );
-        });
-      }
-    });
-  }
-  async withActiveImageFile(context, command, callback) {
-    const file = context.app.workspace.getActiveFile();
-    if (!(file instanceof import_obsidian17.TFile) || !context.services.fileManager.isImageFile(file)) {
-      logSkippedCommand(context, {
-        ...command,
-        reason: "No active image file"
-      });
-      showOperationNotice(context.services.settings.getSettings(), "Open an image file first");
-      return;
-    }
-    await callback(file);
   }
 };
 
 // src/app/feature-catalog.ts
-function createScaffoldedFeature(id, name, summary) {
+function createScaffoldedFeature(id) {
+  var _a, _b;
+  const copy = getSettingTabCopy(DEFAULT_UI_LANGUAGE);
   return {
     id,
-    name,
-    summary,
+    name: (_a = copy.featureLabels[id]) != null ? _a : id,
+    summary: (_b = copy.featureSummaries[id]) != null ? _b : "",
     state: "scaffolded",
     register: () => void 0
   };
@@ -3371,28 +4481,18 @@ function createBuiltInFeatures() {
     new RecoveryFeature(),
     new CompressFeature(),
     new ConvertFeature(),
-    new EditorFeature(),
     new PreviewFeature(),
     new GalleryFeature(),
     new BatchFeature(),
-    new ResizeFeature(),
     new AlignFeature(),
     new ContextMenuFeature(),
-    createScaffoldedFeature(
-      "watermark-removal",
-      "\u53BB\u6C34\u5370",
-      "\u89C4\u5212\u4E2D\u7684\u5C40\u90E8\u4FEE\u590D\u80FD\u529B\uFF0C\u4EC5\u5728\u6548\u679C\u548C\u4EA4\u4E92\u8FBE\u5230\u53EF\u7528\u6807\u51C6\u540E\u518D\u6062\u590D\u3002"
-    ),
-    createScaffoldedFeature(
-      "drag-resize",
-      "\u62D6\u62FD\u8C03\u6574\u5C3A\u5BF8",
-      "\u540E\u7EED\u4F1A\u8865\u4E0A\u7F16\u8F91\u5668\u5185\u76F4\u63A5\u62D6\u62FD\u8C03\u6574\u56FE\u7247\u663E\u793A\u5C3A\u5BF8\u7684\u4EA4\u4E92\u3002"
-    )
+    createScaffoldedFeature("watermark-removal"),
+    createScaffoldedFeature("drag-resize")
   ];
 }
 
 // src/core/compression/compression-tracker.ts
-var import_obsidian18 = require("obsidian");
+var import_obsidian16 = require("obsidian");
 var HISTORY_FILE_NAME = "compression-history.json";
 var CompressionTracker = class {
   constructor(app, pluginId) {
@@ -3401,8 +4501,8 @@ var CompressionTracker = class {
     __publicField(this, "historyPath");
     __publicField(this, "records", /* @__PURE__ */ new Map());
     __publicField(this, "initialized", false);
-    this.rootPath = (0, import_obsidian18.normalizePath)(`${this.app.vault.configDir}/plugins/${pluginId}`);
-    this.historyPath = (0, import_obsidian18.normalizePath)(`${this.rootPath}/${HISTORY_FILE_NAME}`);
+    this.rootPath = (0, import_obsidian16.normalizePath)(`${this.app.vault.configDir}/plugins/${pluginId}`);
+    this.historyPath = (0, import_obsidian16.normalizePath)(`${this.rootPath}/${HISTORY_FILE_NAME}`);
   }
   async initialize() {
     await this.ensureDirectory(this.rootPath);
@@ -3412,7 +4512,7 @@ var CompressionTracker = class {
   }
   async getCurrentStatus(file) {
     await this.ensureInitialized();
-    const path = (0, import_obsidian18.normalizePath)(file.path);
+    const path = (0, import_obsidian16.normalizePath)(file.path);
     const record = this.records.get(path);
     if (!record) {
       return null;
@@ -3432,8 +4532,8 @@ var CompressionTracker = class {
   }
   async mark(path, size, mtime, status) {
     await this.ensureInitialized();
-    this.records.set((0, import_obsidian18.normalizePath)(path), {
-      path: (0, import_obsidian18.normalizePath)(path),
+    this.records.set((0, import_obsidian16.normalizePath)(path), {
+      path: (0, import_obsidian16.normalizePath)(path),
       size,
       mtime,
       status,
@@ -3477,7 +4577,7 @@ var CompressionTracker = class {
     let changed = false;
     for (const [path] of this.records) {
       const existing = this.app.vault.getAbstractFileByPath(path);
-      if (existing instanceof import_obsidian18.TFile) {
+      if (existing instanceof import_obsidian16.TFile) {
         continue;
       }
       this.records.delete(path);
@@ -3488,7 +4588,7 @@ var CompressionTracker = class {
     }
   }
   async ensureDirectory(path) {
-    const normalizedPath = (0, import_obsidian18.normalizePath)(path);
+    const normalizedPath = (0, import_obsidian16.normalizePath)(path);
     if (!normalizedPath || await this.app.vault.adapter.exists(normalizedPath)) {
       return;
     }
@@ -3617,14 +4717,15 @@ var FeatureRegistry = class {
 };
 
 // src/core/recovery/recovery-manager.ts
-var import_obsidian19 = require("obsidian");
+var import_obsidian17 = require("obsidian");
 var HISTORY_FILE_NAME2 = "history.json";
 var MAX_RECOVERY_TRANSACTIONS = 10;
 var MAX_RECOVERY_AGE_MS = 24 * 60 * 60 * 1e3;
 var RecoveryManager = class {
-  constructor(app, pluginId, fileManager) {
+  constructor(app, pluginId, fileManager, getSettings) {
     this.app = app;
     this.fileManager = fileManager;
+    this.getSettings = getSettings;
     __publicField(this, "historyPath");
     __publicField(this, "snapshotsPath");
     __publicField(this, "rootPath");
@@ -3635,9 +4736,9 @@ var RecoveryManager = class {
     __publicField(this, "createdPaths", /* @__PURE__ */ new Set());
     __publicField(this, "createdFolderPaths", /* @__PURE__ */ new Set());
     __publicField(this, "initialized", false);
-    this.rootPath = (0, import_obsidian19.normalizePath)(`${this.app.vault.configDir}/plugins/${pluginId}/recovery`);
-    this.historyPath = (0, import_obsidian19.normalizePath)(`${this.rootPath}/${HISTORY_FILE_NAME2}`);
-    this.snapshotsPath = (0, import_obsidian19.normalizePath)(`${this.rootPath}/snapshots`);
+    this.rootPath = (0, import_obsidian17.normalizePath)(`${this.app.vault.configDir}/plugins/${pluginId}/recovery`);
+    this.historyPath = (0, import_obsidian17.normalizePath)(`${this.rootPath}/${HISTORY_FILE_NAME2}`);
+    this.snapshotsPath = (0, import_obsidian17.normalizePath)(`${this.rootPath}/snapshots`);
   }
   async initialize() {
     await this.ensureDirectory(this.rootPath);
@@ -3693,7 +4794,7 @@ var RecoveryManager = class {
     if (!transaction) {
       return;
     }
-    const normalizedPath = (0, import_obsidian19.normalizePath)(file.path);
+    const normalizedPath = (0, import_obsidian17.normalizePath)(file.path);
     if (this.capturedBinaryPaths.has(normalizedPath)) {
       return;
     }
@@ -3711,7 +4812,7 @@ var RecoveryManager = class {
     if (!transaction) {
       return;
     }
-    const normalizedPath = (0, import_obsidian19.normalizePath)(path);
+    const normalizedPath = (0, import_obsidian17.normalizePath)(path);
     if (this.capturedTextPaths.has(normalizedPath)) {
       return;
     }
@@ -3729,7 +4830,7 @@ var RecoveryManager = class {
     if (!transaction) {
       return;
     }
-    const normalizedPath = (0, import_obsidian19.normalizePath)(path);
+    const normalizedPath = (0, import_obsidian17.normalizePath)(path);
     if (this.createdPaths.has(normalizedPath)) {
       return;
     }
@@ -3741,8 +4842,8 @@ var RecoveryManager = class {
   }
   recordRename(fromPath, toPath) {
     const transaction = this.activeTransaction;
-    const normalizedFrom = (0, import_obsidian19.normalizePath)(fromPath);
-    const normalizedTo = (0, import_obsidian19.normalizePath)(toPath);
+    const normalizedFrom = (0, import_obsidian17.normalizePath)(fromPath);
+    const normalizedTo = (0, import_obsidian17.normalizePath)(toPath);
     if (!transaction || normalizedFrom === normalizedTo) {
       return;
     }
@@ -3759,7 +4860,7 @@ var RecoveryManager = class {
     }
     transaction.entries.push({
       kind: "deleted-folder",
-      path: (0, import_obsidian19.normalizePath)(path)
+      path: (0, import_obsidian17.normalizePath)(path)
     });
   }
   recordCreatedFolder(path) {
@@ -3767,7 +4868,7 @@ var RecoveryManager = class {
     if (!transaction) {
       return;
     }
-    const normalizedPath = (0, import_obsidian19.normalizePath)(path);
+    const normalizedPath = (0, import_obsidian17.normalizePath)(path);
     if (this.createdFolderPaths.has(normalizedPath)) {
       return;
     }
@@ -3958,7 +5059,7 @@ var RecoveryManager = class {
     const files = [];
     for (const path of trackedPaths) {
       const abstract = this.app.vault.getAbstractFileByPath(path);
-      if (!(abstract instanceof import_obsidian19.TFile)) {
+      if (!(abstract instanceof import_obsidian17.TFile)) {
         files.push({
           path,
           kind: this.inferFileKind(path),
@@ -4023,7 +5124,7 @@ var RecoveryManager = class {
         continue;
       }
       const abstract = this.app.vault.getAbstractFileByPath(entry.path);
-      if (abstract instanceof import_obsidian19.TFile) {
+      if (abstract instanceof import_obsidian17.TFile) {
         await this.app.vault.delete(abstract, true);
       } else if (await this.app.vault.adapter.exists(entry.path)) {
         await this.app.vault.adapter.remove(entry.path);
@@ -4057,7 +5158,7 @@ var RecoveryManager = class {
     }
     for (const file of [...state.files].reverse().filter((item) => !item.exists)) {
       const abstract = this.app.vault.getAbstractFileByPath(file.path);
-      if (abstract instanceof import_obsidian19.TFile) {
+      if (abstract instanceof import_obsidian17.TFile) {
         await this.app.vault.delete(abstract, true);
       } else if (await this.app.vault.adapter.exists(file.path)) {
         await this.app.vault.adapter.remove(file.path);
@@ -4144,7 +5245,7 @@ var RecoveryManager = class {
       const parsed = JSON.parse(raw);
       return Array.isArray(parsed.transactions) ? parsed.transactions : [];
     } catch (e) {
-      new import_obsidian19.Notice("Image Manager recovery history is unreadable and has been reset");
+      new import_obsidian17.Notice(getNoticeCopy(this.getSettings().uiLanguage).recoveryHistoryReset);
       return [];
     }
   }
@@ -4156,12 +5257,12 @@ var RecoveryManager = class {
     await this.app.vault.adapter.write(this.historyPath, JSON.stringify(state, null, 2));
   }
   async writeBinarySnapshot(transactionId, originalPath, data) {
-    const snapshotPath = (0, import_obsidian19.normalizePath)(`${this.snapshotsPath}/${transactionId}-${this.slugPath(originalPath)}.bin`);
+    const snapshotPath = (0, import_obsidian17.normalizePath)(`${this.snapshotsPath}/${transactionId}-${this.slugPath(originalPath)}.bin`);
     await this.app.vault.adapter.writeBinary(snapshotPath, data);
     return snapshotPath;
   }
   async writeTextSnapshot(transactionId, originalPath, content) {
-    const snapshotPath = (0, import_obsidian19.normalizePath)(`${this.snapshotsPath}/${transactionId}-${this.slugPath(originalPath)}.txt`);
+    const snapshotPath = (0, import_obsidian17.normalizePath)(`${this.snapshotsPath}/${transactionId}-${this.slugPath(originalPath)}.txt`);
     await this.app.vault.adapter.write(snapshotPath, content);
     return snapshotPath;
   }
@@ -4172,7 +5273,7 @@ var RecoveryManager = class {
     await this.initialize();
   }
   async ensureDirectory(path) {
-    const normalizedPath = (0, import_obsidian19.normalizePath)(path);
+    const normalizedPath = (0, import_obsidian17.normalizePath)(path);
     if (!normalizedPath || await this.app.vault.adapter.exists(normalizedPath)) {
       return;
     }
@@ -4279,8 +5380,8 @@ var RecoveryManager = class {
 };
 
 // src/services/file-manager/index.ts
-var import_obsidian20 = require("obsidian");
-var IMAGE_EXTENSIONS = /* @__PURE__ */ new Set(["png", "jpg", "jpeg", "gif", "webp", "bmp", "svg", "tif", "tiff", "heic"]);
+var import_obsidian18 = require("obsidian");
+var IMAGE_EXTENSIONS = /* @__PURE__ */ new Set(["png", "jpg", "jpeg", "gif", "webp", "bmp", "svg", "tif", "tiff", "heic", "avif"]);
 var FileManager = class {
   constructor(app, getSettings, variableResolver, linkFormatter) {
     this.app = app;
@@ -4372,7 +5473,7 @@ var FileManager = class {
   }
   async restoreBinaryFile(path, data) {
     const existing = this.app.vault.getAbstractFileByPath(path);
-    if (existing instanceof import_obsidian20.TFile) {
+    if (existing instanceof import_obsidian18.TFile) {
       await this.app.vault.modifyBinary(existing, data, { mtime: Date.now() });
       await this.refreshOpenLeaves(existing, path, path);
       return existing;
@@ -4384,7 +5485,7 @@ var FileManager = class {
   }
   async restoreTextFile(path, content) {
     const existing = this.app.vault.getAbstractFileByPath(path);
-    if (existing instanceof import_obsidian20.TFile) {
+    if (existing instanceof import_obsidian18.TFile) {
       await this.app.vault.modify(existing, content);
       return existing;
     }
@@ -4400,7 +5501,7 @@ var FileManager = class {
     for (const match of content.matchAll(imageLinkRegex)) {
       const parsed = this.linkFormatter.parseLink(match[0]);
       const file = (_a = this.resolveLinkedImageFile(parsed, sourcePath)) == null ? void 0 : _a.file;
-      if (file instanceof import_obsidian20.TFile && this.isImageFile(file) && !seenPaths.has(file.path)) {
+      if (file instanceof import_obsidian18.TFile && this.isImageFile(file) && !seenPaths.has(file.path)) {
         seenPaths.add(file.path);
         files.push(file);
       }
@@ -4410,10 +5511,10 @@ var FileManager = class {
   getImagesInFolder(folder) {
     const files = [];
     for (const child of folder.children) {
-      if (child instanceof import_obsidian20.TFile && this.isImageFile(child)) {
+      if (child instanceof import_obsidian18.TFile && this.isImageFile(child)) {
         files.push(child);
       }
-      if (child instanceof import_obsidian20.TFolder) {
+      if (child instanceof import_obsidian18.TFolder) {
         files.push(...this.getImagesInFolder(child));
       }
     }
@@ -4422,10 +5523,10 @@ var FileManager = class {
   getMarkdownFilesInFolder(folder) {
     const files = [];
     for (const child of folder.children) {
-      if (child instanceof import_obsidian20.TFile && child.extension.toLowerCase() === "md") {
+      if (child instanceof import_obsidian18.TFile && child.extension.toLowerCase() === "md") {
         files.push(child);
       }
-      if (child instanceof import_obsidian20.TFolder) {
+      if (child instanceof import_obsidian18.TFolder) {
         files.push(...this.getMarkdownFilesInFolder(child));
       }
     }
@@ -4551,7 +5652,7 @@ var FileManager = class {
         managedImages.set(image.path, image);
       }
     }
-    if (this.isNoteScopedOutputFolder() && oldFolder instanceof import_obsidian20.TFolder) {
+    if (this.isNoteScopedOutputFolder() && oldFolder instanceof import_obsidian18.TFolder) {
       for (const image of this.getImagesInFolder(oldFolder)) {
         managedImages.set(image.path, image);
       }
@@ -4576,7 +5677,7 @@ var FileManager = class {
     if (updated !== content) {
       await this.app.vault.modify(noteFile, updated);
     }
-    if (oldFolder instanceof import_obsidian20.TFolder) {
+    if (oldFolder instanceof import_obsidian18.TFolder) {
       if (this.getSettings().deleteOrphanImages) {
         await this.deleteOrphanImagesInFolder(oldFolder);
       }
@@ -4588,7 +5689,7 @@ var FileManager = class {
   }
   async deleteOrphanImagesForNote(noteFile, scopeNotePaths = /* @__PURE__ */ new Set([noteFile.path])) {
     const cleanupFolder = this.resolveOrphanCleanupFolderForNote(noteFile);
-    if (!(cleanupFolder instanceof import_obsidian20.TFolder)) {
+    if (!(cleanupFolder instanceof import_obsidian18.TFolder)) {
       return {
         deletedImages: 0,
         deletedFolders: 0,
@@ -4700,7 +5801,7 @@ var FileManager = class {
     const sourcePaths = this.getReferencingNotePaths(oldPath);
     for (const sourcePath of sourcePaths) {
       const sourceFile = this.app.vault.getAbstractFileByPath(sourcePath);
-      if (!(sourceFile instanceof import_obsidian20.TFile) || sourceFile.extension.toLowerCase() !== "md") {
+      if (!(sourceFile instanceof import_obsidian18.TFile) || sourceFile.extension.toLowerCase() !== "md") {
         continue;
       }
       await this.updateLinks(sourceFile, oldPath, newPath, sourceFile.path);
@@ -4789,7 +5890,7 @@ var FileManager = class {
     const settings = this.getSettings();
     return this.rewriteImageLinks(content, (match, _rawTarget, parsed) => {
       const resolved = this.resolveLinkedImageFile(parsed, sourcePath);
-      if (!((resolved == null ? void 0 : resolved.file) instanceof import_obsidian20.TFile) || !this.isImageFile(resolved.file)) {
+      if (!((resolved == null ? void 0 : resolved.file) instanceof import_obsidian18.TFile) || !this.isImageFile(resolved.file)) {
         return match;
       }
       return this.linkFormatter.formatLink(resolved.file.path, noteFile, {
@@ -4843,7 +5944,7 @@ var FileManager = class {
           continue;
         }
         const referenceNote = this.app.vault.getAbstractFileByPath(referencePath);
-        if (referenceNote instanceof import_obsidian20.TFile && referenceNote.extension.toLowerCase() === "md") {
+        if (referenceNote instanceof import_obsidian18.TFile && referenceNote.extension.toLowerCase() === "md") {
           const oldParentPath = (_b = (_a = image.parent) == null ? void 0 : _a.path) != null ? _b : getParentPath(image.path);
           const moved = await this.reassignImageToReferencingNote(image, referenceNote);
           if (oldParentPath) {
@@ -4874,7 +5975,7 @@ var FileManager = class {
     let deletedFolders = 0;
     for (const folderPath of deletedParents) {
       const abstract = this.app.vault.getAbstractFileByPath(folderPath);
-      if (abstract instanceof import_obsidian20.TFolder) {
+      if (abstract instanceof import_obsidian18.TFolder) {
         deletedFolders += await this.deleteFolderIfEmpty(abstract);
       }
     }
@@ -4917,7 +6018,7 @@ var FileManager = class {
     const managedFolderPath = this.resolveOutputFolderPath(noteFile.path);
     if (managedFolderPath) {
       const managedFolder = this.app.vault.getAbstractFileByPath(managedFolderPath);
-      if (managedFolder instanceof import_obsidian20.TFolder) {
+      if (managedFolder instanceof import_obsidian18.TFolder) {
         return managedFolder;
       }
       if (this.getSettings().outputFolder.trim()) {
@@ -4929,7 +6030,7 @@ var FileManager = class {
       return null;
     }
     const fallbackFolder = this.app.vault.getAbstractFileByPath(fallbackFolderPath);
-    return fallbackFolder instanceof import_obsidian20.TFolder ? fallbackFolder : null;
+    return fallbackFolder instanceof import_obsidian18.TFolder ? fallbackFolder : null;
   }
   resolveManagedFolderCleanupBoundary(notePath) {
     const template = this.getSettings().outputFolder.trim();
@@ -4958,7 +6059,7 @@ var FileManager = class {
     if (!this.getSettings().deleteEmptyFolders || folder.children.length > 0 || folder.path === options.preservePath) {
       return 0;
     }
-    const parent = folder.parent instanceof import_obsidian20.TFolder ? folder.parent : null;
+    const parent = folder.parent instanceof import_obsidian18.TFolder ? folder.parent : null;
     (_a = this.recoveryManager) == null ? void 0 : _a.recordDeletedFolder(folder.path);
     await this.app.vault.delete(folder, true);
     const parentDeleted = parent ? await this.deleteFolderIfEmpty(parent, options) : 0;
@@ -4991,7 +6092,9 @@ var FileManager = class {
     return { content: updated, replaced };
   }
   parseExternalImageSource(rawTarget) {
-    const sources = parseTextImageSources(rawTarget);
+    const sources = parseTextImageSources(rawTarget, {
+      allowExtensionlessRemote: true
+    });
     return sources.length === 1 ? sources[0] : null;
   }
   normalizeExternalImageSourceValue(value) {
@@ -5041,7 +6144,7 @@ var FileManager = class {
     }
     for (const candidate of getParsedLinkResolutionCandidates(parsed)) {
       const resolved = this.app.metadataCache.getFirstLinkpathDest(candidate, sourcePath);
-      if (resolved instanceof import_obsidian20.TFile) {
+      if (resolved instanceof import_obsidian18.TFile) {
         return {
           file: resolved,
           matchedTarget: candidate
@@ -5098,7 +6201,7 @@ var FileManager = class {
     }
     this.app.workspace.iterateAllLeaves((leaf) => {
       var _a;
-      if (leaf.view instanceof import_obsidian20.MarkdownView && leaf.view.file) {
+      if (leaf.view instanceof import_obsidian18.MarkdownView && leaf.view.file) {
         markdownViews.push(leaf.view);
         return;
       }
@@ -5205,7 +6308,7 @@ var FileManager = class {
       return;
     }
     const abstract = this.app.vault.getAbstractFileByPath(imagePath);
-    if (!(abstract instanceof import_obsidian20.TFile)) {
+    if (!(abstract instanceof import_obsidian18.TFile)) {
       return;
     }
     const freshSrc = this.buildFreshResourcePath(abstract);
@@ -5225,15 +6328,34 @@ var FileManager = class {
 };
 
 // src/services/image-processor/index.ts
+var SUPPORTED_SOURCE_IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "webp", "bmp", "svg", "tif", "tiff", "heic", "avif"];
+var IN_PLACE_RESTRICTED_EXTENSIONS = /* @__PURE__ */ new Set(["avif"]);
+var SOURCE_MIME_BY_EXTENSION2 = {
+  avif: "image/avif",
+  bmp: "image/bmp",
+  gif: "image/gif",
+  heic: "image/heic",
+  jpeg: "image/jpeg",
+  jpg: "image/jpeg",
+  png: "image/png",
+  svg: "image/svg+xml",
+  tif: "image/tiff",
+  tiff: "image/tiff",
+  webp: "image/webp"
+};
 var ImageProcessor = class {
   constructor(app, getSettings) {
     this.app = app;
     this.getSettings = getSettings;
   }
   isSupportedImage(file) {
-    return ["png", "jpg", "jpeg", "gif", "webp", "bmp", "svg", "tif", "tiff", "heic"].includes(
-      file.extension.toLowerCase()
-    );
+    return SUPPORTED_SOURCE_IMAGE_EXTENSIONS.includes(file.extension.toLowerCase());
+  }
+  canModifyInPlace(file) {
+    return this.getInPlaceModificationRestriction(file) === null;
+  }
+  getInPlaceModificationRestriction(file) {
+    return this.getInPlaceModificationRestrictionByExtension(file.extension);
   }
   async getImageInfo(file) {
     const dimensions = await this.tryReadDimensions(file);
@@ -5249,6 +6371,7 @@ var ImageProcessor = class {
     };
   }
   async compress(file, quality = this.getSettings().compressionQuality) {
+    this.assertInPlaceModificationSupported(file.extension);
     this.assertOutputFormatSupported(this.extensionToFormat(file.extension));
     return this.process(file, {
       format: this.extensionToFormat(file.extension),
@@ -5263,6 +6386,7 @@ var ImageProcessor = class {
     });
   }
   async resize(file, maxWidth, maxHeight) {
+    this.assertInPlaceModificationSupported(file.extension);
     this.assertOutputFormatSupported(this.extensionToFormat(file.extension));
     return this.process(file, {
       format: this.extensionToFormat(file.extension),
@@ -5272,6 +6396,7 @@ var ImageProcessor = class {
     });
   }
   async rotate(file, degrees) {
+    this.assertInPlaceModificationSupported(file.extension);
     this.assertOutputFormatSupported(this.extensionToFormat(file.extension));
     const source = await this.app.vault.readBinary(file);
     const image = await this.loadImage(source, file.extension);
@@ -5289,6 +6414,7 @@ var ImageProcessor = class {
     return this.canvasToArrayBuffer(canvas, this.extensionToFormat(file.extension), this.getSettings().defaultQuality);
   }
   async flip(file, direction) {
+    this.assertInPlaceModificationSupported(file.extension);
     this.assertOutputFormatSupported(this.extensionToFormat(file.extension));
     const source = await this.app.vault.readBinary(file);
     const image = await this.loadImage(source, file.extension);
@@ -5311,6 +6437,7 @@ var ImageProcessor = class {
     return this.canvasToArrayBuffer(canvas, this.extensionToFormat(file.extension), this.getSettings().defaultQuality);
   }
   async crop(file, selection) {
+    this.assertInPlaceModificationSupported(file.extension);
     this.assertOutputFormatSupported(this.extensionToFormat(file.extension));
     const source = await this.app.vault.readBinary(file);
     const image = await this.loadImage(source, file.extension);
@@ -5415,14 +6542,18 @@ var ImageProcessor = class {
     if (normalized === "jpg") {
       return "jpeg" /* JPEG */;
     }
+    if (normalized === "tif") {
+      return "tiff" /* TIFF */;
+    }
     if (Object.values(ImageFormat).includes(normalized)) {
       return normalized;
     }
     return this.getSettings().defaultFormat;
   }
   extensionToMime(extension) {
-    var _a;
-    return (_a = MIME_BY_FORMAT[this.extensionToFormat(extension)]) != null ? _a : `image/${extension}`;
+    var _a, _b;
+    const normalized = extension.toLowerCase();
+    return (_b = (_a = SOURCE_MIME_BY_EXTENSION2[normalized]) != null ? _a : MIME_BY_FORMAT[this.extensionToFormat(extension)]) != null ? _b : `image/${normalized}`;
   }
   assertOutputFormatSupported(format) {
     if (canEncodeCanvasOutputFormat(format)) {
@@ -5430,6 +6561,19 @@ var ImageProcessor = class {
     }
     const supportedFormats = getSupportedCanvasOutputFormats().map((item) => item.toUpperCase()).join(", ");
     throw new Error(`Current platform cannot encode ${format.toUpperCase()} images. Supported outputs: ${supportedFormats}`);
+  }
+  assertInPlaceModificationSupported(extension) {
+    const restriction = this.getInPlaceModificationRestrictionByExtension(extension);
+    if (restriction) {
+      throw new Error(restriction);
+    }
+  }
+  getInPlaceModificationRestrictionByExtension(extension) {
+    const normalized = extension.toLowerCase();
+    if (IN_PLACE_RESTRICTED_EXTENSIONS.has(normalized)) {
+      return `Convert ${normalized.toUpperCase()} to PNG, JPEG, or WebP before editing or compressing it in place`;
+    }
+    return null;
   }
 };
 
@@ -5702,7 +6846,7 @@ function createPluginServices(app, settingsManager) {
   const variableResolver = new VariableResolver();
   const linkFormatter = new LinkFormatter(app);
   const fileManager = new FileManager(app, () => settingsManager.getSettings(), variableResolver, linkFormatter);
-  const recovery = new RecoveryManager(app, "note-image-manager", fileManager);
+  const recovery = new RecoveryManager(app, "note-image-manager", fileManager, () => settingsManager.getSettings());
   fileManager.setRecoveryManager(recovery);
   return {
     settings: settingsManager,
@@ -5753,10 +6897,10 @@ var SettingsManager = class {
   }
   async load() {
     const loaded = await this.loadData();
-    this.settings = {
+    this.settings = normalizeSettings({
       ...DEFAULT_SETTINGS,
       ...isRecord(loaded) ? loaded : {}
-    };
+    });
     return this.getSettings();
   }
   getSettings() {
@@ -5765,477 +6909,25 @@ var SettingsManager = class {
   async update(mutator) {
     const draft = this.getSettings();
     mutator(draft);
-    this.settings = draft;
-    await this.saveData(draft);
+    this.settings = normalizeSettings(draft);
+    await this.saveData(this.settings);
     return this.getSettings();
   }
 };
+function normalizeSettings(settings) {
+  return {
+    ...settings,
+    uiLanguage: resolveUiLanguage(settings.uiLanguage)
+  };
+}
 
 // src/ui/settings/image-manager-setting-tab.ts
-var import_obsidian21 = require("obsidian");
-
-// src/ui/settings/setting-tab-copy.ts
-var ZH = {
-  languageLabel: "\u754C\u9762\u8BED\u8A00",
-  languageDescription: "\u5207\u6362\u8BBE\u7F6E\u9875\u4E0E\u529F\u80FD\u72B6\u6001\u7684\u663E\u793A\u8BED\u8A00\u3002\u9ED8\u8BA4\u4E2D\u6587\u3002",
-  languageOptions: {
-    "zh-CN": "\u7B80\u4F53\u4E2D\u6587",
-    en: "English"
-  },
-  header: {
-    title: "Image Manager \u8BBE\u7F6E",
-    subtitle: "\u5728 Obsidian \u91CC\u628A\u56FE\u7247\u5904\u7406\u505A\u5230\u591F\u7528\u3001\u987A\u624B\u3001\u53EF\u6062\u590D\uFF0C\u4E0D\u4E3A\u8FC7\u5EA6\u8BBE\u8BA1\u589E\u52A0\u7EF4\u62A4\u71B5\u3002",
-    reset: "\u6062\u590D\u9ED8\u8BA4\u8BBE\u7F6E",
-    resetNotice: "Image Manager \u8BBE\u7F6E\u5DF2\u6062\u590D\u4E3A\u9ED8\u8BA4\u503C"
-  },
-  sections: {
-    naming: {
-      title: "\u4FDD\u5B58\u4E0E\u547D\u540D",
-      description: "\u5148\u5B9A\u4FDD\u5B58\u4F4D\u7F6E\uFF0C\u518D\u5B9A\u6587\u4EF6\u540D\u89C4\u5219\uFF1B\u8FD9\u4E24\u9879\u51B3\u5B9A\u56FE\u7247\u6700\u7EC8\u5982\u4F55\u843D\u76D8\u3002"
-    },
-    convert: {
-      title: "\u8F6C\u6362\u4E0E\u538B\u7F29",
-      description: "\u63A7\u5236\u9ED8\u8BA4\u8F93\u51FA\u8D28\u91CF\u3001\u81EA\u52A8\u8F6C\u6362\u4E0E\u538B\u7F29\u7B56\u7565\u3002"
-    },
-    editor: {
-      title: "\u7C98\u8D34\u4E0E\u7F16\u8F91",
-      description: "\u63A7\u5236\u7C98\u8D34\u63A5\u7BA1\u3001\u53F3\u952E\u7F16\u8F91\u548C\u56FE\u7247\u4EA4\u4E92\u884C\u4E3A\u3002"
-    },
-    gallery: {
-      title: "\u56FE\u7247\u753B\u5ECA",
-      description: "\u63A7\u5236\u753B\u5ECA\u5165\u53E3\u3001\u9ED8\u8BA4\u5E03\u5C40\u548C\u6392\u5E8F\u89C4\u5219\u3002"
-    },
-    compatibility: {
-      title: "\u517C\u5BB9\u6027\u4E0E\u51B2\u7A81\u89C4\u907F",
-      description: "\u68C0\u67E5\u5E73\u53F0\u9650\u5236\u3001\u539F\u751F\u9644\u4EF6\u89C4\u5219\u548C\u5E38\u89C1\u63D2\u4EF6\u51B2\u7A81\u3002"
-    },
-    featureStatus: {
-      title: "\u529F\u80FD\u72B6\u6001",
-      description: "\u533A\u5206\u5F53\u524D\u5DF2\u53EF\u7528\u80FD\u529B\u4E0E\u540E\u7EED\u89C4\u5212\u80FD\u529B\u3002"
-    }
-  },
-  samples: {
-    noteName: "\u9879\u76EE\u5468\u62A5",
-    fileName: "\u9875\u9762\u622A\u56FE",
-    notePath: "Projects/\u9879\u76EE\u5468\u62A5.md",
-    vaultRoot: "(\u4ED3\u5E93\u6839\u76EE\u5F55)"
-  },
-  previews: {
-    outputFolder: "\u5B9E\u9645\u4FDD\u5B58\u4F4D\u7F6E\u9884\u89C8",
-    renamePattern: "\u547D\u540D\u6A21\u677F\u9884\u89C8"
-  },
-  exampleTitles: {
-    outputFolder: "\u5E38\u7528\u4FDD\u5B58\u4F4D\u7F6E",
-    renamePattern: "\u5E38\u7528\u547D\u540D\u89C4\u5219",
-    compressionIgnore: "\u538B\u7F29\u5FFD\u7565\u793A\u4F8B",
-    conversionIgnore: "\u8F6C\u6362\u5FFD\u7565\u793A\u4F8B",
-    presets: "\u63A8\u8350\u7EC4\u5408",
-    variables: "\u53EF\u7528\u53D8\u91CF"
-  },
-  settings: {
-    outputFolderName: "\u56FE\u7247\u4FDD\u5B58\u4F4D\u7F6E",
-    outputFolderDesc: "\u652F\u6301\u76F8\u5BF9\u8DEF\u5F84\u548C\u53D8\u91CF\u6A21\u677F\u3002\u7559\u7A7A\u65F6\u4FDD\u5B58\u5230\u5F53\u524D\u7B14\u8BB0\u76EE\u5F55\u3002",
-    defaultFormatName: "\u9ED8\u8BA4\u56FE\u7247\u683C\u5F0F",
-    defaultFormatDesc: "\u7528\u4E8E\u81EA\u52A8\u8F6C\u6362\u548C\u624B\u52A8\u8F6C\u6362\u7684\u76EE\u6807\u683C\u5F0F\u3002",
-    defaultLinkFormatName: "\u9ED8\u8BA4\u94FE\u63A5\u683C\u5F0F",
-    defaultLinkFormatDesc: "\u51B3\u5B9A\u65B0\u63D2\u5165\u56FE\u7247\u4F7F\u7528\u54EA\u79CD\u94FE\u63A5\u8BED\u6CD5\u3002",
-    defaultPathFormatName: "\u9ED8\u8BA4\u8DEF\u5F84\u683C\u5F0F",
-    defaultPathFormatDesc: "\u51B3\u5B9A\u63D2\u5165\u94FE\u63A5\u65F6\u4F18\u5148\u4F7F\u7528\u54EA\u79CD\u8DEF\u5F84\u3002",
-    markdownPathName: "Markdown \u8DEF\u5F84\u8F93\u51FA\u7B56\u7565",
-    markdownPathDesc: "\u4EC5\u5BF9 Markdown \u56FE\u7247\u94FE\u63A5\u751F\u6548\u3002",
-    renamePatternName: "\u751F\u6210\u7684\u56FE\u7247\u6587\u4EF6\u540D",
-    renamePatternDesc: "\u652F\u6301\u53D8\u91CF\u6A21\u677F\u3002\u7559\u7A7A\u65F6\u56DE\u9000\u4E3A\u539F\u6587\u4EF6\u540D\u3002",
-    enableAutoRenameName: "\u542F\u7528\u81EA\u52A8\u91CD\u547D\u540D",
-    enableAutoRenameDesc: "\u5173\u95ED\u540E\u4FDD\u7559\u539F\u6587\u4EF6\u540D\uFF0C\u4EC5\u5728\u8F6C\u6362\u65F6\u66F4\u65B0\u6269\u5C55\u540D\u3002",
-    renameImagesOnRelocateName: "\u7B14\u8BB0\u6539\u540D\u540E\u540C\u6B65\u91CD\u547D\u540D\u56FE\u7247",
-    renameImagesOnRelocateDesc: "\u4EC5\u5728\u53D7\u7BA1\u76EE\u5F55\u540C\u6B65\u5F00\u542F\u65F6\u751F\u6548\u3002",
-    deleteEmptyFoldersName: "\u5220\u9664\u7A7A\u56FE\u7247\u6587\u4EF6\u5939",
-    deleteEmptyFoldersDesc: "\u53EA\u6E05\u7406\u56FE\u7247\u9644\u4EF6\u76EE\u5F55\u4E2D\u56E0\u8FC1\u79FB\u6216\u5220\u9664\u800C\u7559\u4E0B\u7684\u7A7A\u76EE\u5F55\u3002",
-    deleteOrphanImagesName: "\u5220\u9664\u5B64\u7ACB\u56FE\u7247",
-    deleteOrphanImagesDesc: "\u6267\u884C\u201C\u66F4\u65B0\u56FE\u7247\u94FE\u63A5\u4E0E\u76EE\u5F55\u201D\u65F6\uFF0C\u987A\u5E26\u6E05\u7406\u5F53\u524D\u8303\u56F4\u5185\u672A\u88AB\u5F15\u7528\u7684\u56FE\u7247\u3002",
-    defaultQualityName: "\u9ED8\u8BA4\u5904\u7406\u8D28\u91CF",
-    defaultQualityDesc: "\u7528\u4E8E\u8F6C\u6362\u3001\u65CB\u8F6C\u3001\u7FFB\u8F6C\u548C\u7F29\u653E\u3002",
-    compressionQualityName: "\u538B\u7F29\u8D28\u91CF",
-    compressionQualityDesc: "\u8D8A\u4F4E\u8D8A\u7701\u7A7A\u95F4\uFF0C\u753B\u8D28\u635F\u5931\u4E5F\u8D8A\u660E\u663E\u3002",
-    enableAutoConvertName: "\u7C98\u8D34\u56FE\u7247\u65F6\u81EA\u52A8\u8F6C\u6362\u683C\u5F0F",
-    enableAutoConvertDesc: "\u542F\u7528\u540E\uFF0C\u7C98\u8D34\u56FE\u7247\u4F1A\u5148\u8F6C\u4E3A\u9ED8\u8BA4\u683C\u5F0F\u518D\u4FDD\u5B58\u3002",
-    showOperationNotificationsName: "\u663E\u793A\u64CD\u4F5C\u901A\u77E5",
-    showOperationNotificationsDesc: "\u5173\u95ED\u540E\uFF0C\u4EC5\u4FDD\u7559\u5931\u8D25\u63D0\u793A\u3002",
-    showSpaceSavedNotificationName: "\u538B\u7F29\u540E\u63D0\u793A\u8282\u7701\u7A7A\u95F4",
-    showSpaceSavedNotificationDesc: "\u663E\u793A\u538B\u7F29\u524D\u540E\u5927\u5C0F\u548C\u6BD4\u4F8B\u3002",
-    compressionIgnorePatternName: "\u538B\u7F29\u5FFD\u7565\u6B63\u5219",
-    compressionIgnorePatternDesc: "\u6BCF\u884C\u4E00\u4E2A\u6B63\u5219\uFF1B\u547D\u4E2D\u8DEF\u5F84\u65F6\u8DF3\u8FC7\u538B\u7F29\u3002\u652F\u6301 `#` \u6CE8\u91CA\u3002",
-    conversionIgnorePatternName: "\u8F6C\u6362\u5FFD\u7565\u6B63\u5219",
-    conversionIgnorePatternDesc: "\u6BCF\u884C\u4E00\u4E2A\u6B63\u5219\uFF1B\u547D\u4E2D\u8DEF\u5F84\u65F6\u8DF3\u8FC7\u8F6C\u6362\u3002\u652F\u6301 `#` \u6CE8\u91CA\u3002",
-    compressionThresholdKBName: "\u538B\u7F29\u9608\u503C\uFF08KB\uFF09",
-    compressionThresholdKBDesc: "\u4F4E\u4E8E\u8BE5\u4F53\u79EF\u7684\u56FE\u7247\u8DF3\u8FC7\u538B\u7F29\u3002",
-    enablePasteHandlerName: "\u63A5\u7BA1\u7F16\u8F91\u5668\u56FE\u7247\u7C98\u8D34",
-    enablePasteHandlerDesc: "\u542F\u7528\u540E\uFF0C\u63D2\u4EF6\u4F1A\u63A5\u7BA1\u56FE\u7247\u7C98\u8D34\u5E76\u4F7F\u7528\u672C\u63D2\u4EF6\u89C4\u5219\u4FDD\u5B58\u3002",
-    enableAutoDownloadImagesFromTextName: "\u81EA\u52A8\u4E0B\u8F7D\u6587\u672C\u56FE\u7247\u6E90",
-    enableAutoDownloadImagesFromTextDesc: "\u7C98\u8D34\u56FE\u7247 URL\u3001`file://` \u6216 `data:image` \u65F6\u81EA\u52A8\u4E0B\u8F7D\u5E76\u63D2\u5165\u3002",
-    dropPasteCursorLocationName: "\u63D2\u5165\u56FE\u7247\u540E\u5149\u6807\u4F4D\u7F6E",
-    dropPasteCursorLocationDesc: "\u63A7\u5236\u56FE\u7247\u94FE\u63A5\u63D2\u5165\u540E\uFF0C\u5149\u6807\u505C\u5728\u524D\u9762\u8FD8\u662F\u540E\u9762\u3002",
-    enableContextMenuName: "\u542F\u7528\u6587\u4EF6\u53F3\u952E\u83DC\u5355\u64CD\u4F5C",
-    enableContextMenuDesc: "\u663E\u793A\u590D\u5236\u3001\u753B\u5ECA\u3001\u538B\u7F29\u3001\u8F6C\u6362\u3001\u88C1\u526A\u3001\u65CB\u8F6C\u548C\u7FFB\u8F6C\u7B49\u56FE\u7247\u64CD\u4F5C\u3002",
-    enableImageAlignName: "\u542F\u7528\u56FE\u7247\u9ED8\u8BA4\u5BF9\u9F50",
-    enableImageAlignDesc: "\u4E3A\u6E32\u67D3\u540E\u7684\u56FE\u7247\u9644\u52A0\u9ED8\u8BA4\u5BF9\u9F50\u6837\u5F0F\uFF0C\u4E0D\u4FEE\u6539 Markdown \u6E90\u6587\u3002",
-    imageAlignmentDefaultName: "\u9ED8\u8BA4\u56FE\u7247\u5BF9\u9F50\u65B9\u5F0F",
-    imageAlignmentDefaultDesc: "\u4EC5\u5728\u542F\u7528\u56FE\u7247\u9ED8\u8BA4\u5BF9\u9F50\u65F6\u751F\u6548\u3002",
-    disableImageSelectionName: "\u7981\u7528 Obsidian \u56FE\u7247\u70B9\u51FB\u9009\u4E2D",
-    disableImageSelectionDesc: "\u542F\u7528\u540E\uFF0C\u9884\u89C8\u6A21\u5F0F\u4E0B\u4F18\u5148\u963B\u6B62\u539F\u751F\u70B9\u51FB\u9009\u4E2D\u3002",
-    enableGalleryName: "\u542F\u7528\u56FE\u7247\u753B\u5ECA",
-    enableGalleryDesc: "\u63A7\u5236\u753B\u5ECA\u547D\u4EE4\u3001\u53F3\u952E\u5165\u53E3\u548C\u9605\u8BFB\u89C6\u56FE\u53CC\u51FB\u5165\u53E3\u3002",
-    galleryGridSizeName: "\u753B\u5ECA\u7F51\u683C\u5C3A\u5BF8",
-    galleryGridSizeDesc: "\u51B3\u5B9A\u6BCF\u884C\u663E\u793A\u6570\u91CF\u548C\u7F29\u7565\u56FE\u5927\u5C0F\u3002",
-    gallerySortByName: "\u753B\u5ECA\u9ED8\u8BA4\u6392\u5E8F",
-    gallerySortByDesc: "\u6253\u5F00\u753B\u5ECA\u65F6\u9ED8\u8BA4\u91C7\u7528\u7684\u6392\u5E8F\u65B9\u5F0F\u3002",
-    enableNoteRenameSyncName: "\u7B14\u8BB0\u6539\u540D\u6216\u79FB\u52A8\u65F6\u540C\u6B65\u53D7\u7BA1\u56FE\u7247\u76EE\u5F55",
-    enableNoteRenameSyncDesc: "\u4EC5\u5BF9\u53EF\u5B89\u5168\u8BC6\u522B\u7684\u53D7\u7BA1\u76EE\u5F55\u751F\u6548\u3002"
-  },
-  buttons: {
-    applyPreset: "\u5E94\u7528\u6B64\u7EC4\u5408"
-  },
-  labels: {
-    outputFolderFallback: "(\u8DDF\u968F\u5F53\u524D\u7B14\u8BB0\u76EE\u5F55)",
-    invalidVariables: "\u672A\u8BC6\u522B\u7684\u53D8\u91CF\uFF1A",
-    invalidRegex: "\u65E0\u6548\u6B63\u5219\uFF1A",
-    compatibilityOk: "\u517C\u5BB9",
-    compatibilityWarning: "\u6CE8\u610F"
-  },
-  options: {
-    linkFormat: { wiki: "Wiki \u94FE\u63A5", markdown: "Markdown \u94FE\u63A5" },
-    pathFormat: { shortest: "\u6700\u77ED\u552F\u4E00\u8DEF\u5F84", relative: "\u76F8\u5BF9\u8DEF\u5F84", absolute: "\u7EDD\u5BF9\u8DEF\u5F84" },
-    markdownPathEncodingStrategy: { encoded: "\u5F3A\u5236\u7F16\u7801", readable: "\u4E2D\u6587\u53EF\u8BFB", auto: "\u81EA\u52A8" },
-    dropPasteCursorLocation: { front: "\u505C\u5728\u524D\u9762", back: "\u79FB\u5230\u540E\u9762" },
-    imageAlignment: { none: "\u4E0D\u5904\u7406", left: "\u5DE6\u5BF9\u9F50", center: "\u5C45\u4E2D", right: "\u53F3\u5BF9\u9F50" },
-    galleryGridSize: { small: "\u5C0F", medium: "\u4E2D", large: "\u5927" },
-    gallerySortBy: { date: "\u6700\u65B0\u4F18\u5148", name: "\u6309\u540D\u79F0", size: "\u5927\u56FE\u4F18\u5148" }
-  },
-  variableDescriptions: [
-    { token: "{noteName}", description: "\u5F53\u524D\u7B14\u8BB0\u540D\uFF08\u4E0D\u542B\u6269\u5C55\u540D\uFF09" },
-    { token: "{noteFileName}", description: "\u4E0E {noteName} \u7B49\u4EF7\uFF0C\u9002\u5408\u76EE\u5F55\u6A21\u677F" },
-    { token: "{fileName}", description: "\u539F\u59CB\u56FE\u7247\u6587\u4EF6\u540D\uFF08\u4E0D\u542B\u6269\u5C55\u540D\uFF09" },
-    { token: "{date}", description: "\u5F53\u524D\u65E5\u671F\uFF0C\u683C\u5F0F\u4E3A YYYY-MM-DD" },
-    { token: "{time}", description: "\u5F53\u524D\u65F6\u95F4\uFF0C\u683C\u5F0F\u4E3A HH-MM-SS" },
-    { token: "{random}", description: "\u968F\u673A\u540E\u7F00\uFF0C\u907F\u514D\u91CD\u540D" }
-  ],
-  renameExamples: [
-    { label: "\u7B14\u8BB0\u540D + \u65E5\u671F", value: "{noteName}-{date}", description: "\u9002\u5408\u6309\u7B14\u8BB0\u6C89\u6DC0\u56FE\u7247\u3002" },
-    { label: "\u7B14\u8BB0\u540D + \u65F6\u95F4", value: "{noteName}-{date}-{time}", description: "\u9002\u5408\u8FDE\u7EED\u7C98\u8D34\u622A\u56FE\u3002" },
-    { label: "\u6CBF\u7528\u539F\u56FE\u540D", value: "{fileName}", description: "\u4FDD\u7559\u539F\u59CB\u547D\u540D\u3002" },
-    { label: "\u7B14\u8BB0\u540D + \u968F\u673A\u4E32", value: "{noteName}-{random}", description: "\u907F\u514D\u540C\u65E5\u91CD\u540D\u3002" }
-  ],
-  outputFolderExamples: [
-    { label: "\u8DDF\u968F\u5F53\u524D\u7B14\u8BB0", value: "", description: "\u4FDD\u5B58\u5230\u5F53\u524D\u7B14\u8BB0\u540C\u76EE\u5F55\u3002" },
-    { label: "\u56FA\u5B9A\u9644\u4EF6\u76EE\u5F55", value: "Attachments/Images", description: "\u7EDF\u4E00\u7BA1\u7406\u5168\u5E93\u56FE\u7247\u3002" },
-    { label: "\u7B14\u8BB0\u540C\u7EA7 assets", value: "./assets", description: "\u5728\u7B14\u8BB0\u76EE\u5F55\u4E0B\u521B\u5EFA\u9644\u4EF6\u6587\u4EF6\u5939\u3002" },
-    { label: "\u6309\u7B14\u8BB0\u540D\u5206\u76EE\u5F55", value: "./assets/${noteFileName}", description: "\u6BCF\u7BC7\u7B14\u8BB0\u4E00\u4EFD\u72EC\u7ACB\u76EE\u5F55\u3002" }
-  ],
-  compressionIgnoreExamples: [
-    { label: "\u5FFD\u7565\u539F\u59CB\u76EE\u5F55", value: "^assets/raw/", description: "\u8DF3\u8FC7\u539F\u59CB\u7D20\u6750\u76EE\u5F55\u3002" },
-    { label: "\u5FFD\u7565 GIF", value: "\\.gif$", description: "\u4FDD\u7559\u52A8\u56FE\u539F\u6837\u3002" }
-  ],
-  conversionIgnoreExamples: [
-    { label: "\u5FFD\u7565\u622A\u56FE\u76EE\u5F55", value: "^Screenshots/", description: "\u8DF3\u8FC7\u6307\u5B9A\u76EE\u5F55\u3002" },
-    { label: "\u5FFD\u7565 PNG", value: "\\.png$", description: "\u4FDD\u7559 PNG \u539F\u683C\u5F0F\u3002" }
-  ],
-  rulePresets: [
-    { label: "\u65E5\u5E38\u622A\u56FE", description: "\u6309\u7B14\u8BB0\u5206\u76EE\u5F55\u4FDD\u5B58\u622A\u56FE\u3002", renamePattern: "{noteName}-{date}-{time}", outputFolder: "./assets/${noteFileName}" },
-    { label: "\u7EDF\u4E00\u56FE\u5E93", description: "\u8DE8\u7B14\u8BB0\u590D\u7528\u56FE\u7247\u65F6\u66F4\u7701\u5FC3\u3002", renamePattern: "{date}-{time}-{random}", outputFolder: "Attachments/Images" },
-    { label: "\u4FDD\u7559\u539F\u59CB\u547D\u540D", description: "\u9002\u5408\u6574\u7406\u5916\u90E8\u4E0B\u8F7D\u56FE\u7247\u3002", renamePattern: "{fileName}", outputFolder: "./assets" }
-  ],
-  featureLabels: {
-    rename: "\u81EA\u52A8\u547D\u540D\u4E0E\u8FC1\u79FB",
-    compress: "\u56FE\u7247\u538B\u7F29",
-    convert: "\u683C\u5F0F\u8F6C\u6362",
-    preview: "\u56FE\u7247\u9884\u89C8",
-    editor: "\u5FEB\u901F\u7F16\u8F91",
-    gallery: "\u56FE\u7247\u753B\u5ECA",
-    batch: "\u6279\u91CF\u5904\u7406",
-    recovery: "\u6062\u590D\u4E8B\u52A1",
-    resize: "\u5C3A\u5BF8\u8C03\u6574",
-    "drag-resize": "\u62D6\u62FD\u8C03\u6574\u5C3A\u5BF8",
-    "watermark-removal": "\u53BB\u6C34\u5370",
-    align: "\u56FE\u7247\u5BF9\u9F50",
-    "context-menu": "\u53F3\u952E\u83DC\u5355"
-  },
-  featureStates: { implemented: "\u5DF2\u542F\u7528", scaffolded: "\u89C4\u5212\u4E2D" },
-  featureSummaries: {
-    rename: "\u6309\u53D8\u91CF\u547D\u540D\u56FE\u7247\uFF0C\u5E76\u5728\u7B14\u8BB0\u6539\u540D\u6216\u79FB\u52A8\u65F6\u540C\u6B65\u53D7\u7BA1\u76EE\u5F55\u3002",
-    compress: "\u652F\u6301\u5355\u56FE\u548C\u6279\u91CF\u538B\u7F29\uFF0C\u5E76\u8BB0\u5F55\u538B\u7F29\u5386\u53F2\u907F\u514D\u91CD\u590D\u5904\u7406\u3002",
-    convert: "\u652F\u6301\u9ED8\u8BA4\u683C\u5F0F\u8F6C\u6362\uFF0C\u5E76\u5904\u7406\u91CD\u540D\u76EE\u6807\u6587\u4EF6\u3002",
-    preview: "\u4E3A\u9884\u89C8\u56FE\u63D0\u4F9B\u6807\u8BB0\u548C\u5237\u65B0\u94A9\u5B50\uFF0C\u65B9\u4FBF\u753B\u5ECA\u4E0E\u6837\u5F0F\u63A5\u5165\u3002",
-    editor: "\u63D0\u4F9B\u65CB\u8F6C\u3001\u7FFB\u8F6C\u7B49\u8F7B\u91CF\u7F16\u8F91\u80FD\u529B\uFF1B\u88C1\u526A\u5165\u53E3\u653E\u5728\u53F3\u952E\u83DC\u5355\u4E2D\u3002",
-    gallery: "\u63D0\u4F9B\u5F53\u524D\u56FE\u7247\u3001\u5F53\u524D\u7B14\u8BB0\u548C\u5F53\u524D\u6587\u4EF6\u5939\u7684\u753B\u5ECA\u89C6\u56FE\u3002",
-    batch: "\u652F\u6301\u6309\u7B14\u8BB0\u3001\u6587\u4EF6\u5939\u6216\u6574\u5E93\u6267\u884C\u6279\u91CF\u4EFB\u52A1\u3002",
-    recovery: "\u4E3A\u56FE\u7247\u548C Markdown \u4FEE\u6539\u8BB0\u5F55\u4E8B\u52A1\uFF0C\u652F\u6301\u64A4\u9500\u4E0E\u91CD\u505A\u3002",
-    resize: "\u652F\u6301\u5C06\u56FE\u7247\u7F29\u653E\u5230\u5B89\u5168\u7684\u8FB9\u754C\u5C3A\u5BF8\u3002",
-    "drag-resize": "\u540E\u7EED\u4F1A\u8865\u4E0A\u7F16\u8F91\u5668\u5185\u76F4\u63A5\u62D6\u62FD\u8C03\u6574\u56FE\u7247\u663E\u793A\u5C3A\u5BF8\u7684\u4EA4\u4E92\u3002",
-    "watermark-removal": "\u89C4\u5212\u4E2D\u7684\u5C40\u90E8\u4FEE\u590D\u80FD\u529B\uFF0C\u5F85\u6548\u679C\u548C\u4EA4\u4E92\u8FBE\u6807\u540E\u518D\u6062\u590D\u3002",
-    align: "\u4E3A\u6E32\u67D3\u540E\u7684\u56FE\u7247\u9644\u52A0\u9ED8\u8BA4\u5BF9\u9F50\u6837\u5F0F\u3002",
-    "context-menu": "\u4E3A\u56FE\u7247\u6587\u4EF6\u63D0\u4F9B\u590D\u5236\u3001\u753B\u5ECA\u3001\u538B\u7F29\u3001\u8F6C\u6362\u3001\u88C1\u526A\u548C\u8F7B\u91CF\u7F16\u8F91\u5165\u53E3\u3002"
-  },
-  compatibility: {
-    platformTitle: "\u5F53\u524D\u5E73\u53F0",
-    platformDescription: (platform, canWriteClipboard) => `\u5F53\u524D\u8FD0\u884C\u73AF\u5883\uFF1A${platform}\u3002\u53F3\u952E\u590D\u5236\u56FE\u7247\u5230\u526A\u8D34\u677F${canWriteClipboard ? "\u53EF\u7528" : "\u4E0D\u53EF\u7528"}\u3002`,
-    debugTitle: "\u8C03\u8BD5\u65E5\u5FD7\u6A21\u5F0F",
-    debugEnabled: "\u68C0\u6D4B\u5230 Obsidian \u8C03\u8BD5\u6A21\u5F0F\u5DF2\u5F00\u542F\u3002\u63D2\u4EF6\u4F1A\u8F93\u51FA\u66F4\u8BE6\u7EC6\u7684\u8BCA\u65AD\u65E5\u5FD7\u3002",
-    debugDisabled: "Obsidian \u8C03\u8BD5\u6A21\u5F0F\u5F53\u524D\u5173\u95ED\uFF0C\u63D2\u4EF6\u4E0D\u4F1A\u989D\u5916\u8F93\u51FA\u8BE6\u7EC6\u65E5\u5FD7\u3002",
-    formatsTitle: "\u53EF\u7F16\u7801\u8F93\u51FA\u683C\u5F0F",
-    formatsAvailable: (formats) => `\u5F53\u524D\u73AF\u5883\u53EF\u7A33\u5B9A\u8F93\u51FA\uFF1A${formats.join("\u3001")}\u3002GIF\u3001HEIC\u3001TIFF \u4E0D\u4FDD\u8BC1\u53EF\u76F4\u63A5\u91CD\u65B0\u7F16\u7801\u3002`,
-    formatsUnavailable: "\u5F53\u524D\u73AF\u5883\u672A\u68C0\u6D4B\u5230\u7A33\u5B9A\u7684\u53EF\u7F16\u7801\u683C\u5F0F\uFF0C\u5EFA\u8BAE\u5173\u95ED\u81EA\u52A8\u8F6C\u6362\u5E76\u4FDD\u7559\u539F\u56FE\u3002",
-    pasteConflictTitle: "\u7C98\u8D34\u63A5\u7BA1\u51B2\u7A81",
-    pasteConflictEnabled: "\u5DF2\u542F\u7528\u672C\u63D2\u4EF6\u7684\u7C98\u8D34\u63A5\u7BA1\uFF0C\u53EF\u80FD\u4E0E\u5176\u4ED6\u7C98\u8D34\u6216\u9644\u4EF6\u63D2\u4EF6\u91CD\u590D\u5904\u7406\u540C\u4E00\u5F20\u56FE\u7247\u3002",
-    pasteConflictDisabled: "\u5DF2\u5173\u95ED\u672C\u63D2\u4EF6\u7684\u7C98\u8D34\u63A5\u7BA1\uFF0C\u56FE\u7247\u7C98\u8D34\u5C06\u4EA4\u7ED9 Obsidian \u539F\u751F\u6D41\u7A0B\u6216\u5176\u4ED6\u63D2\u4EF6\u5904\u7406\u3002",
-    nativeAttachmentTitle: "Obsidian \u539F\u751F\u9644\u4EF6\u76EE\u5F55",
-    nativeAttachmentDescription: (folder) => `\u68C0\u6D4B\u5230 Obsidian \u539F\u751F\u9644\u4EF6\u76EE\u5F55\u4E3A\u201C${folder}\u201D\u3002\u542F\u7528\u672C\u63D2\u4EF6\u7C98\u8D34\u63A5\u7BA1\u65F6\uFF0C\u5C06\u4F18\u5148\u4F7F\u7528\u672C\u63D2\u4EF6\u7684\u8F93\u51FA\u89C4\u5219\u3002`,
-    pluginConflictTitle: (featureLabel) => `${featureLabel} \u4E0E\u63D2\u4EF6\u51B2\u7A81`,
-    pluginConflictDescription: (pluginName, pluginId, description) => `\u68C0\u6D4B\u5230\u5DF2\u542F\u7528\u63D2\u4EF6\u201C${pluginName}\u201D\uFF08${pluginId}\uFF09\u3002${description}`,
-    renameSyncTitle: "\u7B14\u8BB0\u6539\u540D\u540C\u6B65\u8303\u56F4",
-    renameSyncUnsafe: "\u5F53\u524D\u8F93\u51FA\u76EE\u5F55\u89C4\u5219\u4E0D\u5C5E\u4E8E\u53EF\u5B89\u5168\u8FC1\u79FB\u7684\u53D7\u7BA1\u6A21\u677F\uFF0C\u63D2\u4EF6\u4F1A\u8DF3\u8FC7\u81EA\u52A8\u540C\u6B65\u76EE\u5F55\u3002",
-    renameSyncSafe: "\u5F53\u524D\u8F93\u51FA\u76EE\u5F55\u89C4\u5219\u53EF\u5B89\u5168\u8BC6\u522B\u4E3A\u53D7\u7BA1\u76EE\u5F55\uFF0C\u7B14\u8BB0\u6539\u540D\u6216\u79FB\u52A8\u65F6\u4F1A\u540C\u6B65\u56FE\u7247\u76EE\u5F55\u3002",
-    renameSyncDisabled: "\u5DF2\u5173\u95ED\u7B14\u8BB0\u6539\u540D\u540C\u6B65\uFF0C\u53EF\u51CF\u5C11\u4E0E\u9644\u4EF6\u6574\u7406\u7C7B\u63D2\u4EF6\u4E92\u76F8\u5E72\u9884\u3002",
-    conflictFeatureLabels: {
-      "paste-handler": "\u7C98\u8D34\u63A5\u7BA1",
-      "note-rename-sync": "\u7B14\u8BB0\u6539\u540D\u540C\u6B65"
-    }
-  }
-};
-var EN = {
-  languageLabel: "Interface Language",
-  languageDescription: "Switch the settings page and feature-status panel language. Default: Chinese.",
-  languageOptions: {
-    "zh-CN": "\u7B80\u4F53\u4E2D\u6587",
-    en: "English"
-  },
-  header: {
-    title: "Image Manager Settings",
-    subtitle: "Keep image workflows practical, pleasant, and recoverable in Obsidian without adding design entropy.",
-    reset: "Reset To Defaults",
-    resetNotice: "Image Manager settings were reset to defaults"
-  },
-  sections: {
-    naming: {
-      title: "Storage And Naming",
-      description: "Choose where images go first, then decide how they are named."
-    },
-    convert: {
-      title: "Convert And Compress",
-      description: "Control default output quality, auto-convert behavior, and compression rules."
-    },
-    editor: {
-      title: "Paste And Editing",
-      description: "Control paste takeover, context-menu editing, and image interaction behavior."
-    },
-    gallery: {
-      title: "Gallery",
-      description: "Control gallery entry points, default layout, and sort order."
-    },
-    compatibility: {
-      title: "Compatibility",
-      description: "Review platform limits, native attachment rules, and likely plugin conflicts."
-    },
-    featureStatus: {
-      title: "Feature Status",
-      description: "See what is shipped now and what is still planned."
-    }
-  },
-  samples: {
-    noteName: "weekly-notes",
-    fileName: "page-capture",
-    notePath: "Projects/weekly-notes.md",
-    vaultRoot: "(vault root)"
-  },
-  previews: {
-    outputFolder: "Resolved save path",
-    renamePattern: "Filename preview"
-  },
-  exampleTitles: {
-    outputFolder: "Common save paths",
-    renamePattern: "Common naming rules",
-    compressionIgnore: "Compression ignore examples",
-    conversionIgnore: "Conversion ignore examples",
-    presets: "Recommended presets",
-    variables: "Available variables"
-  },
-  settings: {
-    outputFolderName: "Image save path",
-    outputFolderDesc: "Supports relative paths and variables. Leave empty to save beside the current note.",
-    defaultFormatName: "Default image format",
-    defaultFormatDesc: "Used by auto-convert and manual convert actions.",
-    defaultLinkFormatName: "Default link format",
-    defaultLinkFormatDesc: "Choose which syntax new image links use.",
-    defaultPathFormatName: "Default path format",
-    defaultPathFormatDesc: "Choose which path style is preferred when inserting links.",
-    markdownPathName: "Markdown path strategy",
-    markdownPathDesc: "Applies only to Markdown image links.",
-    renamePatternName: "Generated image filename",
-    renamePatternDesc: "Supports variables. Leave empty to fall back to the original file name.",
-    enableAutoRenameName: "Enable auto rename",
-    enableAutoRenameDesc: "When off, the original filename is kept unless format conversion changes the extension.",
-    renameImagesOnRelocateName: "Rename images when notes move or rename",
-    renameImagesOnRelocateDesc: "Applies only when managed-folder sync is enabled.",
-    deleteEmptyFoldersName: "Delete empty image folders",
-    deleteEmptyFoldersDesc: "Only removes empty folders left behind inside managed image directories.",
-    deleteOrphanImagesName: "Delete orphan images",
-    deleteOrphanImagesDesc: "Also removes unreferenced images in scope when running link and directory updates.",
-    defaultQualityName: "Default processing quality",
-    defaultQualityDesc: "Used by convert, rotate, flip, and resize operations.",
-    compressionQualityName: "Compression quality",
-    compressionQualityDesc: "Lower values save more space but degrade quality faster.",
-    enableAutoConvertName: "Auto-convert pasted images",
-    enableAutoConvertDesc: "Convert pasted images into the default format before saving them.",
-    showOperationNotificationsName: "Show operation notices",
-    showOperationNotificationsDesc: "When off, only failure notices remain.",
-    showSpaceSavedNotificationName: "Show saved space after compression",
-    showSpaceSavedNotificationDesc: "Show before/after size and ratio after compression.",
-    compressionIgnorePatternName: "Compression ignore regex",
-    compressionIgnorePatternDesc: "One regex per line. Skip compression when a path matches. `#` comments are allowed.",
-    conversionIgnorePatternName: "Conversion ignore regex",
-    conversionIgnorePatternDesc: "One regex per line. Skip conversion when a path matches. `#` comments are allowed.",
-    compressionThresholdKBName: "Compression threshold (KB)",
-    compressionThresholdKBDesc: "Skip compression for images below this size.",
-    enablePasteHandlerName: "Take over editor image paste",
-    enablePasteHandlerDesc: "When enabled, the plugin handles image paste and saves files with its own rules.",
-    enableAutoDownloadImagesFromTextName: "Auto-download text image sources",
-    enableAutoDownloadImagesFromTextDesc: "Automatically fetch pasted image URLs, `file://` paths, or `data:image` payloads.",
-    dropPasteCursorLocationName: "Cursor position after insert",
-    dropPasteCursorLocationDesc: "Choose whether the cursor stays before or moves after the inserted image link.",
-    enableContextMenuName: "Enable file context-menu actions",
-    enableContextMenuDesc: "Show copy, gallery, compress, convert, crop, rotate, and flip actions for image files.",
-    enableImageAlignName: "Enable default image alignment",
-    enableImageAlignDesc: "Apply default alignment styles to rendered images without changing Markdown source.",
-    imageAlignmentDefaultName: "Default image alignment",
-    imageAlignmentDefaultDesc: "Applies only when default image alignment is enabled.",
-    disableImageSelectionName: "Disable Obsidian image click selection",
-    disableImageSelectionDesc: "Prefer blocking native click-to-select in reading view.",
-    enableGalleryName: "Enable image gallery",
-    enableGalleryDesc: "Controls gallery commands, context-menu entry, and reading-view double-click entry.",
-    galleryGridSizeName: "Gallery grid size",
-    galleryGridSizeDesc: "Controls thumbnails per row and their size.",
-    gallerySortByName: "Default gallery sort",
-    gallerySortByDesc: "Choose the default sort order when the gallery opens.",
-    enableNoteRenameSyncName: "Sync managed image folders when notes move or rename",
-    enableNoteRenameSyncDesc: "Applies only to managed folders that can be recognized safely."
-  },
-  buttons: {
-    applyPreset: "Apply preset"
-  },
-  labels: {
-    outputFolderFallback: "(same folder as the current note)",
-    invalidVariables: "Unknown variables: ",
-    invalidRegex: "Invalid regex: ",
-    compatibilityOk: "OK",
-    compatibilityWarning: "Review"
-  },
-  options: {
-    linkFormat: { wiki: "Wiki link", markdown: "Markdown link" },
-    pathFormat: { shortest: "Shortest unique path", relative: "Relative path", absolute: "Absolute path" },
-    markdownPathEncodingStrategy: { encoded: "Always encode", readable: "Readable path", auto: "Automatic" },
-    dropPasteCursorLocation: { front: "Stay before", back: "Move after" },
-    imageAlignment: { none: "Do nothing", left: "Left", center: "Center", right: "Right" },
-    galleryGridSize: { small: "Small", medium: "Medium", large: "Large" },
-    gallerySortBy: { date: "Newest first", name: "By name", size: "Largest first" }
-  },
-  variableDescriptions: [
-    { token: "{noteName}", description: "Current note name without extension" },
-    { token: "{noteFileName}", description: "Alias of {noteName}; useful in folder templates" },
-    { token: "{fileName}", description: "Original image filename without extension" },
-    { token: "{date}", description: "Current date in YYYY-MM-DD" },
-    { token: "{time}", description: "Current time in HH-MM-SS" },
-    { token: "{random}", description: "Random suffix to avoid collisions" }
-  ],
-  renameExamples: [
-    { label: "Note + date", value: "{noteName}-{date}", description: "Good when each note owns its images." },
-    { label: "Note + time", value: "{noteName}-{date}-{time}", description: "Good for frequent screenshots." },
-    { label: "Keep original name", value: "{fileName}", description: "Preserve the incoming filename." },
-    { label: "Note + random", value: "{noteName}-{random}", description: "Avoid same-day collisions." }
-  ],
-  outputFolderExamples: [
-    { label: "Follow current note", value: "", description: "Save beside the current note." },
-    { label: "Fixed attachment folder", value: "Attachments/Images", description: "Centralize images for the whole vault." },
-    { label: "Sibling assets folder", value: "./assets", description: "Create one shared folder beside the note." },
-    { label: "Folder per note", value: "./assets/${noteFileName}", description: "Give each note its own image folder." }
-  ],
-  compressionIgnoreExamples: [
-    { label: "Ignore raw folder", value: "^assets/raw/", description: "Skip original source assets." },
-    { label: "Ignore GIF", value: "\\.gif$", description: "Keep animated GIFs unchanged." }
-  ],
-  conversionIgnoreExamples: [
-    { label: "Ignore screenshots folder", value: "^Screenshots/", description: "Skip a specific directory." },
-    { label: "Ignore PNG", value: "\\.png$", description: "Keep PNG files as PNG." }
-  ],
-  rulePresets: [
-    { label: "Daily screenshots", description: "Store screenshots per note with stable timestamps.", renamePattern: "{noteName}-{date}-{time}", outputFolder: "./assets/${noteFileName}" },
-    { label: "Shared library", description: "Better when images are reused across notes.", renamePattern: "{date}-{time}-{random}", outputFolder: "Attachments/Images" },
-    { label: "Keep source names", description: "Useful for downloaded or imported images.", renamePattern: "{fileName}", outputFolder: "./assets" }
-  ],
-  featureLabels: {
-    rename: "Auto naming and relocation",
-    compress: "Compression",
-    convert: "Format conversion",
-    preview: "Preview hooks",
-    editor: "Quick editing",
-    gallery: "Image gallery",
-    batch: "Batch processing",
-    recovery: "Recovery transactions",
-    resize: "Resize",
-    "drag-resize": "Drag resize",
-    "watermark-removal": "Watermark removal",
-    align: "Image alignment",
-    "context-menu": "Context menu"
-  },
-  featureStates: { implemented: "Shipped", scaffolded: "Planned" },
-  featureSummaries: {
-    rename: "Name images from variables and keep managed folders in sync when notes move or rename.",
-    compress: "Compress single images or batches and avoid rerunning the same file version.",
-    convert: "Convert images into the preferred format while handling filename collisions safely.",
-    preview: "Provide preview and refresh hooks for rendered images and gallery integrations.",
-    editor: "Provide lightweight rotate and flip actions, with crop exposed from the context menu.",
-    gallery: "Open current-image, note-level, and folder-level galleries with useful browsing tools.",
-    batch: "Run scoped tasks across a note, folder, or the whole vault.",
-    recovery: "Persist transactions for image and Markdown changes so undo and redo stay reliable.",
-    resize: "Resize images to a safe boundary preset for large assets.",
-    "drag-resize": "Direct drag-to-resize inside the editor is still planned.",
-    "watermark-removal": "Planned object-removal tooling will only return after quality and interaction reach a practical bar.",
-    align: "Apply configurable default alignment styles to rendered note images.",
-    "context-menu": "Expose copy, gallery, compress, convert, crop, and lightweight edit actions from the file menu."
-  },
-  compatibility: {
-    platformTitle: "Current platform",
-    platformDescription: (platform, canWriteClipboard) => `Current runtime: ${platform}. Copy image to clipboard from the file menu is ${canWriteClipboard ? "available" : "unavailable"}.`,
-    debugTitle: "Debug logging mode",
-    debugEnabled: "Obsidian debug mode is enabled. The plugin will emit more detailed diagnostic logs.",
-    debugDisabled: "Obsidian debug mode is off. The plugin will not emit extra verbose logs.",
-    formatsTitle: "Encodable output formats",
-    formatsAvailable: (formats) => `This environment can encode: ${formats.join(", ")}. GIF, HEIC, and TIFF are not guaranteed to round-trip safely.`,
-    formatsUnavailable: "No stable output format was detected in this environment. Consider disabling auto-convert and keeping originals.",
-    pasteConflictTitle: "Paste takeover conflicts",
-    pasteConflictEnabled: "Paste takeover is enabled and may overlap with other paste or attachment plugins.",
-    pasteConflictDisabled: "Paste takeover is disabled, so image paste is handled by Obsidian or another plugin.",
-    nativeAttachmentTitle: "Native attachment folder",
-    nativeAttachmentDescription: (folder) => `Obsidian currently uses \u201C${folder}\u201D as its native attachment folder. When paste takeover is enabled, Image Manager rules take priority.`,
-    pluginConflictTitle: (featureLabel) => `${featureLabel} conflict`,
-    pluginConflictDescription: (pluginName, pluginId, description) => `Detected enabled plugin "${pluginName}" (${pluginId}). ${description}`,
-    renameSyncTitle: "Rename-sync scope",
-    renameSyncUnsafe: "The current output-folder rule is not a safely relocatable managed template, so auto-sync is skipped.",
-    renameSyncSafe: "The current output-folder rule is a safely managed template, so note rename or move will sync image folders.",
-    renameSyncDisabled: "Note rename sync is disabled, which reduces interference with attachment-management plugins.",
-    conflictFeatureLabels: {
-      "paste-handler": "Paste takeover",
-      "note-rename-sync": "Note rename sync"
-    }
-  }
-};
-function getSettingTabCopy(language) {
-  return language === "en" ? EN : ZH;
-}
+var import_obsidian19 = require("obsidian");
 
 // src/utils/plugin-conflicts.ts
 var CONFLICT_RULES = [
   {
     feature: "paste-handler",
-    featureLabel: "\u7C98\u8D34\u63A5\u7BA1",
     enabled: (settings) => settings.enablePasteHandler,
     patterns: [
       /paste image rename/i,
@@ -6244,12 +6936,10 @@ var CONFLICT_RULES = [
       /custom attachment location/i,
       /attachment management/i,
       /paste[-\s]?image/i
-    ],
-    description: "\u8BE5\u63D2\u4EF6\u4E5F\u4F1A\u5904\u7406\u56FE\u7247\u7C98\u8D34\u3001\u9644\u4EF6\u843D\u76D8\u6216\u56FE\u7247\u4E0A\u4F20\uFF0C\u53EF\u80FD\u4E0E\u201C\u7C98\u8D34\u63A5\u7BA1\u201D\u91CD\u590D\u5904\u7406\u540C\u4E00\u5F20\u56FE\u7247\u3002"
+    ]
   },
   {
     feature: "note-rename-sync",
-    featureLabel: "\u7B14\u8BB0\u6539\u540D\u540C\u6B65",
     enabled: (settings) => settings.enableNoteRenameSync,
     patterns: [
       /custom attachment location/i,
@@ -6257,14 +6947,14 @@ var CONFLICT_RULES = [
       /file organizer/i,
       /folder notes/i,
       /attachments?/i
-    ],
-    description: "\u8BE5\u63D2\u4EF6\u4E5F\u53EF\u80FD\u6539\u5199\u9644\u4EF6\u76EE\u5F55\u6216\u8DDF\u968F\u7B14\u8BB0\u79FB\u52A8\u9644\u4EF6\uFF0C\u53EF\u80FD\u4E0E\u201C\u7B14\u8BB0\u6539\u540D\u540C\u6B65\u201D\u53D1\u751F\u91CD\u590D\u642C\u79FB\u3002"
+    ]
   }
 ];
 function detectPluginConflicts(app, settings) {
   var _a, _b, _c, _d;
   const manifests = getEnabledPluginManifests(app);
   const conflicts = [];
+  const ui = getUiCopy(resolveUiLanguage(settings.uiLanguage));
   for (const manifest of manifests) {
     const searchable = `${manifest.id} ${manifest.name} ${manifest.description}`.toLowerCase();
     for (const rule of CONFLICT_RULES) {
@@ -6273,22 +6963,23 @@ function detectPluginConflicts(app, settings) {
       }
       conflicts.push({
         feature: rule.feature,
-        featureLabel: rule.featureLabel,
+        featureLabel: ui.conflicts.featureLabels[rule.feature],
         pluginId: (_b = (_a = manifest.id) != null ? _a : manifest.name) != null ? _b : "unknown-plugin",
         pluginName: (_d = (_c = manifest.name) != null ? _c : manifest.id) != null ? _d : "unknown-plugin",
-        description: rule.description
+        description: ui.conflicts.descriptions[rule.feature]
       });
     }
   }
   return dedupePluginConflicts(conflicts);
 }
-function formatPluginConflictNotice(conflicts) {
+function formatPluginConflictNotice(conflicts, language = "zh-CN") {
   if (conflicts.length === 0) {
     return null;
   }
-  const preview = conflicts.slice(0, 2).map((conflict) => `${conflict.featureLabel} vs ${conflict.pluginName}`).join("\uFF1B");
-  const suffix = conflicts.length > 2 ? `\uFF1B\u53E6\u6709 ${conflicts.length - 2} \u9879` : "";
-  return `\u68C0\u6D4B\u5230\u6F5C\u5728\u63D2\u4EF6\u51B2\u7A81\uFF1A${preview}${suffix}\u3002\u53EF\u5728 Image Manager \u8BBE\u7F6E\u7684\u201C\u517C\u5BB9\u6027\u4E0E\u51B2\u7A81\u89C4\u907F\u201D\u4E2D\u67E5\u770B\u3002`;
+  const notices = getNoticeCopy(resolveUiLanguage(language));
+  const preview = conflicts.slice(0, 2).map((conflict) => notices.pluginConflictPreviewItem(conflict.featureLabel, conflict.pluginName)).join(resolveUiLanguage(language) === "en" ? "; " : "\uFF1B");
+  const suffix = conflicts.length > 2 ? notices.pluginConflictMore(conflicts.length - 2) : "";
+  return notices.pluginConflictSummary(preview, suffix);
 }
 function getEnabledPluginManifests(app) {
   var _a, _b, _c, _d, _e, _f;
@@ -6338,7 +7029,7 @@ function dedupePluginConflicts(conflicts) {
 }
 
 // src/ui/settings/image-manager-setting-tab.ts
-var ImageManagerSettingTab = class extends import_obsidian21.PluginSettingTab {
+var ImageManagerSettingTab = class extends import_obsidian19.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
     this.plugin = plugin;
@@ -6362,7 +7053,7 @@ var ImageManagerSettingTab = class extends import_obsidian21.PluginSettingTab {
       copy.sections.naming.title,
       copy.sections.naming.description
     );
-    outputFolderSetting = new import_obsidian21.Setting(namingSection).setName(copy.settings.outputFolderName).setDesc(copy.settings.outputFolderDesc).addTextArea((text) => {
+    outputFolderSetting = new import_obsidian19.Setting(namingSection).setName(copy.settings.outputFolderName).setDesc(copy.settings.outputFolderDesc).addTextArea((text) => {
       outputFolderInput = text;
       text.inputEl.rows = 2;
       text.setPlaceholder("./assets/${noteFileName}");
@@ -6387,7 +7078,7 @@ var ImageManagerSettingTab = class extends import_obsidian21.PluginSettingTab {
     );
     outputFolderPreviewValue = this.createPreviewBlock(namingSection, copy.previews.outputFolder);
     this.updateOutputFolderFeedback(outputFolderSetting, outputFolderPreviewValue, settings.outputFolder);
-    new import_obsidian21.Setting(namingSection).setName(copy.settings.defaultFormatName).setDesc(copy.settings.defaultFormatDesc).addDropdown(
+    new import_obsidian19.Setting(namingSection).setName(copy.settings.defaultFormatName).setDesc(copy.settings.defaultFormatDesc).addDropdown(
       (dropdown) => dropdown.addOption("webp" /* WEBP */, "WebP").addOption("jpeg" /* JPEG */, "JPEG").addOption("png" /* PNG */, "PNG").setValue(settings.defaultFormat).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.defaultFormat = value;
@@ -6397,28 +7088,28 @@ var ImageManagerSettingTab = class extends import_obsidian21.PluginSettingTab {
         }
       })
     );
-    new import_obsidian21.Setting(namingSection).setName(copy.settings.defaultLinkFormatName).setDesc(copy.settings.defaultLinkFormatDesc).addDropdown(
+    new import_obsidian19.Setting(namingSection).setName(copy.settings.defaultLinkFormatName).setDesc(copy.settings.defaultLinkFormatDesc).addDropdown(
       (dropdown) => dropdown.addOption("wiki" /* WIKI */, copy.options.linkFormat.wiki).addOption("markdown" /* MARKDOWN */, copy.options.linkFormat.markdown).setValue(settings.defaultLinkFormat).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.defaultLinkFormat = value;
         });
       })
     );
-    new import_obsidian21.Setting(namingSection).setName(copy.settings.defaultPathFormatName).setDesc(copy.settings.defaultPathFormatDesc).addDropdown(
+    new import_obsidian19.Setting(namingSection).setName(copy.settings.defaultPathFormatName).setDesc(copy.settings.defaultPathFormatDesc).addDropdown(
       (dropdown) => dropdown.addOption("shortest" /* SHORTEST */, copy.options.pathFormat.shortest).addOption("relative" /* RELATIVE */, copy.options.pathFormat.relative).addOption("absolute" /* ABSOLUTE */, copy.options.pathFormat.absolute).setValue(settings.defaultPathFormat).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.defaultPathFormat = value;
         });
       })
     );
-    new import_obsidian21.Setting(namingSection).setName(copy.settings.markdownPathName).setDesc(copy.settings.markdownPathDesc).addDropdown(
+    new import_obsidian19.Setting(namingSection).setName(copy.settings.markdownPathName).setDesc(copy.settings.markdownPathDesc).addDropdown(
       (dropdown) => dropdown.addOption("encoded" /* ENCODED */, copy.options.markdownPathEncodingStrategy.encoded).addOption("readable" /* READABLE */, copy.options.markdownPathEncodingStrategy.readable).addOption("auto" /* AUTO */, copy.options.markdownPathEncodingStrategy.auto).setValue(settings.markdownPathEncodingStrategy).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.markdownPathEncodingStrategy = value;
         });
       })
     );
-    renameSetting = new import_obsidian21.Setting(namingSection).setName(copy.settings.renamePatternName).setDesc(copy.settings.renamePatternDesc).addTextArea((text) => {
+    renameSetting = new import_obsidian19.Setting(namingSection).setName(copy.settings.renamePatternName).setDesc(copy.settings.renamePatternDesc).addTextArea((text) => {
       renameInput = text;
       text.inputEl.rows = 2;
       text.setPlaceholder(DEFAULT_SETTINGS.renamePattern);
@@ -6460,7 +7151,7 @@ var ImageManagerSettingTab = class extends import_obsidian21.PluginSettingTab {
       }
     );
     this.createVariableReference(namingSection);
-    new import_obsidian21.Setting(namingSection).setName(copy.settings.enableAutoRenameName).setDesc(copy.settings.enableAutoRenameDesc).addToggle(
+    new import_obsidian19.Setting(namingSection).setName(copy.settings.enableAutoRenameName).setDesc(copy.settings.enableAutoRenameDesc).addToggle(
       (toggle) => toggle.setValue(settings.enableAutoRename).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.enableAutoRename = value;
@@ -6470,21 +7161,21 @@ var ImageManagerSettingTab = class extends import_obsidian21.PluginSettingTab {
         }
       })
     );
-    new import_obsidian21.Setting(namingSection).setName(copy.settings.renameImagesOnRelocateName).setDesc(copy.settings.renameImagesOnRelocateDesc).addToggle(
+    new import_obsidian19.Setting(namingSection).setName(copy.settings.renameImagesOnRelocateName).setDesc(copy.settings.renameImagesOnRelocateDesc).addToggle(
       (toggle) => toggle.setValue(settings.renameImagesOnNoteRelocate).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.renameImagesOnNoteRelocate = value;
         });
       })
     );
-    new import_obsidian21.Setting(namingSection).setName(copy.settings.deleteEmptyFoldersName).setDesc(copy.settings.deleteEmptyFoldersDesc).addToggle(
+    new import_obsidian19.Setting(namingSection).setName(copy.settings.deleteEmptyFoldersName).setDesc(copy.settings.deleteEmptyFoldersDesc).addToggle(
       (toggle) => toggle.setValue(settings.deleteEmptyFolders).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.deleteEmptyFolders = value;
         });
       })
     );
-    new import_obsidian21.Setting(namingSection).setName(copy.settings.deleteOrphanImagesName).setDesc(copy.settings.deleteOrphanImagesDesc).addToggle(
+    new import_obsidian19.Setting(namingSection).setName(copy.settings.deleteOrphanImagesName).setDesc(copy.settings.deleteOrphanImagesDesc).addToggle(
       (toggle) => toggle.setValue(settings.deleteOrphanImages).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.deleteOrphanImages = value;
@@ -6496,42 +7187,55 @@ var ImageManagerSettingTab = class extends import_obsidian21.PluginSettingTab {
       copy.sections.convert.title,
       copy.sections.convert.description
     );
-    new import_obsidian21.Setting(convertSection).setName(copy.settings.defaultQualityName).setDesc(copy.settings.defaultQualityDesc).addSlider(
+    convertSection.addClass("image-manager-settings-section--convert");
+    new import_obsidian19.Setting(convertSection).setName(copy.settings.defaultQualityName).setDesc(copy.settings.defaultQualityDesc).addSlider(
       (slider) => slider.setLimits(1, 100, 1).setDynamicTooltip().setValue(settings.defaultQuality).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.defaultQuality = value;
         });
       })
     );
-    new import_obsidian21.Setting(convertSection).setName(copy.settings.compressionQualityName).setDesc(copy.settings.compressionQualityDesc).addSlider(
+    new import_obsidian19.Setting(convertSection).setName(copy.settings.compressionQualityName).setDesc(copy.settings.compressionQualityDesc).addSlider(
       (slider) => slider.setLimits(1, 100, 1).setDynamicTooltip().setValue(settings.compressionQuality).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.compressionQuality = value;
         });
       })
     );
-    new import_obsidian21.Setting(convertSection).setName(copy.settings.enableAutoConvertName).setDesc(copy.settings.enableAutoConvertDesc).addToggle(
+    new import_obsidian19.Setting(convertSection).setName(copy.settings.enableAutoConvertName).setDesc(copy.settings.enableAutoConvertDesc).addToggle(
       (toggle) => toggle.setValue(settings.enableAutoConvert).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.enableAutoConvert = value;
         });
       })
     );
-    new import_obsidian21.Setting(convertSection).setName(copy.settings.showOperationNotificationsName).setDesc(copy.settings.showOperationNotificationsDesc).addToggle(
+    new import_obsidian19.Setting(convertSection).setName(copy.settings.showOperationNotificationsName).setDesc(copy.settings.showOperationNotificationsDesc).addToggle(
       (toggle) => toggle.setValue(settings.showOperationNotifications).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.showOperationNotifications = value;
         });
       })
     );
-    new import_obsidian21.Setting(convertSection).setName(copy.settings.showSpaceSavedNotificationName).setDesc(copy.settings.showSpaceSavedNotificationDesc).addToggle(
+    new import_obsidian19.Setting(convertSection).setName(copy.settings.showSpaceSavedNotificationName).setDesc(copy.settings.showSpaceSavedNotificationDesc).addToggle(
       (toggle) => toggle.setValue(settings.showSpaceSavedNotification).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.showSpaceSavedNotification = value;
         });
       })
     );
-    const compressionIgnoreSetting = new import_obsidian21.Setting(convertSection).setName(copy.settings.compressionIgnorePatternName).setDesc(copy.settings.compressionIgnorePatternDesc).addTextArea((text) => {
+    const thresholdWrap = convertSection.createDiv({ cls: "image-manager-settings-threshold" });
+    new import_obsidian19.Setting(thresholdWrap).setName(copy.settings.compressionThresholdKBName).setDesc(copy.settings.compressionThresholdKBDesc).addText((text) => {
+      text.inputEl.addClass("image-manager-settings-threshold__input");
+      text.setPlaceholder("100").setValue(String(settings.compressionThresholdKB)).onChange(async (value) => {
+        const parsed = Number.parseInt(value, 10);
+        await this.updateSettings((draft) => {
+          draft.compressionThresholdKB = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+        });
+      });
+    });
+    const rulePanel = convertSection.createDiv({ cls: "image-manager-settings-rule-panel" });
+    const compressionRuleBlock = rulePanel.createDiv({ cls: "image-manager-settings-rule-block" });
+    const compressionIgnoreSetting = new import_obsidian19.Setting(compressionRuleBlock).setName(copy.settings.compressionIgnorePatternName).setDesc(copy.settings.compressionIgnorePatternDesc).addTextArea((text) => {
       text.inputEl.rows = 3;
       text.setPlaceholder("^assets/raw/\n\\.gif$");
       text.setValue(settings.compressionIgnorePattern).onChange(async (value) => {
@@ -6543,13 +7247,20 @@ var ImageManagerSettingTab = class extends import_obsidian21.PluginSettingTab {
       text.inputEl.addClass("image-manager-settings-code-input");
       text.inputEl.addClass("image-manager-settings-textarea");
     });
+    compressionIgnoreSetting.settingEl.addClass("image-manager-settings-rule-setting");
     this.updateRegexPatternFeedback(compressionIgnoreSetting, settings.compressionIgnorePattern);
-    this.createExampleRow(convertSection, copy.exampleTitles.compressionIgnore, copy.compressionIgnoreExamples, (value) => {
-      void this.applySettingValue((draft) => {
-        draft.compressionIgnorePattern = value;
-      });
-    });
-    const conversionIgnoreSetting = new import_obsidian21.Setting(convertSection).setName(copy.settings.conversionIgnorePatternName).setDesc(copy.settings.conversionIgnorePatternDesc).addTextArea((text) => {
+    this.createExampleRow(
+      compressionRuleBlock,
+      copy.exampleTitles.compressionIgnore,
+      copy.compressionIgnoreExamples,
+      (value) => {
+        void this.applySettingValue((draft) => {
+          draft.compressionIgnorePattern = value;
+        });
+      }
+    ).addClass("image-manager-settings-rule-examples");
+    const conversionRuleBlock = rulePanel.createDiv({ cls: "image-manager-settings-rule-block" });
+    const conversionIgnoreSetting = new import_obsidian19.Setting(conversionRuleBlock).setName(copy.settings.conversionIgnorePatternName).setDesc(copy.settings.conversionIgnorePatternDesc).addTextArea((text) => {
       text.inputEl.rows = 3;
       text.setPlaceholder("^Screenshots/\n\\.png$");
       text.setValue(settings.conversionIgnorePattern).onChange(async (value) => {
@@ -6561,26 +7272,24 @@ var ImageManagerSettingTab = class extends import_obsidian21.PluginSettingTab {
       text.inputEl.addClass("image-manager-settings-code-input");
       text.inputEl.addClass("image-manager-settings-textarea");
     });
+    conversionIgnoreSetting.settingEl.addClass("image-manager-settings-rule-setting");
     this.updateRegexPatternFeedback(conversionIgnoreSetting, settings.conversionIgnorePattern);
-    this.createExampleRow(convertSection, copy.exampleTitles.conversionIgnore, copy.conversionIgnoreExamples, (value) => {
-      void this.applySettingValue((draft) => {
-        draft.conversionIgnorePattern = value;
-      });
-    });
-    new import_obsidian21.Setting(convertSection).setName(copy.settings.compressionThresholdKBName).setDesc(copy.settings.compressionThresholdKBDesc).addText(
-      (text) => text.setPlaceholder("100").setValue(String(settings.compressionThresholdKB)).onChange(async (value) => {
-        const parsed = Number.parseInt(value, 10);
-        await this.updateSettings((draft) => {
-          draft.compressionThresholdKB = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+    this.createExampleRow(
+      conversionRuleBlock,
+      copy.exampleTitles.conversionIgnore,
+      copy.conversionIgnoreExamples,
+      (value) => {
+        void this.applySettingValue((draft) => {
+          draft.conversionIgnorePattern = value;
         });
-      })
-    );
+      }
+    ).addClass("image-manager-settings-rule-examples");
     const editorSection = this.createSection(
       containerEl,
       copy.sections.editor.title,
       copy.sections.editor.description
     );
-    new import_obsidian21.Setting(editorSection).setName(copy.settings.enablePasteHandlerName).setDesc(copy.settings.enablePasteHandlerDesc).addToggle(
+    new import_obsidian19.Setting(editorSection).setName(copy.settings.enablePasteHandlerName).setDesc(copy.settings.enablePasteHandlerDesc).addToggle(
       (toggle) => toggle.setValue(settings.enablePasteHandler).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.enablePasteHandler = value;
@@ -6588,21 +7297,21 @@ var ImageManagerSettingTab = class extends import_obsidian21.PluginSettingTab {
         this.display();
       })
     );
-    new import_obsidian21.Setting(editorSection).setName(copy.settings.enableAutoDownloadImagesFromTextName).setDesc(copy.settings.enableAutoDownloadImagesFromTextDesc).addToggle(
+    new import_obsidian19.Setting(editorSection).setName(copy.settings.enableAutoDownloadImagesFromTextName).setDesc(copy.settings.enableAutoDownloadImagesFromTextDesc).addToggle(
       (toggle) => toggle.setValue(settings.enableAutoDownloadImagesFromText).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.enableAutoDownloadImagesFromText = value;
         });
       })
     );
-    new import_obsidian21.Setting(editorSection).setName(copy.settings.dropPasteCursorLocationName).setDesc(copy.settings.dropPasteCursorLocationDesc).addDropdown(
+    new import_obsidian19.Setting(editorSection).setName(copy.settings.dropPasteCursorLocationName).setDesc(copy.settings.dropPasteCursorLocationDesc).addDropdown(
       (dropdown) => dropdown.addOption("front", copy.options.dropPasteCursorLocation.front).addOption("back", copy.options.dropPasteCursorLocation.back).setValue(settings.dropPasteCursorLocation).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.dropPasteCursorLocation = value;
         });
       })
     );
-    new import_obsidian21.Setting(editorSection).setName(copy.settings.enableContextMenuName).setDesc(copy.settings.enableContextMenuDesc).addToggle(
+    new import_obsidian19.Setting(editorSection).setName(copy.settings.enableContextMenuName).setDesc(copy.settings.enableContextMenuDesc).addToggle(
       (toggle) => toggle.setValue(settings.enableContextMenu).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.enableContextMenu = value;
@@ -6610,21 +7319,21 @@ var ImageManagerSettingTab = class extends import_obsidian21.PluginSettingTab {
         this.display();
       })
     );
-    new import_obsidian21.Setting(editorSection).setName(copy.settings.enableImageAlignName).setDesc(copy.settings.enableImageAlignDesc).addToggle(
+    new import_obsidian19.Setting(editorSection).setName(copy.settings.enableImageAlignName).setDesc(copy.settings.enableImageAlignDesc).addToggle(
       (toggle) => toggle.setValue(settings.enableImageAlign).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.enableImageAlign = value;
         });
       })
     );
-    new import_obsidian21.Setting(editorSection).setName(copy.settings.imageAlignmentDefaultName).setDesc(copy.settings.imageAlignmentDefaultDesc).addDropdown(
+    new import_obsidian19.Setting(editorSection).setName(copy.settings.imageAlignmentDefaultName).setDesc(copy.settings.imageAlignmentDefaultDesc).addDropdown(
       (dropdown) => dropdown.addOption("none" /* NONE */, copy.options.imageAlignment.none).addOption("left" /* LEFT */, copy.options.imageAlignment.left).addOption("center" /* CENTER */, copy.options.imageAlignment.center).addOption("right" /* RIGHT */, copy.options.imageAlignment.right).setValue(settings.imageAlignmentDefaultAlignment).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.imageAlignmentDefaultAlignment = value;
         });
       })
     );
-    new import_obsidian21.Setting(editorSection).setName(copy.settings.disableImageSelectionName).setDesc(copy.settings.disableImageSelectionDesc).addToggle(
+    new import_obsidian19.Setting(editorSection).setName(copy.settings.disableImageSelectionName).setDesc(copy.settings.disableImageSelectionDesc).addToggle(
       (toggle) => toggle.setValue(settings.disableObsidianImageSelectionOnClick).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.disableObsidianImageSelectionOnClick = value;
@@ -6636,21 +7345,21 @@ var ImageManagerSettingTab = class extends import_obsidian21.PluginSettingTab {
       copy.sections.gallery.title,
       copy.sections.gallery.description
     );
-    new import_obsidian21.Setting(gallerySection).setName(copy.settings.enableGalleryName).setDesc(copy.settings.enableGalleryDesc).addToggle(
+    new import_obsidian19.Setting(gallerySection).setName(copy.settings.enableGalleryName).setDesc(copy.settings.enableGalleryDesc).addToggle(
       (toggle) => toggle.setValue(settings.enableGallery).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.enableGallery = value;
         });
       })
     );
-    new import_obsidian21.Setting(gallerySection).setName(copy.settings.galleryGridSizeName).setDesc(copy.settings.galleryGridSizeDesc).addDropdown(
+    new import_obsidian19.Setting(gallerySection).setName(copy.settings.galleryGridSizeName).setDesc(copy.settings.galleryGridSizeDesc).addDropdown(
       (dropdown) => dropdown.addOption("small" /* SMALL */, copy.options.galleryGridSize.small).addOption("medium" /* MEDIUM */, copy.options.galleryGridSize.medium).addOption("large" /* LARGE */, copy.options.galleryGridSize.large).setValue(settings.galleryGridSize).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.galleryGridSize = value;
         });
       })
     );
-    new import_obsidian21.Setting(gallerySection).setName(copy.settings.gallerySortByName).setDesc(copy.settings.gallerySortByDesc).addDropdown(
+    new import_obsidian19.Setting(gallerySection).setName(copy.settings.gallerySortByName).setDesc(copy.settings.gallerySortByDesc).addDropdown(
       (dropdown) => dropdown.addOption("date" /* DATE */, copy.options.gallerySortBy.date).addOption("name" /* NAME */, copy.options.gallerySortBy.name).addOption("size" /* SIZE */, copy.options.gallerySortBy.size).setValue(settings.gallerySortBy).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.gallerySortBy = value;
@@ -6662,6 +7371,7 @@ var ImageManagerSettingTab = class extends import_obsidian21.PluginSettingTab {
   }
   renderHeader(containerEl) {
     const copy = this.getCopy();
+    const languageOptions = getUiLanguageOptions();
     const hero = containerEl.createDiv({ cls: "image-manager-settings-hero" });
     const content = hero.createDiv({ cls: "image-manager-settings-hero__content" });
     content.createEl("h2", { text: copy.header.title });
@@ -6669,20 +7379,20 @@ var ImageManagerSettingTab = class extends import_obsidian21.PluginSettingTab {
       text: copy.header.subtitle
     });
     const actionWrap = hero.createDiv({ cls: "image-manager-settings-hero__actions" });
-    new import_obsidian21.Setting(actionWrap).setName(copy.languageLabel).setDesc(copy.languageDescription).addDropdown(
-      (dropdown) => dropdown.addOption("zh-CN", copy.languageOptions["zh-CN"]).addOption("en", copy.languageOptions.en).setValue(this.plugin.getSettings().uiLanguage).onChange(async (value) => {
+    new import_obsidian19.Setting(actionWrap).setName(copy.languageLabel).setDesc(copy.languageDescription).addDropdown(
+      (dropdown) => dropdown.addOption("zh-CN", languageOptions["zh-CN"]).addOption("en", languageOptions.en).setValue(this.plugin.getSettings().uiLanguage).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.uiLanguage = value;
         });
         this.display();
       })
     );
-    new import_obsidian21.Setting(actionWrap).addButton(
+    new import_obsidian19.Setting(actionWrap).addButton(
       (button) => button.setButtonText(copy.header.reset).setWarning().onClick(async () => {
         await this.updateSettings((draft) => {
           Object.assign(draft, DEFAULT_SETTINGS);
         });
-        new import_obsidian21.Notice(copy.header.resetNotice);
+        new import_obsidian19.Notice(copy.header.resetNotice);
         this.display();
       })
     );
@@ -6712,6 +7422,7 @@ ${example.description}`;
         onApply(example.value);
       });
     }
+    return wrap;
   }
   createPresetRow(containerEl, title, presets, onApply) {
     const copy = this.getCopy();
@@ -6786,7 +7497,7 @@ ${example.description}`;
       copy.sections.compatibility.title,
       copy.sections.compatibility.description
     );
-    new import_obsidian21.Setting(section).setName(copy.settings.enableNoteRenameSyncName).setDesc(copy.settings.enableNoteRenameSyncDesc).addToggle(
+    new import_obsidian19.Setting(section).setName(copy.settings.enableNoteRenameSyncName).setDesc(copy.settings.enableNoteRenameSyncDesc).addToggle(
       (toggle) => toggle.setValue(settings.enableNoteRenameSync).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.enableNoteRenameSync = value;
@@ -6851,7 +7562,7 @@ ${example.description}`;
         title: copy.compatibility.platformTitle,
         tone: "ok",
         description: copy.compatibility.platformDescription(
-          describeCurrentPlatform(),
+          describeCurrentPlatform(settings.uiLanguage),
           canWriteImageToClipboard()
         )
       },
@@ -6978,10 +7689,10 @@ var SCOPED_COMMAND_SORT_PREFIX = {
   VAULT: "\u200D",
   OTHER: ""
 };
-var SCOPED_COMMAND_DISPLAY_LABEL = {
-  FILE: "\u3010\u5355\u6587\u4EF6\u3011",
-  FOLDER: "\u3010\u5355\u6587\u4EF6\u5939\u3011",
-  VAULT: "\u3010\u6574\u5E93\u3011"
+var COMMAND_SCOPE_ORDER_BY_KEY = {
+  FILE: 0 /* FILE */,
+  FOLDER: 1 /* FOLDER */,
+  VAULT: 2 /* VAULT */
 };
 function sortCommandsByScope(commands) {
   return commands.map((command, index) => ({
@@ -6994,10 +7705,10 @@ function sortCommandsByScope(commands) {
     return leftGroupOrder - rightGroupOrder || left.scope - right.scope || left.actionOrder - right.actionOrder || left.index - right.index;
   }).map((entry) => entry.command);
 }
-function applyScopedCommandSortKey(command) {
+function applyScopedCommandSortKey(command, language = DEFAULT_UI_LANGUAGE) {
   const meta = getCommandSortMeta(command);
   const prefix = getScopedCommandSortKey(meta.scope);
-  const displayName = formatScopedCommandNameForPalette(command.name, meta.scope);
+  const displayName = formatScopedCommandNameForPalette(command.name, meta.scope, language);
   const nextName = `${prefix}${displayName}`;
   if (command.name === nextName) {
     return command;
@@ -7020,22 +7731,23 @@ function getScopedCommandSortKey(scope) {
       return SCOPED_COMMAND_SORT_PREFIX.OTHER;
   }
 }
-function formatScopedCommandNameForPalette(commandName, scope) {
-  const label = getScopedCommandDisplayLabel(scope);
+function formatScopedCommandNameForPalette(commandName, scope, language) {
+  const label = getScopedCommandDisplayLabel(scope, language);
   const trimmedName = stripVisibleScopedCommandPrefix(stripExplicitCommandOrderPrefix(commandName)).trim();
   if (!label) {
     return trimmedName;
   }
-  return trimmedName.startsWith(label) ? trimmedName : `${label}${trimmedName}`;
+  return trimmedName.endsWith(label) ? trimmedName : `${trimmedName}${label}`;
 }
-function getScopedCommandDisplayLabel(scope) {
+function getScopedCommandDisplayLabel(scope, language) {
+  const labels = getCommandScopeCopy(language).displayLabels;
   switch (scope) {
     case 0 /* FILE */:
-      return SCOPED_COMMAND_DISPLAY_LABEL.FILE;
+      return labels.FILE;
     case 1 /* FOLDER */:
-      return SCOPED_COMMAND_DISPLAY_LABEL.FOLDER;
+      return labels.FOLDER;
     case 2 /* VAULT */:
-      return SCOPED_COMMAND_DISPLAY_LABEL.VAULT;
+      return labels.VAULT;
     case 4 /* OTHER */:
     default:
       return "";
@@ -7105,26 +7817,13 @@ function parseExplicitCommandOrderPrefix(value) {
   };
 }
 function parseScopedCommandName(commandName) {
-  const scopePrefixes = [
-    {
-      prefixes: ["\u3010\u5355\u6587\u4EF6\u3011", "\u5355\u6587\u4EF6\uFF1A", "\u5F53\u524D\u6587\u4EF6\uFF1A", "\u5F53\u524D\u7B14\u8BB0\uFF1A", "\u56FE\u7247\uFF1A"],
-      scope: 0 /* FILE */
-    },
-    {
-      prefixes: ["\u3010\u5355\u6587\u4EF6\u5939\u3011", "\u5355\u6587\u4EF6\u5939\uFF1A", "\u5F53\u524D\u6587\u4EF6\u5939\uFF1A"],
-      scope: 1 /* FOLDER */
-    },
-    {
-      prefixes: ["\u3010\u6574\u5E93\u3011", "\u6574\u5E93\uFF1A", "\u6574\u4E2A\u4ED3\u5E93\uFF1A"],
-      scope: 2 /* VAULT */
-    }
-  ];
-  for (const { prefixes, scope } of scopePrefixes) {
-    for (const prefix of prefixes) {
-      if (commandName.startsWith(prefix)) {
+  const scopeAliases = getCommandScopeAliases();
+  for (const scope of Object.keys(scopeAliases)) {
+    for (const marker of scopeAliases[scope]) {
+      if (commandName.startsWith(marker) || isScopedDisplayLabel(marker) && commandName.endsWith(marker)) {
         return {
-          scope,
-          prefix
+          scope: COMMAND_SCOPE_ORDER_BY_KEY[scope],
+          marker
         };
       }
     }
@@ -7137,18 +7836,27 @@ function stripExplicitCommandOrderPrefix(value) {
 function stripVisibleScopedCommandPrefix(commandName) {
   const parsed = parseScopedCommandName(commandName);
   if (parsed) {
-    return commandName.slice(parsed.prefix.length);
+    if (commandName.startsWith(parsed.marker)) {
+      return commandName.slice(parsed.marker.length);
+    }
+    return commandName.slice(0, -parsed.marker.length);
   }
-  for (const label of Object.values(SCOPED_COMMAND_DISPLAY_LABEL)) {
+  for (const label of getCommandScopeDisplayLabels()) {
     if (commandName.startsWith(label)) {
       return commandName.slice(label.length);
+    }
+    if (commandName.endsWith(label)) {
+      return commandName.slice(0, -label.length);
     }
   }
   return commandName;
 }
+function isScopedDisplayLabel(value) {
+  return getCommandScopeDisplayLabels().includes(value);
+}
 
 // src/main.ts
-var ImageManagerPlugin = class extends import_obsidian22.Plugin {
+var ImageManagerPlugin = class extends import_obsidian20.Plugin {
   constructor() {
     super(...arguments);
     __publicField(this, "settingsManager", new SettingsManager(
@@ -7157,6 +7865,7 @@ var ImageManagerPlugin = class extends import_obsidian22.Plugin {
     ));
     __publicField(this, "featureRegistry");
     __publicField(this, "services");
+    __publicField(this, "registeredCommandDefinitions", /* @__PURE__ */ new Map());
   }
   async onload() {
     await this.settingsManager.load();
@@ -7172,8 +7881,10 @@ var ImageManagerPlugin = class extends import_obsidian22.Plugin {
       settings: this.settingsManager.getSettings(),
       features: this.featureRegistry.list().map((feature) => feature.id)
     });
-    showOperationNotice(this.settingsManager.getSettings(), "Image Manager loaded");
-    const conflictNotice = formatPluginConflictNotice(detectPluginConflicts(this.app, this.settingsManager.getSettings()));
+    const settings = this.settingsManager.getSettings();
+    const notices = getNoticeCopy(settings.uiLanguage);
+    showOperationNotice(settings, notices.loaded);
+    const conflictNotice = formatPluginConflictNotice(detectPluginConflicts(this.app, settings), settings.uiLanguage);
     if (conflictNotice) {
       showOperationNotice(this.settingsManager.getSettings(), conflictNotice);
     }
@@ -7189,7 +7900,7 @@ var ImageManagerPlugin = class extends import_obsidian22.Plugin {
         if (!this.settingsManager.getSettings().enablePasteHandler) {
           return;
         }
-        if (!(view instanceof import_obsidian22.MarkdownView) || !view.file) {
+        if (!(view instanceof import_obsidian20.MarkdownView) || !view.file) {
           return;
         }
         const files = Array.from((_b = (_a = event.clipboardData) == null ? void 0 : _a.items) != null ? _b : []).filter((item) => item.type.startsWith("image/")).map((item) => item.getAsFile()).filter((file) => file !== null);
@@ -7201,7 +7912,7 @@ var ImageManagerPlugin = class extends import_obsidian22.Plugin {
         const inputs = files.length > 0 ? files.map((file) => ({ kind: "clipboard-file", file })) : textSources.map((source) => ({ kind: "text-image-source", source }));
         void this.insertPastedImages(inputs, view).catch((error) => {
           console.error("Image Manager failed to process pasted images", error);
-          new import_obsidian22.Notice("Failed to process pasted images");
+          new import_obsidian20.Notice(getNoticeCopy(this.settingsManager.getSettings().uiLanguage).failedToProcessPastedImages);
         });
       })
     );
@@ -7224,6 +7935,9 @@ var ImageManagerPlugin = class extends import_obsidian22.Plugin {
         this.services.logger.error("Failed to update image links after settings change", error);
       });
     }
+    if (changedKeys.includes("uiLanguage")) {
+      this.refreshRegisteredCommands();
+    }
     return updated;
   }
   listFeatures() {
@@ -7232,9 +7946,13 @@ var ImageManagerPlugin = class extends import_obsidian22.Plugin {
   async activateFeatures() {
     const deferredCommands = [];
     const originalAddCommand = this.addCommand.bind(this);
+    this.registeredCommandDefinitions.clear();
     this.addCommand = (command) => {
-      deferredCommands.push(command);
-      return command;
+      const commandDefinition = this.createStoredCommandDefinition(command);
+      this.registeredCommandDefinitions.set(commandDefinition.id, commandDefinition);
+      const localized = this.localizeCommand(commandDefinition);
+      deferredCommands.push(localized);
+      return localized;
     };
     try {
       await this.featureRegistry.activateAll(createPluginFeatureContext(this.app, this, this.services));
@@ -7242,8 +7960,60 @@ var ImageManagerPlugin = class extends import_obsidian22.Plugin {
       this.addCommand = originalAddCommand;
     }
     for (const command of sortCommandsByScope(deferredCommands)) {
-      originalAddCommand(applyScopedCommandSortKey(command));
+      originalAddCommand(this.createRuntimeCommand(applyScopedCommandSortKey(command, this.settingsManager.getSettings().uiLanguage)));
     }
+  }
+  refreshRegisteredCommands() {
+    const language = this.settingsManager.getSettings().uiLanguage;
+    const commands = sortCommandsByScope(
+      [...this.registeredCommandDefinitions.values()].map((command) => this.localizeCommand(command))
+    );
+    for (const commandId of this.registeredCommandDefinitions.keys()) {
+      this.removeCommand(commandId);
+    }
+    for (const command of commands) {
+      this.addCommand(this.createRuntimeCommand(applyScopedCommandSortKey(command, language)));
+    }
+  }
+  localizeCommand(command) {
+    const localizedName = getLocalizedCommandName(command.id, this.settingsManager.getSettings().uiLanguage);
+    if (!localizedName || localizedName === command.name) {
+      return command;
+    }
+    return {
+      ...command,
+      name: localizedName
+    };
+  }
+  createStoredCommandDefinition(command) {
+    return {
+      ...command,
+      name: this.stripPluginNamePrefixes(command.name)
+    };
+  }
+  createRuntimeCommand(command) {
+    return {
+      ...command,
+      name: this.stripPluginNamePrefixes(command.name)
+    };
+  }
+  stripPluginNamePrefixes(commandName) {
+    var _a, _b;
+    const pluginName = (_b = (_a = this.manifest) == null ? void 0 : _a.name) != null ? _b : "Image Manager";
+    const prefixes = [...new Set([pluginName, "Image Manager"].filter((value) => value.trim().length > 0))];
+    let nextName = commandName.trimStart();
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const prefix of prefixes) {
+        const marker = `${prefix}:`;
+        if (nextName.startsWith(marker)) {
+          nextName = nextName.slice(marker.length).trimStart();
+          changed = true;
+        }
+      }
+    }
+    return nextName;
   }
   async insertPastedImages(inputs, view) {
     if (!view.file) {
@@ -7258,7 +8028,7 @@ var ImageManagerPlugin = class extends import_obsidian22.Plugin {
     });
     await this.services.recovery.runTransaction(
       {
-        label: `\u7C98\u8D34\u5BFC\u5165 ${view.file.basename}`,
+        label: getUiCopy(this.settingsManager.getSettings().uiLanguage).transactions.pasteImport(view.file.basename),
         trigger: "paste-import",
         scope: "single-note"
       },
@@ -7275,7 +8045,7 @@ var ImageManagerPlugin = class extends import_obsidian22.Plugin {
             const tempFile = await this.services.fileManager.saveImage(source, originalName, noteFile);
             const settings = this.settingsManager.getSettings();
             let output = tempFile;
-            if (settings.enableAutoConvert && settings.defaultFormat !== this.extensionToImageFormat(tempFile.extension)) {
+            if (settings.enableAutoConvert && !this.extensionMatchesFormat(tempFile.extension, settings.defaultFormat)) {
               try {
                 const ignored = matchRegexIgnorePattern(settings.conversionIgnorePattern, tempFile.path);
                 if (ignored) {
@@ -7317,7 +8087,7 @@ var ImageManagerPlugin = class extends import_obsidian22.Plugin {
           }
         }
         if (links.length === 0) {
-          new import_obsidian22.Notice("Failed to save pasted images");
+          new import_obsidian20.Notice(getNoticeCopy(this.settingsManager.getSettings().uiLanguage).failedToSavePastedImages);
           return;
         }
         const cursor = view.editor.getCursor();
@@ -7327,14 +8097,17 @@ var ImageManagerPlugin = class extends import_obsidian22.Plugin {
           view.editor.setCursor({ line: cursor.line, ch: cursor.ch + text.length });
         }
         if (failedFiles.length > 0) {
-          showOperationNotice(this.settingsManager.getSettings(), `Processed ${links.length} pasted image(s), failed ${failedFiles.length}`);
+          const activeSettings = this.settingsManager.getSettings();
+          showOperationNotice(activeSettings, getNoticeCopy(activeSettings.uiLanguage).processedPastedImages(links.length, failedFiles.length));
         } else {
-          showOperationNotice(this.settingsManager.getSettings(), formatSavedLocationNotice(savedPaths));
+          const activeSettings = this.settingsManager.getSettings();
+          showOperationNotice(activeSettings, formatSavedLocationNotice(savedPaths, activeSettings));
         }
         if (ignoredConversionFiles.length > 0 || failedConversionFiles.length > 0) {
+          const activeSettings = this.settingsManager.getSettings();
           showOperationNotice(
-            this.settingsManager.getSettings(),
-            formatAutoConvertFallbackNotice(ignoredConversionFiles.length, failedConversionFiles.length)
+            activeSettings,
+            formatAutoConvertFallbackNotice(ignoredConversionFiles.length, failedConversionFiles.length, activeSettings)
           );
         }
         this.services.logger.debug("Paste handler completed", {
@@ -7381,25 +8154,27 @@ var ImageManagerPlugin = class extends import_obsidian22.Plugin {
     );
     return this.services.fileManager.replaceFile(file, buffer, targetPath);
   }
-  extensionToImageFormat(extension) {
+  extensionMatchesFormat(extension, format) {
     const normalized = extension.toLowerCase();
     if (normalized === "jpg") {
-      return "jpeg" /* JPEG */;
+      return format === "jpeg" /* JPEG */;
     }
-    if (Object.values(ImageFormat).includes(normalized)) {
-      return normalized;
+    if (normalized === "tif") {
+      return format === "tiff" /* TIFF */;
     }
-    return this.settingsManager.getSettings().defaultFormat;
+    return normalized === format.toLowerCase();
   }
   async rewriteActiveNoteImageLinks() {
-    const view = this.app.workspace.getActiveViewOfType(import_obsidian22.MarkdownView);
+    const view = this.app.workspace.getActiveViewOfType(import_obsidian20.MarkdownView);
     if (!(view == null ? void 0 : view.file)) {
       return;
     }
     const noteFile = view.file;
     await this.services.recovery.runTransaction(
       {
-        label: `\u91CD\u5199\u6D3B\u52A8\u7B14\u8BB0\u56FE\u7247\u94FE\u63A5 ${noteFile.basename}`,
+        label: getUiCopy(this.settingsManager.getSettings().uiLanguage).transactions.rewriteActiveNoteImageLinks(
+          noteFile.basename
+        ),
         trigger: "settings-rewrite",
         scope: "single-note"
       },

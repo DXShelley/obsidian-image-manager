@@ -1,5 +1,6 @@
 import { MarkdownView, TFile } from 'obsidian';
 import type { TFolder } from 'obsidian';
+import { getDefaultCommandName, getNoticeCopy, getUiCopy } from '@/i18n';
 import type { ImageManagerFeature, ImageManagerFeatureContext } from '@/types/index';
 import type { ImageFormat } from '@/types/index';
 import { formatBatchConversionNotice } from '@/utils/batch-operation-feedback';
@@ -18,7 +19,7 @@ export class ConvertFeature implements ImageManagerFeature {
   async register(context: ImageManagerFeatureContext): Promise<void> {
     const activeCommand = {
       commandId: 'a3-convert-active-image-to-default-format',
-      commandName: '转换图片为默认格式'
+      commandName: getDefaultCommandName('a3-convert-active-image-to-default-format')
     } as const;
     context.plugin.addCommand({
       id: activeCommand.commandId,
@@ -27,7 +28,7 @@ export class ConvertFeature implements ImageManagerFeature {
         void executeLoggedCommand(context, activeCommand, async () => {
           await context.services.recovery.runTransaction(
             {
-              label: '转换当前文件引用图片',
+              label: getUiCopy(context.services.settings.getSettings().uiLanguage).transactions.convertCurrentNoteImages,
               trigger: 'convert',
               scope: 'single-note'
             },
@@ -43,7 +44,7 @@ export class ConvertFeature implements ImageManagerFeature {
 
     const folderCommand = {
       commandId: 'b3-convert-current-folder-images-to-default-format',
-      commandName: '转换图片为默认格式'
+      commandName: getDefaultCommandName('b3-convert-current-folder-images-to-default-format')
     } as const;
     context.plugin.addCommand({
       id: folderCommand.commandId,
@@ -56,13 +57,16 @@ export class ConvertFeature implements ImageManagerFeature {
               ...folderCommand,
               reason: 'No active folder'
             });
-            showOperationNotice(context.services.settings.getSettings(), 'No active folder');
+            const settings = context.services.settings.getSettings();
+            showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noActiveFolder);
             return;
           }
 
           await context.services.recovery.runTransaction(
             {
-              label: `转换文件夹图片 ${folder.path || 'vault root'}`,
+              label: getUiCopy(context.services.settings.getSettings().uiLanguage).transactions.convertFolderImages(
+                folder.path || getUiCopy(context.services.settings.getSettings().uiLanguage).common.vaultRoot
+              ),
               trigger: 'convert',
               scope: 'folder'
             },
@@ -76,20 +80,21 @@ export class ConvertFeature implements ImageManagerFeature {
 
     const vaultCommand = {
       commandId: 'c3-convert-vault-images-to-default-format',
-      commandName: '转换图片为默认格式'
+      commandName: getDefaultCommandName('c3-convert-vault-images-to-default-format')
     } as const;
     context.plugin.addCommand({
       id: vaultCommand.commandId,
       name: vaultCommand.commandName,
       callback: () => {
         void executeLoggedCommand(context, vaultCommand, async () => {
-          if (!(await confirmVaultScopeOperation(context.app, '整库格式转换'))) {
+          const ui = getUiCopy(context.services.settings.getSettings().uiLanguage);
+          if (!(await confirmVaultScopeOperation(context.app, context.services.settings.getSettings().uiLanguage, ui.vaultOperation.actionNames.formatConversion))) {
             return;
           }
 
           await context.services.recovery.runTransaction(
             {
-              label: '转换整个仓库图片',
+              label: ui.transactions.convertVaultImages,
               trigger: 'convert',
               scope: 'vault'
             },
@@ -117,7 +122,7 @@ export class ConvertFeature implements ImageManagerFeature {
       if (options.notifySkip !== false) {
         showOperationNotice(
           context.services.settings.getSettings(),
-          formatConversionIgnoredNotice(file.name, ignored.source)
+          formatConversionIgnoredNotice(file.name, ignored.source, context.services.settings.getSettings())
         );
       }
       return file;
@@ -131,7 +136,8 @@ export class ConvertFeature implements ImageManagerFeature {
     );
     const created = await context.services.fileManager.replaceFile(file, buffer, targetPath);
     if (options.notify !== false) {
-      showOperationNotice(context.services.settings.getSettings(), `Converted to ${format}`);
+      const settings = context.services.settings.getSettings();
+      showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).convertedToFormat(format));
     }
     return created;
   }
@@ -172,7 +178,8 @@ export class ConvertFeature implements ImageManagerFeature {
     });
 
     if (files.length === 0 || convertedCount === 0) {
-      showOperationNotice(context.services.settings.getSettings(), 'No images found');
+      const settings = context.services.settings.getSettings();
+      showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noImagesFound);
       return;
     }
 
@@ -180,7 +187,8 @@ export class ConvertFeature implements ImageManagerFeature {
       context.services.settings.getSettings(),
       formatBatchConversionNotice({
         imageCount: convertedCount,
-        targetFormat: format
+        targetFormat: format,
+        language: context.services.settings.getSettings().uiLanguage
       })
     );
   }
@@ -200,7 +208,8 @@ export class ConvertFeature implements ImageManagerFeature {
         ...command,
         reason: 'No active note file'
       });
-      showOperationNotice(context.services.settings.getSettings(), 'Open a note file first');
+      const settings = context.services.settings.getSettings();
+      showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noActiveNoteFile);
       return;
     }
 

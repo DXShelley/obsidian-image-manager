@@ -1,5 +1,6 @@
+import { getNoticeCopy, getUiCopy } from '@/i18n';
 import type { App } from 'obsidian';
-import type { ImageManagerSettings } from '@/types/index';
+import { resolveUiLanguage, type ImageManagerSettings } from '@/types/index';
 
 interface PluginManifestLike {
   readonly id?: string;
@@ -17,16 +18,13 @@ export interface PluginConflict {
 
 interface ConflictRule {
   readonly feature: PluginConflict['feature'];
-  readonly featureLabel: string;
   readonly enabled: (settings: ImageManagerSettings) => boolean;
   readonly patterns: readonly RegExp[];
-  readonly description: string;
 }
 
 const CONFLICT_RULES: readonly ConflictRule[] = [
   {
     feature: 'paste-handler',
-    featureLabel: '粘贴接管',
     enabled: (settings) => settings.enablePasteHandler,
     patterns: [
       /paste image rename/i,
@@ -35,12 +33,10 @@ const CONFLICT_RULES: readonly ConflictRule[] = [
       /custom attachment location/i,
       /attachment management/i,
       /paste[-\s]?image/i
-    ],
-    description: '该插件也会处理图片粘贴、附件落盘或图片上传，可能与“粘贴接管”重复处理同一张图片。'
+    ]
   },
   {
     feature: 'note-rename-sync',
-    featureLabel: '笔记改名同步',
     enabled: (settings) => settings.enableNoteRenameSync,
     patterns: [
       /custom attachment location/i,
@@ -48,14 +44,14 @@ const CONFLICT_RULES: readonly ConflictRule[] = [
       /file organizer/i,
       /folder notes/i,
       /attachments?/i
-    ],
-    description: '该插件也可能改写附件目录或跟随笔记移动附件，可能与“笔记改名同步”发生重复搬移。'
+    ]
   }
 ] as const;
 
 export function detectPluginConflicts(app: App, settings: ImageManagerSettings): PluginConflict[] {
   const manifests = getEnabledPluginManifests(app);
   const conflicts: PluginConflict[] = [];
+  const ui = getUiCopy(resolveUiLanguage(settings.uiLanguage));
 
   for (const manifest of manifests) {
     const searchable = `${manifest.id} ${manifest.name} ${manifest.description}`.toLowerCase();
@@ -66,10 +62,10 @@ export function detectPluginConflicts(app: App, settings: ImageManagerSettings):
 
       conflicts.push({
         feature: rule.feature,
-        featureLabel: rule.featureLabel,
+        featureLabel: ui.conflicts.featureLabels[rule.feature],
         pluginId: manifest.id ?? manifest.name ?? 'unknown-plugin',
         pluginName: manifest.name ?? manifest.id ?? 'unknown-plugin',
-        description: rule.description
+        description: ui.conflicts.descriptions[rule.feature]
       });
     }
   }
@@ -77,17 +73,21 @@ export function detectPluginConflicts(app: App, settings: ImageManagerSettings):
   return dedupePluginConflicts(conflicts);
 }
 
-export function formatPluginConflictNotice(conflicts: readonly PluginConflict[]): string | null {
+export function formatPluginConflictNotice(
+  conflicts: readonly PluginConflict[],
+  language: ImageManagerSettings['uiLanguage'] = 'zh-CN'
+): string | null {
   if (conflicts.length === 0) {
     return null;
   }
 
+  const notices = getNoticeCopy(resolveUiLanguage(language));
   const preview = conflicts
     .slice(0, 2)
-    .map((conflict) => `${conflict.featureLabel} vs ${conflict.pluginName}`)
-    .join('；');
-  const suffix = conflicts.length > 2 ? `；另有 ${conflicts.length - 2} 项` : '';
-  return `检测到潜在插件冲突：${preview}${suffix}。可在 Image Manager 设置的“兼容性与冲突规避”中查看。`;
+    .map((conflict) => notices.pluginConflictPreviewItem(conflict.featureLabel, conflict.pluginName))
+    .join(resolveUiLanguage(language) === 'en' ? '; ' : '；');
+  const suffix = conflicts.length > 2 ? notices.pluginConflictMore(conflicts.length - 2) : '';
+  return notices.pluginConflictSummary(preview, suffix);
 }
 
 function getEnabledPluginManifests(app: App): PluginManifestLike[] {

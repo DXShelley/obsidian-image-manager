@@ -1,4 +1,5 @@
 import { MarkdownView, Notice, TFile, TFolder } from 'obsidian';
+import { getDefaultCommandName, getNoticeCopy, getUiCopy } from '@/i18n';
 import type { ImageManagerFeature, ImageManagerFeatureContext } from '@/types/index';
 import { BatchExecutionStatus, BatchOperation, BatchScope } from '@/types/index';
 import { executeLoggedCommand, logSkippedCommand } from '@/utils/command-logging';
@@ -34,7 +35,7 @@ export class BatchFeature implements ImageManagerFeature {
   async register(context: ImageManagerFeatureContext): Promise<void> {
     const noteCommand = {
       commandId: 'a1-update-current-note-image-links',
-      commandName: '更新图片链接与目录'
+      commandName: getDefaultCommandName('a1-update-current-note-image-links')
     } as const;
     context.plugin.addCommand({
       id: noteCommand.commandId,
@@ -46,14 +47,17 @@ export class BatchFeature implements ImageManagerFeature {
               ...noteCommand,
               reason: 'No active note'
             });
-            showOperationNotice(context.services.settings.getSettings(), 'No active note');
+            const settings = context.services.settings.getSettings();
+            showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noActiveNote);
             return;
           }
           const noteFile = view.file;
 
           await context.services.recovery.runTransaction(
             {
-              label: `批量更新笔记图片链接 ${noteFile.basename}`,
+              label: getUiCopy(context.services.settings.getSettings().uiLanguage).transactions.batchUpdateNoteImageLinks(
+                noteFile.basename
+              ),
               trigger: 'batch',
               scope: 'single-note'
             },
@@ -67,7 +71,7 @@ export class BatchFeature implements ImageManagerFeature {
 
     const noteImportCommand = {
       commandId: 'a2-import-current-note-external-images',
-      commandName: '下载外部图片到本地'
+      commandName: getDefaultCommandName('a2-import-current-note-external-images')
     } as const;
     context.plugin.addCommand({
       id: noteImportCommand.commandId,
@@ -76,7 +80,8 @@ export class BatchFeature implements ImageManagerFeature {
         void executeLoggedCommand(context, noteImportCommand, async () => {
           await context.services.recovery.runTransaction(
             {
-              label: '下载当前笔记外部图片',
+              label: getUiCopy(context.services.settings.getSettings().uiLanguage).transactions
+                .importCurrentNoteExternalImages,
               trigger: 'batch',
               scope: 'single-note'
             },
@@ -92,7 +97,7 @@ export class BatchFeature implements ImageManagerFeature {
 
     const noteCleanupCommand = {
       commandId: 'a5-delete-current-note-extra-images',
-      commandName: '删除多余图片文件'
+      commandName: getDefaultCommandName('a5-delete-current-note-extra-images')
     } as const;
     context.plugin.addCommand({
       id: noteCleanupCommand.commandId,
@@ -104,14 +109,16 @@ export class BatchFeature implements ImageManagerFeature {
               ...noteCleanupCommand,
               reason: 'No active note'
             });
-            showOperationNotice(context.services.settings.getSettings(), 'No active note');
+            const settings = context.services.settings.getSettings();
+            showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noActiveNote);
             return;
           }
           const noteFile = view.file;
 
           await context.services.recovery.runTransaction(
             {
-              label: `删除笔记多余图片 ${noteFile.basename}`,
+              label: getUiCopy(context.services.settings.getSettings().uiLanguage).transactions
+                .deleteCurrentNoteExtraImages(noteFile.basename),
               trigger: 'batch',
               scope: 'single-note'
             },
@@ -125,7 +132,7 @@ export class BatchFeature implements ImageManagerFeature {
 
     const folderCommand = {
       commandId: 'b1-update-current-folder-image-links',
-      commandName: '更新图片链接与目录'
+      commandName: getDefaultCommandName('b1-update-current-folder-image-links')
     } as const;
     context.plugin.addCommand({
       id: folderCommand.commandId,
@@ -138,13 +145,17 @@ export class BatchFeature implements ImageManagerFeature {
               ...folderCommand,
               reason: 'No active folder'
             });
-            showOperationNotice(context.services.settings.getSettings(), 'No active folder');
+            const settings = context.services.settings.getSettings();
+            showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noActiveFolder);
             return;
           }
 
           await context.services.recovery.runTransaction(
             {
-              label: `批量更新文件夹图片链接 ${folder.path || 'vault root'}`,
+              label: getUiCopy(context.services.settings.getSettings().uiLanguage).transactions
+                .batchUpdateFolderImageLinks(
+                  folder.path || getUiCopy(context.services.settings.getSettings().uiLanguage).common.vaultRoot
+                ),
               trigger: 'batch',
               scope: 'folder'
             },
@@ -158,7 +169,7 @@ export class BatchFeature implements ImageManagerFeature {
 
     const folderImportCommand = {
       commandId: 'b2-import-current-folder-external-images',
-      commandName: '下载外部图片到本地'
+      commandName: getDefaultCommandName('b2-import-current-folder-external-images')
     } as const;
     context.plugin.addCommand({
       id: folderImportCommand.commandId,
@@ -171,13 +182,16 @@ export class BatchFeature implements ImageManagerFeature {
               ...folderImportCommand,
               reason: 'No active folder'
             });
-            showOperationNotice(context.services.settings.getSettings(), 'No active folder');
+            const settings = context.services.settings.getSettings();
+            showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noActiveFolder);
             return;
           }
 
           await context.services.recovery.runTransaction(
             {
-              label: `下载文件夹外部图片 ${folder.path || 'vault root'}`,
+              label: getUiCopy(context.services.settings.getSettings().uiLanguage).transactions.importFolderExternalImages(
+                folder.path || getUiCopy(context.services.settings.getSettings().uiLanguage).common.vaultRoot
+              ),
               trigger: 'batch',
               scope: 'folder'
             },
@@ -191,7 +205,7 @@ export class BatchFeature implements ImageManagerFeature {
 
     const folderCleanupCommand = {
       commandId: 'b5-delete-current-folder-extra-images',
-      commandName: '删除多余图片文件'
+      commandName: getDefaultCommandName('b5-delete-current-folder-extra-images')
     } as const;
     context.plugin.addCommand({
       id: folderCleanupCommand.commandId,
@@ -204,13 +218,16 @@ export class BatchFeature implements ImageManagerFeature {
               ...folderCleanupCommand,
               reason: 'No active folder'
             });
-            showOperationNotice(context.services.settings.getSettings(), 'No active folder');
+            const settings = context.services.settings.getSettings();
+            showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noActiveFolder);
             return;
           }
 
           await context.services.recovery.runTransaction(
             {
-              label: `删除文件夹多余图片 ${folder.path || 'vault root'}`,
+              label: getUiCopy(context.services.settings.getSettings().uiLanguage).transactions.deleteFolderExtraImages(
+                folder.path || getUiCopy(context.services.settings.getSettings().uiLanguage).common.vaultRoot
+              ),
               trigger: 'batch',
               scope: 'folder'
             },
@@ -224,20 +241,21 @@ export class BatchFeature implements ImageManagerFeature {
 
     const vaultCommand = {
       commandId: 'c1-update-vault-image-links',
-      commandName: '更新图片链接与目录'
+      commandName: getDefaultCommandName('c1-update-vault-image-links')
     } as const;
     context.plugin.addCommand({
       id: vaultCommand.commandId,
       name: vaultCommand.commandName,
       callback: () => {
         void executeLoggedCommand(context, vaultCommand, async () => {
-          if (!(await confirmVaultScopeOperation(context.app, '整库图片链接与目录更新'))) {
+          const ui = getUiCopy(context.services.settings.getSettings().uiLanguage);
+          if (!(await confirmVaultScopeOperation(context.app, context.services.settings.getSettings().uiLanguage, ui.vaultOperation.actionNames.linkRewrite))) {
             return;
           }
 
           await context.services.recovery.runTransaction(
             {
-              label: '批量更新整个仓库图片链接',
+              label: ui.transactions.batchUpdateVaultImageLinks,
               trigger: 'batch',
               scope: 'vault'
             },
@@ -251,20 +269,21 @@ export class BatchFeature implements ImageManagerFeature {
 
     const vaultImportCommand = {
       commandId: 'c2-import-vault-external-images',
-      commandName: '下载外部图片到本地'
+      commandName: getDefaultCommandName('c2-import-vault-external-images')
     } as const;
     context.plugin.addCommand({
       id: vaultImportCommand.commandId,
       name: vaultImportCommand.commandName,
       callback: () => {
         void executeLoggedCommand(context, vaultImportCommand, async () => {
-          if (!(await confirmVaultScopeOperation(context.app, '整库外部图片下载'))) {
+          const ui = getUiCopy(context.services.settings.getSettings().uiLanguage);
+          if (!(await confirmVaultScopeOperation(context.app, context.services.settings.getSettings().uiLanguage, ui.vaultOperation.actionNames.externalImport))) {
             return;
           }
 
           await context.services.recovery.runTransaction(
             {
-              label: '下载整个仓库外部图片',
+              label: ui.transactions.importVaultExternalImages,
               trigger: 'batch',
               scope: 'vault'
             },
@@ -278,20 +297,21 @@ export class BatchFeature implements ImageManagerFeature {
 
     const vaultCleanupCommand = {
       commandId: 'c5-delete-vault-extra-images',
-      commandName: '删除多余图片文件'
+      commandName: getDefaultCommandName('c5-delete-vault-extra-images')
     } as const;
     context.plugin.addCommand({
       id: vaultCleanupCommand.commandId,
       name: vaultCleanupCommand.commandName,
       callback: () => {
         void executeLoggedCommand(context, vaultCleanupCommand, async () => {
-          if (!(await confirmVaultScopeOperation(context.app, '整库多余图片删除'))) {
+          const ui = getUiCopy(context.services.settings.getSettings().uiLanguage);
+          if (!(await confirmVaultScopeOperation(context.app, context.services.settings.getSettings().uiLanguage, ui.vaultOperation.actionNames.orphanCleanup))) {
             return;
           }
 
           await context.services.recovery.runTransaction(
             {
-              label: '删除整个仓库多余图片',
+              label: ui.transactions.deleteVaultExtraImages,
               trigger: 'batch',
               scope: 'vault'
             },
@@ -311,7 +331,8 @@ export class BatchFeature implements ImageManagerFeature {
   ): Promise<void> {
     context.services.logger.refreshMode('batch-update-links');
     if (this.hasActiveBatch(context)) {
-      showOperationNotice(context.services.settings.getSettings(), 'An image batch job is already active');
+      const settings = context.services.settings.getSettings();
+      showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).batchJobAlreadyActive);
       return;
     }
 
@@ -391,7 +412,8 @@ export class BatchFeature implements ImageManagerFeature {
           downloadedImages,
           deletedImages,
           deletedFolders,
-          failedCount: report.failed
+          failedCount: report.failed,
+          language: context.services.settings.getSettings().uiLanguage
         })
       );
     } catch (error) {
@@ -400,7 +422,7 @@ export class BatchFeature implements ImageManagerFeature {
         scope,
         sourcePath: source?.path
       });
-      new Notice(error instanceof Error ? error.message : 'Batch link rewrite failed');
+      new Notice(error instanceof Error ? error.message : getNoticeCopy(context.services.settings.getSettings().uiLanguage).batchLinkRewriteFailed);
     }
   }
 
@@ -411,7 +433,8 @@ export class BatchFeature implements ImageManagerFeature {
   ): Promise<void> {
     context.services.logger.refreshMode('batch-import-external-images');
     if (this.hasActiveBatch(context)) {
-      showOperationNotice(context.services.settings.getSettings(), 'An image batch job is already active');
+      const settings = context.services.settings.getSettings();
+      showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).batchJobAlreadyActive);
       return;
     }
 
@@ -466,7 +489,8 @@ export class BatchFeature implements ImageManagerFeature {
           })),
           importedLinks,
           downloadedImages,
-          failedCount: report.failed
+          failedCount: report.failed,
+          language: context.services.settings.getSettings().uiLanguage
         })
       );
     } catch (error) {
@@ -475,7 +499,7 @@ export class BatchFeature implements ImageManagerFeature {
         scope,
         sourcePath: source?.path
       });
-      new Notice(error instanceof Error ? error.message : 'Batch external image import failed');
+      new Notice(error instanceof Error ? error.message : getNoticeCopy(context.services.settings.getSettings().uiLanguage).batchExternalImageImportFailed);
     }
   }
 
@@ -486,7 +510,8 @@ export class BatchFeature implements ImageManagerFeature {
   ): Promise<void> {
     context.services.logger.refreshMode('batch-delete-extra-images');
     if (this.hasActiveBatch(context)) {
-      showOperationNotice(context.services.settings.getSettings(), 'An image batch job is already active');
+      const settings = context.services.settings.getSettings();
+      showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).batchJobAlreadyActive);
       return;
     }
 
@@ -500,14 +525,16 @@ export class BatchFeature implements ImageManagerFeature {
       switch (scope) {
         case BatchScope.CURRENT_NOTE:
           if (!(source instanceof TFile)) {
-            showOperationNotice(context.services.settings.getSettings(), 'No active note');
+            const settings = context.services.settings.getSettings();
+            showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noActiveNote);
             return;
           }
           result = await context.services.fileManager.deleteOrphanImagesForNote(source);
           break;
         case BatchScope.FOLDER:
           if (!(source instanceof TFolder)) {
-            showOperationNotice(context.services.settings.getSettings(), 'No active folder');
+            const settings = context.services.settings.getSettings();
+            showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noActiveFolder);
             return;
           }
           result = await context.services.fileManager.deleteOrphanImagesInFolder(source);
@@ -533,7 +560,8 @@ export class BatchFeature implements ImageManagerFeature {
           deletedFolders: result.deletedFolders,
           relocatedImages: result.relocatedImages ?? 0,
           preservedImages: result.preservedImages ?? 0,
-          failedCount: 0
+          failedCount: 0,
+          language: context.services.settings.getSettings().uiLanguage
         })
       );
     } catch (error) {
@@ -542,7 +570,7 @@ export class BatchFeature implements ImageManagerFeature {
         scope,
         sourcePath: source?.path
       });
-      new Notice(error instanceof Error ? error.message : 'Orphan image cleanup failed');
+      new Notice(error instanceof Error ? error.message : getNoticeCopy(context.services.settings.getSettings().uiLanguage).orphanCleanupFailed);
     }
   }
 
@@ -582,7 +610,8 @@ export class BatchFeature implements ImageManagerFeature {
         ...command,
         reason: 'No active note file'
       });
-      showOperationNotice(context.services.settings.getSettings(), 'Open a note file first');
+      const settings = context.services.settings.getSettings();
+      showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noActiveNoteFile);
       return;
     }
 

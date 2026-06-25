@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { Alignment } from '@/types/index';
 import { PreviewFeature } from '@/features/preview/preview-feature';
+import { getUiCopy } from '@/i18n';
 
 const { openSingleImageGalleryMock, showAtMouseEventMock, latestMenuItemsRef, noticeMock } = vi.hoisted(() => ({
   openSingleImageGalleryMock: vi.fn(async () => undefined),
@@ -170,7 +171,9 @@ describe('PreviewFeature', () => {
     dblclick?.(event);
 
     await vi.waitFor(() => {
-      expect(openSingleImageGalleryMock).toHaveBeenCalledWith(context, imageFile, noteFile);
+      expect(openSingleImageGalleryMock).toHaveBeenCalledWith(context, imageFile, noteFile, {
+        lightboxCloseBehavior: 'close-modal'
+      });
     });
     expect(event.preventDefault).toHaveBeenCalled();
     expect(event.stopPropagation).toHaveBeenCalled();
@@ -265,7 +268,9 @@ describe('PreviewFeature', () => {
     expect(event.preventDefault).toHaveBeenCalled();
     expect(event.stopPropagation).toHaveBeenCalled();
 
-    const importItem = latestMenuItemsRef.current.find((item) => item.title === '下载该外部图片到本地');
+    const importItem = latestMenuItemsRef.current.find(
+      (item) => item.title === getUiCopy('zh-CN').contextMenu.downloadExternalImage
+    );
     expect(importItem?.icon).toBe('download');
 
     importItem?.onClick?.();

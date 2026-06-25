@@ -4,30 +4,27 @@
 
 ## Commands
 
-- Scoped commands are ordered by the `a1-a5`, `b1-b5`, and `c1-c5` `id` groups for `【单文件】`, `【单文件夹】`, and `【整库】`, with `update links -> import external images -> convert format -> compress -> delete extra image files` inside each scope.
-- `【单文件】更新图片链接与目录`
-- `【单文件】下载外部图片到本地`
-- `【单文件】转换图片为默认格式`
-- `【单文件】压缩图片`
-- `【单文件】删除多余图片文件`
-- `【单文件夹】更新图片链接与目录`
-- `【单文件夹】下载外部图片到本地`
-- `【单文件夹】转换图片为默认格式`
-- `【单文件夹】压缩图片`
-- `【单文件夹】删除多余图片文件`
-- `【整库】更新图片链接与目录`
-- `【整库】下载外部图片到本地`
-- `【整库】转换图片为默认格式`
-- `【整库】压缩图片`
-- `【整库】删除多余图片文件`
+- Scoped commands are ordered by the `a1-a5`, `b1-b5`, and `c1-c5` `id` groups and display `【单文件】`, `【单文件夹】`, and `【整库】` as command-name suffixes, with `update links -> import external images -> convert format -> compress -> delete extra image files` inside each scope.
+- `更新图片链接与目录【单文件】`
+- `下载外部图片到本地【单文件】`
+- `转换图片为默认格式【单文件】`
+- `压缩图片【单文件】`
+- `删除多余图片文件【单文件】`
+- `更新图片链接与目录【单文件夹】`
+- `下载外部图片到本地【单文件夹】`
+- `转换图片为默认格式【单文件夹】`
+- `压缩图片【单文件夹】`
+- `删除多余图片文件【单文件夹】`
+- `更新图片链接与目录【整库】`
+- `下载外部图片到本地【整库】`
+- `转换图片为默认格式【整库】`
+- `压缩图片【整库】`
+- `删除多余图片文件【整库】`
 - `恢复：撤销上一步图片管理修改`
 - `恢复：重做上一步图片管理修改`
-- `顺时针旋转图片 90°`
-- `水平翻转图片`
-- `缩放图片到 1920px 边界`
 - `打开当前图片画廊`
-- `【单文件】打开图片画廊`
-- `【单文件夹】打开图片画廊`
+- `打开图片画廊【单文件】`
+- `打开图片画廊【单文件夹】`
 
 ## Context Menu
 
@@ -58,8 +55,8 @@ Right-click an image file in the file explorer to access:
 - If `{noteName}` and `{date}` resolve to the same value, adjacent duplicate fragments are collapsed automatically.
 - If `renamePattern` contains `{time}`, collision handling uses ordered suffixes such as `-01`, `-02`, and `-03`.
 - When a note is renamed or moved, managed image folders can be synchronized automatically.
-- `Download external images to local` imports `URL`, `file://`, and `data:image/...;base64,...` sources from a note into the managed folder and rewrites those links to local image links.
-- The command-palette `【单文件】下载外部图片到本地` command processes every external image link in the current note.
+- `Download external images to local` imports `URL`, `file://`, and `data:image/...;base64,...` sources from a note into the managed folder and rewrites those links to local image links; explicit import flows also accept extensionless or dynamic image endpoints when the response headers confirm an image payload.
+- The command-palette `下载外部图片到本地【单文件】` command processes every external image link in the current note.
 - In reading view, right-clicking a rendered external image shows `下载该外部图片到本地`, which imports only that selected image source.
 
 ## Compatibility Strategy
@@ -69,9 +66,10 @@ Right-click an image file in the file explorer to access:
 - Prefer safely relocatable managed-folder templates such as `./assets/${noteFileName}` or `./assets/{noteName}`. Relative or note-scoped templates are easier to keep in sync when notes move and safer for scoped cleanup.
 - If `outputFolder` points to a fixed shared library such as `Attachments/Images`, use it as a shared pool instead of enabling note-rename sync. That reduces overlap with plugins such as `Attachment Management`, `Custom Attachment Location`, and `File Organizer`.
 - When you need better compatibility with external Markdown tooling, publishing pipelines, or sync flows, prefer `Markdown` links with the `AUTO` or `ENCODED` path strategy. Use `Wiki` links and shortest-unique paths mainly for Obsidian-first vaults.
+- Keep asset detection separate from in-place editing guarantees. Formats such as `AVIF`, `HEIC`, `TIFF`, and `SVG` can be recognized, imported, or used as conversion inputs without implying that every in-place compress, crop, rotate, or resize path is equally safe.
 - Reading-view image enhancements should stay additive rather than replacing native behavior. If you rely on Obsidian's default image click selection, keep `disableObsidianImageSelectionOnClick` turned off and use double-click gallery entry as the extra interaction.
 - Turn on `deleteOrphanImages` only after your attachment boundaries and reference patterns are stable. If your vault still uses Canvas, nonstandard embeds, or external scripts that read images directly, leave it off.
-- Start with `【单文件】` and `【单文件夹】` scoped commands before running any `【整库】` operation so you can verify link rewrites and folder moves incrementally.
+- Start with commands ending in `【单文件】` and `【单文件夹】` before running commands ending in `【整库】` so you can verify link rewrites and folder moves incrementally.
 - Use the settings page's compatibility section as the routine checkpoint. When paste, attachment-management, or file-organization plugins are enabled together, decide which plugin owns each workflow before you run bulk cleanup.
 
 ## Settings Page
@@ -84,12 +82,13 @@ Right-click an image file in the file explorer to access:
 
 ## Refresh Behavior
 
-- Rotate, flip, resize, crop, compress, and convert operations update the image file immediately.
+- Rotate, flip, crop, compress, and convert operations update the image file immediately.
+- For `AVIF`, the plugin currently guarantees recognition, import, and conversion input only. Convert it to `PNG`, `JPEG`, or `WebP` before trying in-place crop, compress, rotate, flip, or resize operations.
 - If the image is embedded in a Markdown note, the plugin attempts to rerender that note preview automatically.
 - Scoped batch-style commands defer Markdown rerenders so a run ends with one summary notice and one preview refresh.
 - The current-file conversion command operates on the active Markdown note and processes each referenced image at most once.
 - If different source formats would convert to the same target name, such as `aaa.png` and `aaa.jpg` to `webp`, the plugin appends suffixes like `-1` and `-2` automatically.
-- All `【整库】...` commands show a risk confirmation before execution.
+- All `...【整库】` commands show a risk confirmation before execution.
 
 ## Recovery
 

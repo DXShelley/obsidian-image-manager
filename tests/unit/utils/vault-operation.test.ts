@@ -13,7 +13,7 @@ describe('confirmVaultScopeOperation', () => {
   it('prompts before running a vault-scoped operation', async () => {
     const app = {};
 
-    const confirmed = await confirmVaultScopeOperation(app as never, '整库格式转换');
+    const confirmed = await confirmVaultScopeOperation(app as never, 'zh-CN', '整库格式转换');
 
     expect(confirmed).toBe(true);
     expect(confirmRiskAction).toHaveBeenCalledWith(app, {

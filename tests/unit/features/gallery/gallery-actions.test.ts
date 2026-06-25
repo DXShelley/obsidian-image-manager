@@ -3,6 +3,19 @@ import { GalleryGridSize, GallerySortBy } from '@/types/index';
 
 const modalOpenMock = vi.fn();
 const modalOptionsMock = vi.fn();
+const galleryUi = {
+  titleForNote: (noteName: string) => `Images in ${noteName}`,
+  titleForFolder: (folderPath: string) => `Images in ${folderPath}`,
+  titleForImage: (fileName: string) => `Image: ${fileName}`,
+  searchPlaceholder: 'Filter by file name',
+  sortBy: { date: 'Newest first', name: 'By name', size: 'Largest first' },
+  viewMode: { grid: 'Grid', list: 'List' },
+  emptyResults: 'No images match the current filter.',
+  close: 'Close',
+  previous: 'Previous',
+  next: 'Next',
+  copyImage: 'Copy Image'
+};
 
 vi.mock('obsidian', () => ({
   MarkdownView: class {},
@@ -95,6 +108,7 @@ describe('gallery-actions', () => {
         },
         settings: {
           getSettings: vi.fn(() => ({
+            uiLanguage: 'en',
             gallerySortBy: GallerySortBy.DATE,
             galleryGridSize: GalleryGridSize.MEDIUM
           }))
@@ -107,14 +121,14 @@ describe('gallery-actions', () => {
     expect(context.services.fileManager.getImagesInNote).toHaveBeenCalledWith(noteFile);
     expect(context.services.imageProcessor.getImageInfo).toHaveBeenCalledWith(siblingImageFile);
     expect(context.services.imageProcessor.getImageInfo).toHaveBeenCalledWith(imageFile);
-    expect(modalOptionsMock).toHaveBeenCalledWith(
+    expect(modalOptionsMock.mock.calls[0]?.[0]).toEqual(
       expect.objectContaining({
         title: 'Images in demo',
+        ui: expect.objectContaining({ copyImage: galleryUi.copyImage, close: galleryUi.close }),
         images: [siblingImageInfo, imageInfo],
         defaultSortBy: GallerySortBy.DATE,
         defaultGridSize: GalleryGridSize.MEDIUM,
         initialSelectedImagePath: 'assets/photo.png',
-        onCopyMarkdownLink: expect.any(Function),
         onCopyImageToClipboard: expect.any(Function)
       })
     );
@@ -162,6 +176,7 @@ describe('gallery-actions', () => {
         },
         settings: {
           getSettings: vi.fn(() => ({
+            uiLanguage: 'en',
             gallerySortBy: GallerySortBy.DATE,
             galleryGridSize: GalleryGridSize.MEDIUM
           }))
@@ -171,11 +186,74 @@ describe('gallery-actions', () => {
 
     await openSingleImageGallery(context as never, imageFile as never);
 
-    expect(modalOptionsMock).toHaveBeenLastCalledWith(
+    expect(modalOptionsMock.mock.lastCall?.[0]).toEqual(
       expect.objectContaining({
         title: 'Image: solo.png',
+        ui: expect.objectContaining({ copyImage: galleryUi.copyImage, close: galleryUi.close }),
         images: [imageInfo],
         initialSelectedImagePath: 'assets/solo.png'
+      })
+    );
+  });
+
+  it('passes through close-modal behavior for click-opened galleries', async () => {
+    const { TFile } = await import('obsidian');
+    const { openSingleImageGallery } = await import('@/features/gallery/gallery-actions');
+    const imageFile = Object.assign(new TFile(), {
+      path: 'assets/clicked.png',
+      name: 'clicked.png',
+      basename: 'clicked',
+      extension: 'png',
+      stat: {
+        size: 512,
+        mtime: 64
+      }
+    });
+    const imageInfo = {
+      path: imageFile.path,
+      name: imageFile.name,
+      extension: imageFile.extension,
+      size: imageFile.stat.size,
+      mtime: imageFile.stat.mtime,
+      resourcePath: 'app://assets/clicked.png',
+      width: 100,
+      height: 80
+    };
+    const context = {
+      app: {
+        metadataCache: {
+          resolvedLinks: {}
+        },
+        vault: {
+          getAbstractFileByPath: vi.fn(() => null)
+        },
+        workspace: {
+          getActiveViewOfType: vi.fn(() => null)
+        }
+      },
+      services: {
+        imageProcessor: {
+          getImageInfo: vi.fn(async () => imageInfo)
+        },
+        settings: {
+          getSettings: vi.fn(() => ({
+            uiLanguage: 'en',
+            gallerySortBy: GallerySortBy.DATE,
+            galleryGridSize: GalleryGridSize.MEDIUM
+          }))
+        }
+      }
+    };
+
+    await openSingleImageGallery(context as never, imageFile as never, undefined, {
+      lightboxCloseBehavior: 'close-modal'
+    });
+
+    expect(modalOptionsMock.mock.lastCall?.[0]).toEqual(
+      expect.objectContaining({
+        title: 'Image: clicked.png',
+        ui: expect.objectContaining({ copyImage: galleryUi.copyImage, close: galleryUi.close }),
+        lightboxCloseBehavior: 'close-modal'
       })
     );
   });

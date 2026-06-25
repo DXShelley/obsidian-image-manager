@@ -1,3 +1,12 @@
+import {
+  DEFAULT_UI_LANGUAGE,
+  getCommandScopeAliases,
+  getCommandScopeCopy,
+  getCommandScopeDisplayLabels,
+  type CommandScopeLabelKey,
+  type UiLanguage
+} from '@/i18n';
+
 export interface CommandLike {
   readonly id: string;
   readonly name: string;
@@ -15,12 +24,6 @@ const SCOPED_COMMAND_SORT_PREFIX = {
   OTHER: ''
 } as const;
 
-const SCOPED_COMMAND_DISPLAY_LABEL = {
-  FILE: '【单文件】',
-  FOLDER: '【单文件夹】',
-  VAULT: '【整库】'
-} as const;
-
 const enum CommandScopeOrder {
   FILE = 0,
   FOLDER = 1,
@@ -28,6 +31,12 @@ const enum CommandScopeOrder {
   RECOVERY = 3,
   OTHER = 4
 }
+
+const COMMAND_SCOPE_ORDER_BY_KEY: Readonly<Record<CommandScopeLabelKey, CommandScopeOrder>> = {
+  FILE: CommandScopeOrder.FILE,
+  FOLDER: CommandScopeOrder.FOLDER,
+  VAULT: CommandScopeOrder.VAULT
+};
 
 export function sortCommandsByScope<T extends CommandLike>(commands: readonly T[]): T[] {
   return commands
@@ -50,10 +59,10 @@ export function sortCommandsByScope<T extends CommandLike>(commands: readonly T[
     .map((entry) => entry.command);
 }
 
-export function applyScopedCommandSortKey<T extends CommandLike>(command: T): T {
+export function applyScopedCommandSortKey<T extends CommandLike>(command: T, language: UiLanguage = DEFAULT_UI_LANGUAGE): T {
   const meta = getCommandSortMeta(command);
   const prefix = getScopedCommandSortKey(meta.scope);
-  const displayName = formatScopedCommandNameForPalette(command.name, meta.scope);
+  const displayName = formatScopedCommandNameForPalette(command.name, meta.scope, language);
   const nextName = `${prefix}${displayName}`;
   if (command.name === nextName) {
     return command;
@@ -83,24 +92,25 @@ function getScopedCommandSortKey(scope: CommandScopeOrder): string {
   }
 }
 
-function formatScopedCommandNameForPalette(commandName: string, scope: CommandScopeOrder): string {
-  const label = getScopedCommandDisplayLabel(scope);
+function formatScopedCommandNameForPalette(commandName: string, scope: CommandScopeOrder, language: UiLanguage): string {
+  const label = getScopedCommandDisplayLabel(scope, language);
   const trimmedName = stripVisibleScopedCommandPrefix(stripExplicitCommandOrderPrefix(commandName)).trim();
   if (!label) {
     return trimmedName;
   }
 
-  return trimmedName.startsWith(label) ? trimmedName : `${label}${trimmedName}`;
+  return trimmedName.endsWith(label) ? trimmedName : `${trimmedName}${label}`;
 }
 
-function getScopedCommandDisplayLabel(scope: CommandScopeOrder): string {
+function getScopedCommandDisplayLabel(scope: CommandScopeOrder, language: UiLanguage): string {
+  const labels = getCommandScopeCopy(language).displayLabels;
   switch (scope) {
     case CommandScopeOrder.FILE:
-      return SCOPED_COMMAND_DISPLAY_LABEL.FILE;
+      return labels.FILE;
     case CommandScopeOrder.FOLDER:
-      return SCOPED_COMMAND_DISPLAY_LABEL.FOLDER;
+      return labels.FOLDER;
     case CommandScopeOrder.VAULT:
-      return SCOPED_COMMAND_DISPLAY_LABEL.VAULT;
+      return labels.VAULT;
     case CommandScopeOrder.OTHER:
     default:
       return '';
@@ -182,32 +192,16 @@ function parseExplicitCommandOrderPrefix(value: string): CommandSortMeta | null 
 
 function parseScopedCommandName(commandName: string): {
   scope: CommandScopeOrder;
-  prefix: string;
+  marker: string;
 } | null {
-  const scopePrefixes: readonly {
-    readonly prefixes: readonly string[];
-    readonly scope: CommandScopeOrder;
-  }[] = [
-    {
-      prefixes: ['【单文件】', '单文件：', '当前文件：', '当前笔记：', '图片：'],
-      scope: CommandScopeOrder.FILE
-    },
-    {
-      prefixes: ['【单文件夹】', '单文件夹：', '当前文件夹：'],
-      scope: CommandScopeOrder.FOLDER
-    },
-    {
-      prefixes: ['【整库】', '整库：', '整个仓库：'],
-      scope: CommandScopeOrder.VAULT
-    }
-  ];
+  const scopeAliases = getCommandScopeAliases();
 
-  for (const { prefixes, scope } of scopePrefixes) {
-    for (const prefix of prefixes) {
-      if (commandName.startsWith(prefix)) {
+  for (const scope of Object.keys(scopeAliases) as CommandScopeLabelKey[]) {
+    for (const marker of scopeAliases[scope]) {
+      if (commandName.startsWith(marker) || (isScopedDisplayLabel(marker) && commandName.endsWith(marker))) {
         return {
-          scope,
-          prefix
+          scope: COMMAND_SCOPE_ORDER_BY_KEY[scope],
+          marker
         };
       }
     }
@@ -223,14 +217,25 @@ function stripExplicitCommandOrderPrefix(value: string): string {
 function stripVisibleScopedCommandPrefix(commandName: string): string {
   const parsed = parseScopedCommandName(commandName);
   if (parsed) {
-    return commandName.slice(parsed.prefix.length);
+    if (commandName.startsWith(parsed.marker)) {
+      return commandName.slice(parsed.marker.length);
+    }
+
+    return commandName.slice(0, -parsed.marker.length);
   }
 
-  for (const label of Object.values(SCOPED_COMMAND_DISPLAY_LABEL)) {
+  for (const label of getCommandScopeDisplayLabels()) {
     if (commandName.startsWith(label)) {
       return commandName.slice(label.length);
+    }
+    if (commandName.endsWith(label)) {
+      return commandName.slice(0, -label.length);
     }
   }
 
   return commandName;
+}
+
+function isScopedDisplayLabel(value: string): boolean {
+  return getCommandScopeDisplayLabels().includes(value);
 }

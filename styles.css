@@ -109,6 +109,105 @@
   gap: 8px;
 }
 
+.image-manager-settings-rule-panel {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--background-modifier-border) 88%, transparent);
+  border-radius: 12px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--interactive-accent) 4%, transparent), transparent 38%),
+    var(--background-secondary);
+}
+
+.image-manager-settings-rule-block {
+  display: grid;
+  gap: 10px;
+  padding: 2px 0;
+}
+
+.image-manager-settings-rule-block + .image-manager-settings-rule-block {
+  padding-top: 14px;
+  border-top: 1px dashed var(--background-modifier-border);
+}
+
+.image-manager-settings-rule-setting.setting-item {
+  align-items: flex-start;
+  gap: 18px;
+  padding: 0;
+  border-top: 0;
+}
+
+.image-manager-settings-rule-setting .setting-item-info {
+  flex: 1 1 280px;
+  padding-right: 8px;
+}
+
+.image-manager-settings-rule-setting .setting-item-name {
+  font-weight: 600;
+}
+
+.image-manager-settings-rule-setting .setting-item-description {
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.image-manager-settings-rule-setting .setting-item-control {
+  flex: 0 1 360px;
+  width: min(100%, 360px);
+}
+
+.image-manager-settings-rule-setting textarea {
+  min-height: 72px;
+  border-radius: 10px;
+  background: var(--background-primary);
+}
+
+.image-manager-settings-rule-examples {
+  margin-top: 0;
+  padding-left: 2px;
+}
+
+.image-manager-settings-rule-examples .image-manager-settings-examples__title {
+  margin-bottom: 6px;
+  color: var(--text-faint);
+  font-size: calc(var(--font-ui-smaller) - 1px);
+}
+
+.image-manager-settings-threshold {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 12px;
+  background: var(--background-secondary);
+}
+
+.image-manager-settings-threshold .setting-item {
+  align-items: center;
+  padding: 0;
+  border-top: 0;
+}
+
+.image-manager-settings-threshold .setting-item-name {
+  font-weight: 600;
+}
+
+.image-manager-settings-threshold .setting-item-description {
+  color: var(--text-muted);
+}
+
+.image-manager-settings-threshold .setting-item-control {
+  min-width: 120px;
+}
+
+.image-manager-settings-threshold__input {
+  width: 120px;
+  text-align: right;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
 .image-manager-settings-chip,
 .image-manager-settings-preset__button {
   border: 1px solid var(--background-modifier-border);
@@ -258,6 +357,19 @@
   .image-manager-settings-card__top {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .image-manager-settings-rule-setting.setting-item {
+    gap: 10px;
+  }
+
+  .image-manager-settings-rule-setting .setting-item-control {
+    width: 100%;
+  }
+
+  .image-manager-settings-rule-setting textarea,
+  .image-manager-settings-threshold__input {
+    width: 100%;
   }
 }
 
@@ -416,6 +528,14 @@
   gap: 12px;
 }
 
+.image-manager-gallery-lightbox__header-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  align-items: center;
+}
+
 .image-manager-gallery-lightbox__title {
   display: grid;
   gap: 4px;
@@ -428,11 +548,16 @@
 }
 
 .image-manager-gallery-lightbox__controls {
+  display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
+  gap: 8px;
+  align-items: center;
 }
 
 .image-manager-gallery-lightbox__close,
-.image-manager-gallery-lightbox__nav {
+.image-manager-gallery-lightbox__nav,
+.image-manager-gallery-lightbox__zoom-button {
   border: 1px solid var(--background-modifier-border);
   border-radius: 8px;
   background: var(--background-secondary);
@@ -440,16 +565,23 @@
 }
 
 .image-manager-gallery-lightbox__body {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 16px;
-  align-items: center;
+  min-width: 0;
 }
 
-.image-manager-gallery-lightbox__image {
-  width: 100%;
+.image-manager-gallery-lightbox__footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.image-manager-gallery-lightbox__viewport {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
   max-height: min(72vh, 900px);
-  object-fit: contain;
+  padding: 12px;
   border-radius: 12px;
   background:
     linear-gradient(45deg, var(--background-secondary) 25%, transparent 25%),
@@ -458,6 +590,25 @@
     linear-gradient(-45deg, transparent 75%, var(--background-secondary) 75%);
   background-size: 20px 20px;
   background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+}
+
+.image-manager-gallery-lightbox__viewport.is-pannable {
+  cursor: grab;
+}
+
+.image-manager-gallery-lightbox__viewport.is-dragging {
+  cursor: grabbing;
+}
+
+.image-manager-gallery-lightbox__image {
+  width: auto;
+  max-width: 100%;
+  max-height: min(72vh, 900px);
+  object-fit: contain;
+  border-radius: 12px;
+  transform-origin: center center;
+  transition: transform 120ms ease;
+  user-select: none;
 }
 
 .image-manager-selection-modal {
@@ -519,8 +670,10 @@
   }
 
   .image-manager-gallery-lightbox__header,
-  .image-manager-gallery-lightbox__body {
-    grid-template-columns: 1fr;
+  .image-manager-gallery-lightbox__footer,
+  .image-manager-gallery-lightbox__header-meta,
+  .image-manager-gallery-lightbox__controls {
+    justify-content: flex-start;
   }
 }
 

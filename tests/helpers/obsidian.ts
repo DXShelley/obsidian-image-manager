@@ -80,6 +80,8 @@ export class Plugin {
 
   addCommand(): void {}
 
+  removeCommand(): void {}
+
   addSettingTab(): void {}
 
   registerEvent(): void {}

@@ -1,4 +1,5 @@
 import { TFile } from 'obsidian';
+import { getDefaultCommandName, getNoticeCopy, getUiCopy } from '@/i18n';
 import type { ImageManagerFeature, ImageManagerFeatureContext } from '@/types/index';
 import { executeLoggedCommand, logSkippedCommand } from '@/utils/command-logging';
 import { showOperationNotice } from '@/utils/operation-feedback';
@@ -12,7 +13,7 @@ export class ResizeFeature implements ImageManagerFeature {
   async register(context: ImageManagerFeatureContext): Promise<void> {
     const resizeCommand = {
       commandId: 'resize-active-image-to-1920px',
-      commandName: '缩放图片到 1920px 边界'
+      commandName: getDefaultCommandName('resize-active-image-to-1920px')
     } as const;
     context.plugin.addCommand({
       id: resizeCommand.commandId,
@@ -21,7 +22,7 @@ export class ResizeFeature implements ImageManagerFeature {
         void executeLoggedCommand(context, resizeCommand, async () => {
           await context.services.recovery.runTransaction(
             {
-              label: '缩放当前图片到 1920px',
+              label: getUiCopy(context.services.settings.getSettings().uiLanguage).transactions.resizeActiveImage,
               trigger: 'resize',
               scope: 'single-file'
             },
@@ -29,7 +30,8 @@ export class ResizeFeature implements ImageManagerFeature {
               await this.withActiveImageFile(context, resizeCommand, async (file) => {
                 const buffer = await context.services.imageProcessor.resize(file, 1920, 1920);
                 await context.services.fileManager.replaceFile(file, buffer);
-                showOperationNotice(context.services.settings.getSettings(), 'Image resized');
+                const settings = context.services.settings.getSettings();
+                showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).imageResized);
               });
             }
           );
@@ -52,7 +54,17 @@ export class ResizeFeature implements ImageManagerFeature {
         ...command,
         reason: 'No active image file'
       });
-      showOperationNotice(context.services.settings.getSettings(), 'Open an image file first');
+      const settings = context.services.settings.getSettings();
+      showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noActiveImageFile);
+      return;
+    }
+    const restriction = context.services.imageProcessor.getInPlaceModificationRestriction(file);
+    if (restriction) {
+      logSkippedCommand(context, {
+        ...command,
+        reason: restriction
+      });
+      showOperationNotice(context.services.settings.getSettings(), restriction);
       return;
     }
 

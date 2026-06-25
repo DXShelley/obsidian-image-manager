@@ -78,7 +78,7 @@ interface SiteConfig {
   };
 }
 
-const VERSION = 'v3.1.1';
+const VERSION = 'v4.0.0';
 
 const SITE_CONFIGS: Readonly<Record<SiteLocale, SiteConfig>> = {
   'zh-CN': {
@@ -113,25 +113,25 @@ const SITE_CONFIGS: Readonly<Record<SiteLocale, SiteConfig>> = {
         'Obsidian Image Manager 关注真实写作场景里的图片导入、命名、转换、批处理与恢复，而不是用一堆零散开关堆出复杂度。',
       primaryCta: { label: '查看功能状态', href: '#status' },
       secondaryCta: { label: '浏览核心能力', href: '#features' },
-      panelTag: 'Current Note',
+      panelTag: '当前笔记',
       panelTitle: '从粘贴到整理，目录、文件名和链接格式都能保持可控。',
       panelBody: '受管目录、批处理、恢复事务与阅读画廊共同构成一套完整而克制的图片流转方案。',
-      commandStrip: ['Paste Import', 'Auto Convert', 'Managed Folder Sync', 'Undo / Redo'],
-      railLabel: 'Feature Rail',
-      railState: 'Shipped / Planned',
+      commandStrip: ['粘贴导入', '自动转换', '受管目录同步', '撤销 / 重做'],
+      railLabel: '能力总览',
+      railState: '已实现 / 规划中',
       railItems: ['当前图片 / 当前笔记 / 当前文件夹画廊', '轻量编辑与拖拽裁剪', '批量压缩、转换、链接整理', '去水印保留为规划功能']
     },
     stats: [
       { value: VERSION, label: '当前发布版本' },
-      { value: 'Note / Folder / Vault', label: '批量处理范围' },
-      { value: 'Undo / Redo', label: '恢复事务支持' }
+      { value: '笔记 / 文件夹 / 整库', label: '批量处理范围' },
+      { value: '撤销 / 重做', label: '恢复事务支持' }
     ],
     sections: {
-      features: { eyebrow: 'Core Features', title: '围绕 Obsidian 真实图片流转场景设计，而不是追求过度设计。' },
-      workflow: { eyebrow: 'Workflow', title: '导入、整理、批处理、回退，形成一条能长期维护的图片处理路径。' },
-      status: { eyebrow: 'Feature Status', title: '已实现与规划中统一展示，主页口径直接对齐仓库状态。' },
-      install: { eyebrow: 'Install' },
-      philosophy: { eyebrow: 'Philosophy', title: '在 Obsidian 里做够用实用的图片工具，而不是继续制造熵。' }
+      features: { eyebrow: '核心能力', title: '围绕 Obsidian 真实图片流转场景设计，而不是追求过度设计。' },
+      workflow: { eyebrow: '处理流程', title: '导入、整理、批处理、回退，形成一条能长期维护的图片处理路径。' },
+      status: { eyebrow: '功能状态', title: '已实现与规划中统一展示，主页口径直接对齐仓库状态。' },
+      install: { eyebrow: '安装方式' },
+      philosophy: { eyebrow: '设计取舍', title: '在 Obsidian 里做够用实用的图片工具，而不是继续制造熵。' }
     },
     statusLabels: {
       implemented: '已上线',
@@ -141,22 +141,22 @@ const SITE_CONFIGS: Readonly<Record<SiteLocale, SiteConfig>> = {
       {
         title: '受管目录与命名规则',
         description: '支持 `./assets/${noteFileName}` 这类按笔记组织的目录模板，并用变量生成稳定文件名。',
-        meta: 'Paste / Rename / Relocate'
+        meta: '导入 / 重命名 / 迁移'
       },
       {
         title: '批量处理先有边界再谈效率',
         description: '外部图片导入、压缩、转换、链接更新和清理都能作用于当前笔记、当前文件夹或整个仓库。',
-        meta: 'Scoped Batch Jobs'
+        meta: '范围化批处理'
       },
       {
         title: '轻量编辑与单图导入双入口',
         description: '文件右键菜单负责本地图片编辑；阅读视图右键外部图片时，只导入当前这一张。',
-        meta: 'Context Menu Editing'
+        meta: '右键菜单编辑'
       },
       {
         title: '恢复事务是基础设施',
         description: '图片和 Markdown 的修改都会进入持久化恢复事务，支持撤销与重做最近的操作。',
-        meta: 'Recovery First'
+        meta: '恢复优先'
       }
     ],
     workflow: [
@@ -230,17 +230,17 @@ const SITE_CONFIGS: Readonly<Record<SiteLocale, SiteConfig>> = {
     ],
     detailCards: [
       {
-        eyebrow: 'Gallery',
+        eyebrow: '画廊',
         title: '图片浏览不再只靠文件树。',
         body: '当前笔记和当前文件夹画廊支持筛选、排序、网格/列表切换与灯箱预览。'
       },
       {
-        eyebrow: 'Batch',
+        eyebrow: '批处理',
         title: '面向整个仓库的动作，也要自带刹车。',
         body: '整库命令前置风险确认，批量任务支持暂停、恢复与取消，外部图片导入也会按范围单独执行。'
       },
       {
-        eyebrow: 'Reliability',
+        eyebrow: '稳定性',
         title: '路径兼容、重名处理和清理边界都做了约束。',
         body: '支持中文与已编码路径混用，时间命名带顺序后缀去重，空目录清理只作用于图片附件目录。'
       }
