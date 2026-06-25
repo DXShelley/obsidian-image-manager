@@ -1,6 +1,6 @@
 {
   "name": "obsidian-image-manager",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "A comprehensive image management plugin for Obsidian",
   "main": "main.js",
   "scripts": {
@@ -39,12 +39,11 @@
     "obsidian": "latest",
     "tslib": "2.4.0",
     "type-coverage": "^2.29.0",
-    "typescript-eslint": "^8.42.0",
     "typescript": "^5.9.2",
+    "typescript-eslint": "^8.42.0",
     "vitest": "^3.2.4"
   },
   "dependencies": {
-    "fabric": "^6.5.0",
     "piexifjs": "^1.0.6"
   },
   "typeCoverage": {

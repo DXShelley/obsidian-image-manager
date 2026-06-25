@@ -46,6 +46,7 @@ Status mapping:
 - `defaultQuality = 80`
 - `defaultLinkFormat = wiki`
 - `defaultPathFormat = shortest`
+- `uiLanguage = zh-CN`
 - `renamePattern = {noteName}-{date}-{random}`
 - `outputFolder = ./assets/${noteFileName}`
 - `enableAutoConvert = true`
@@ -109,15 +110,29 @@ Status mapping:
   1. Open `Settings -> Image Manager`.
   2. Inspect the grouped sections.
 - Expected:
-  - `Save and rename` is shown.
-  - `Convert and compress` is shown.
-  - `Editor and paste behavior` is shown.
-  - `Gallery` is shown.
+  - `界面语言` is shown at the top by default.
+  - `保存与命名` is shown.
+  - `转换与压缩` is shown.
+  - `粘贴与编辑` is shown.
+  - `图片画廊` is shown.
   - `功能状态` is shown.
-  - `图片文件保存位置` is shown.
+  - `图片保存位置` is shown.
   - `生成的图片文件名` is shown.
   - Two preview blocks are shown.
   - The console does not show `setErrorMessage is not a function`.
+
+#### TC-SET-007 Interface Language Toggle
+
+- Status: `Implemented`
+- Objective: Verify that the settings page and feature-status panel switch languages immediately.
+- Steps:
+  1. Change `界面语言` from `简体中文` to `English` at the top of the settings page.
+  2. Inspect section headers, field descriptions, and the `Feature Status` panel.
+  3. Switch back to `简体中文`.
+- Expected:
+  - The settings page refreshes into English immediately.
+  - Feature items such as `Recovery transactions` and `Watermark removal` appear in English.
+  - After switching back, `恢复事务` and `去水印` are shown again in Chinese.
 
 #### TC-SET-002 Dropdown Setting Persistence
 
@@ -874,7 +889,6 @@ Status mapping:
   - `Compress image` appears.
   - `Convert to default format` appears.
   - `Drag-to-crop` appears.
-  - `Remove watermark from selection` appears.
   - `Rotate 90 degrees` appears.
   - `Flip horizontal` appears.
   - `Flip vertical` appears.
@@ -1162,7 +1176,8 @@ Status mapping:
   1. Compare against `功能状态` in the settings page.
   2. Compare against `docs/task-status.md`.
 - Expected:
-  - The implemented and partial descriptions are broadly consistent.
+  - Implemented, planned, and partial descriptions are broadly consistent.
+  - Watermark removal appears only as a planned item in both the settings page and the docs.
 
 #### TC-DOC-002 Test Document Coverage
 

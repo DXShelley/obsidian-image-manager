@@ -195,7 +195,7 @@ describe('ContextMenuFeature', () => {
     });
   });
 
-  it('adds crop and watermark actions that run through selection and recovery', async () => {
+  it('adds crop action that runs through selection and recovery', async () => {
     const { TFile } = await import('obsidian');
     const feature = new ContextMenuFeature();
     let fileMenuHandler:
@@ -209,7 +209,6 @@ describe('ContextMenuFeature', () => {
     const { menu, addedItems } = createMenuSpy();
     const recoveryRunTransaction = vi.fn(async (_meta: unknown, run: () => Promise<void>) => run());
     const cropMock = vi.fn(async () => new ArrayBuffer(4));
-    const removeWatermarkMock = vi.fn(async () => new ArrayBuffer(4));
     const replaceFileMock = vi.fn(async () => file);
     vi.mocked(pickImageSelectionMock).mockResolvedValue({
       x: 8,
@@ -235,8 +234,7 @@ describe('ContextMenuFeature', () => {
           replaceFile: replaceFileMock
         },
         imageProcessor: {
-          crop: cropMock,
-          removeWatermark: removeWatermarkMock
+          crop: cropMock
         },
         recovery: {
           runTransaction: recoveryRunTransaction
@@ -261,9 +259,8 @@ describe('ContextMenuFeature', () => {
     fileMenuHandler?.(menu as never, file);
 
     const cropItem = addedItems.find((item) => item.title === '拖拽裁剪');
-    const watermarkItem = addedItems.find((item) => item.title === '框选去水印');
     expect(cropItem).toBeDefined();
-    expect(watermarkItem).toBeDefined();
+    expect(addedItems.find((item) => item.title?.includes('去水印'))).toBeUndefined();
 
     cropItem?.onClick?.();
     await vi.waitFor(() => {
@@ -283,22 +280,6 @@ describe('ContextMenuFeature', () => {
         height: 20
       });
       expect(replaceFileMock).toHaveBeenCalledWith(file, expect.any(ArrayBuffer));
-    });
-
-    vi.mocked(pickImageSelectionMock).mockResolvedValue({
-      x: 4,
-      y: 2,
-      width: 16,
-      height: 10
-    });
-    watermarkItem?.onClick?.();
-    await vi.waitFor(() => {
-      expect(removeWatermarkMock).toHaveBeenCalledWith(file, {
-        x: 4,
-        y: 2,
-        width: 16,
-        height: 10
-      });
     });
   });
 });

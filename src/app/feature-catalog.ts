@@ -35,6 +35,11 @@ export function createBuiltInFeatures(): ImageManagerFeature[] {
     new AlignFeature(),
     new ContextMenuFeature(),
     createScaffoldedFeature(
+      'watermark-removal',
+      '去水印',
+      '规划中的局部修复能力，仅在效果和交互达到可用标准后再恢复。'
+    ),
+    createScaffoldedFeature(
       'drag-resize',
       '拖拽调整尺寸',
       '后续会补上编辑器内直接拖拽调整图片显示尺寸的交互。'

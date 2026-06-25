@@ -2,7 +2,13 @@
 
 # Obsidian Image Manager
 
-`Obsidian Image Manager` is an image management plugin for Obsidian. `v3.0.0` focuses on interactive image operations, stronger feature-toggle consistency, and a dedicated release site.
+`Obsidian Image Manager` is an image-management plugin for Obsidian. `v3.1.0` focuses on practical image workflows, bilingual settings, and a clearer release-facing presentation.
+
+## Philosophy
+
+- Solve the image problems that appear frequently in real Obsidian use, and solve them well enough to stay out of the way.
+- Keep the experience pleasant, but do not drag the project into maintenance entropy through over-design.
+- Ship features only when their quality is acceptable; keep the rest explicitly marked as planned.
 
 ## Project Overview
 
@@ -28,7 +34,7 @@
 - Make current-note conversion and compression commands process every image referenced by the active Markdown note instead of only the active image file.
 - Provide active-image commands for rotate, flip, and resize-to-1920px so the current image can also be processed from the command palette.
 - Pause, resume, or cancel active batch jobs.
-- Use image context-menu actions for copy, compress, convert, rotate, horizontal or vertical flip, drag-to-crop, and selection-based watermark removal.
+- Use image context-menu actions for copy, compress, convert, rotate, horizontal or vertical flip, and drag-to-crop.
 - Open current-image, note-level, or folder-level galleries with filtering, sorting, grid/list toggles, and reading-view double-click entry points.
 - Sync managed image folders when notes are renamed or moved, with optional image file renaming.
 - During orphan cleanup, relocate images that still have a single external note referrer into that note's managed folder instead of deleting them.
@@ -37,6 +43,14 @@
 - Support encoded, readable-wrapped, and automatic Markdown path presentation strategies so Chinese, spaces, parentheses, and already-encoded paths can coexist.
 - Persist compression history for the current file version to avoid recompressing already-processed or non-beneficial outputs.
 - Persist recovery transactions for image and Markdown changes, and support undo / redo for recent Image Manager operations.
+- Switch the settings page and feature-status panel between Simplified Chinese and English, with Chinese as the default.
+
+## Planned Capabilities
+
+- Drag-to-resize image display inside the editor
+- Watermark removal / object repair, only after quality and interaction reach a practical bar
+- OCR, search, and categorization
+- Worker-based background processing
 
 ## Documentation
 
@@ -54,11 +68,12 @@
 
 - [Obsidian](https://obsidian.md/): provides the plugin runtime, editor surface, and vault model that this project builds on.
 - [Custom Attachment Location](https://github.com/mnaoumov/obsidian-custom-attachment-location): several attachment-folder template and cleanup behaviors in this plugin were designed with reference to parts of its UX semantics.
+- [obsidian-image-converter](https://github.com/xRyul/obsidian-image-converter): this project also learned from its product thinking around image-processing boundaries, command organization, and practical scope.
 - These references document inspiration and behavioral intent, not a promise of full compatibility.
 
 ## Release
 
-- Version: `3.0.0`
+- Version: `3.1.0`
 - Minimum Obsidian version: `0.15.0`
 - Release workflow: push a `v*` tag to trigger `.github/workflows/release.yml`
 - Release artifacts: `manifest.json`, `main.js`, `styles.css`
@@ -84,12 +99,13 @@ npm run build
 1. Copy `manifest.json`, `main.js`, and `styles.css` into `.obsidian/plugins/obsidian-image-manager/`.
 2. Enable **Image Manager** in **Settings -> Community plugins** and reload after each rebuild.
 3. Open **Settings -> Image Manager** and confirm the settings page renders without console errors, including save-path and file-name previews.
-4. Paste an image into a note and verify that the save path, generated name, link format, and cursor placement follow your settings.
-5. Rotate or flip an image referenced by a Markdown note and verify that both the file and the rendered preview refresh.
-6. Right-click an image file in the file explorer and verify the plugin context-menu actions.
-7. If Obsidian still shows old behavior after a rebuild, recopy `manifest.json`, `main.js`, and `styles.css` into the plugin directory and reload the plugin.
-8. Run the batch compression commands and confirm pause, resume, and cancel behave as expected.
-9. Open the note and folder galleries and verify filtering, sorting, and grid/list toggles.
-10. Run the current-file conversion command from a Markdown note and verify each referenced image is converted only once.
-11. Run any vault-wide command and verify that a risk confirmation appears first.
-12. Perform several image edits and verify that undo and redo can move back and forth across recent operations.
+4. Switch `界面语言 / Interface Language` at the top of the settings page and confirm that section titles, field descriptions, and feature status update immediately.
+5. Paste an image into a note and verify that the save path, generated name, link format, and cursor placement follow your settings.
+6. Rotate or flip an image referenced by a Markdown note and verify that both the file and the rendered preview refresh.
+7. Right-click an image file in the file explorer and verify the plugin context-menu actions.
+8. If Obsidian still shows old behavior after a rebuild, recopy `manifest.json`, `main.js`, and `styles.css` into the plugin directory and reload the plugin.
+9. Run the batch compression commands and confirm pause, resume, and cancel behave as expected.
+10. Open the note and folder galleries and verify filtering, sorting, and grid/list toggles.
+11. Run the current-file conversion command from a Markdown note and verify each referenced image is converted only once.
+12. Run any vault-wide command and verify that a risk confirmation appears first.
+13. Perform several image edits and verify that undo and redo can move back and forth across recent operations.

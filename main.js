@@ -57,6 +57,7 @@ var ImageFormat = /* @__PURE__ */ ((ImageFormat2) => {
   return ImageFormat2;
 })(ImageFormat || {});
 var DEFAULT_SETTINGS = {
+  uiLanguage: "zh-CN",
   defaultFormat: "webp" /* WEBP */,
   defaultQuality: 80,
   defaultLinkFormat: "wiki" /* WIKI */,
@@ -1812,89 +1813,6 @@ function normalizeImageSelection(selection, imageWidth, imageHeight) {
   }
   return { x, y, width, height };
 }
-function fillWatermarkSelection(data, imageWidth, imageHeight, selection) {
-  const region = normalizeImageSelection(selection, imageWidth, imageHeight);
-  if (!region) {
-    return;
-  }
-  for (let offsetY = 0; offsetY < region.height; offsetY += 1) {
-    const y = region.y + offsetY;
-    const rowRatio = region.height <= 1 ? 0.5 : offsetY / (region.height - 1);
-    for (let offsetX = 0; offsetX < region.width; offsetX += 1) {
-      const x = region.x + offsetX;
-      const colRatio = region.width <= 1 ? 0.5 : offsetX / (region.width - 1);
-      const horizontal = sampleHorizontalBlend(data, imageWidth, imageHeight, region, y, colRatio);
-      const vertical = sampleVerticalBlend(data, imageWidth, imageHeight, region, x, rowRatio);
-      const blended = blendColors(horizontal, vertical);
-      if (!blended) {
-        continue;
-      }
-      writePixel(data, imageWidth, x, y, blended);
-    }
-  }
-}
-function sampleHorizontalBlend(data, imageWidth, imageHeight, selection, y, ratio) {
-  const left = findNearestPixel(data, imageWidth, imageHeight, selection.x - 1, y, -1, 0);
-  const right = findNearestPixel(data, imageWidth, imageHeight, selection.x + selection.width, y, 1, 0);
-  return interpolateColors(left, right, ratio);
-}
-function sampleVerticalBlend(data, imageWidth, imageHeight, selection, x, ratio) {
-  const top = findNearestPixel(data, imageWidth, imageHeight, x, selection.y - 1, 0, -1);
-  const bottom = findNearestPixel(data, imageWidth, imageHeight, x, selection.y + selection.height, 0, 1);
-  return interpolateColors(top, bottom, ratio);
-}
-function interpolateColors(left, right, ratio) {
-  if (left && right) {
-    return {
-      r: Math.round(left.r + (right.r - left.r) * ratio),
-      g: Math.round(left.g + (right.g - left.g) * ratio),
-      b: Math.round(left.b + (right.b - left.b) * ratio),
-      a: Math.round(left.a + (right.a - left.a) * ratio)
-    };
-  }
-  return left != null ? left : right;
-}
-function blendColors(first, second) {
-  if (first && second) {
-    return {
-      r: Math.round((first.r + second.r) / 2),
-      g: Math.round((first.g + second.g) / 2),
-      b: Math.round((first.b + second.b) / 2),
-      a: Math.round((first.a + second.a) / 2)
-    };
-  }
-  return first != null ? first : second;
-}
-function findNearestPixel(data, imageWidth, imageHeight, startX, startY, stepX, stepY) {
-  let x = startX;
-  let y = startY;
-  while (x >= 0 && x < imageWidth && y >= 0 && y < imageHeight) {
-    return readPixel(data, imageWidth, x, y);
-  }
-  x += stepX;
-  y += stepY;
-  while (x >= 0 && x < imageWidth && y >= 0 && y < imageHeight) {
-    return readPixel(data, imageWidth, x, y);
-  }
-  return null;
-}
-function readPixel(data, imageWidth, x, y) {
-  var _a, _b, _c, _d;
-  const index = (y * imageWidth + x) * 4;
-  return {
-    r: (_a = data[index]) != null ? _a : 0,
-    g: (_b = data[index + 1]) != null ? _b : 0,
-    b: (_c = data[index + 2]) != null ? _c : 0,
-    a: (_d = data[index + 3]) != null ? _d : 255
-  };
-}
-function writePixel(data, imageWidth, x, y, color) {
-  const index = (y * imageWidth + x) * 4;
-  data[index] = color.r;
-  data[index + 1] = color.g;
-  data[index + 2] = color.b;
-  data[index + 3] = color.a;
-}
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), max);
 }
@@ -2159,12 +2077,6 @@ var ContextMenuFeature = class {
       });
     });
     menu.addItem((item) => {
-      item.setTitle("\u6846\u9009\u53BB\u6C34\u5370").setIcon("wand").onClick(() => {
-        context.services.logger.refreshMode("context-menu-watermark");
-        void this.removeWatermark(context, file);
-      });
-    });
-    menu.addItem((item) => {
       item.setTitle("\u987A\u65F6\u9488\u65CB\u8F6C 90\xB0").setIcon("rotate-cw").onClick(() => {
         context.services.logger.refreshMode("context-menu-rotate");
         void context.services.recovery.runTransaction(
@@ -2264,31 +2176,6 @@ var ContextMenuFeature = class {
       },
       async () => {
         await this.replaceImage(context, file, () => context.services.imageProcessor.crop(file, selection), "Image cropped");
-      }
-    );
-  }
-  async removeWatermark(context, file) {
-    const selection = await this.pickSelection(context, file, {
-      title: `\u6846\u9009\u53BB\u6C34\u5370\uFF1A${file.name}`,
-      description: "\u62D6\u62FD\u6846\u51FA\u6C34\u5370\u533A\u57DF\uFF0C\u786E\u8BA4\u540E\u4F1A\u4F7F\u7528\u5468\u8FB9\u50CF\u7D20\u5BF9\u9009\u533A\u8FDB\u884C\u4FEE\u8865\u3002",
-      confirmLabel: "\u53BB\u6C34\u5370"
-    });
-    if (!selection) {
-      return;
-    }
-    await context.services.recovery.runTransaction(
-      {
-        label: `\u53F3\u952E\u53BB\u6C34\u5370 ${file.name}`,
-        trigger: "context-menu",
-        scope: "single-file"
-      },
-      async () => {
-        await this.replaceImage(
-          context,
-          file,
-          () => context.services.imageProcessor.removeWatermark(file, selection),
-          "Watermark removed"
-        );
       }
     );
   }
@@ -3072,6 +2959,11 @@ function createBuiltInFeatures() {
     new ResizeFeature(),
     new AlignFeature(),
     new ContextMenuFeature(),
+    createScaffoldedFeature(
+      "watermark-removal",
+      "\u53BB\u6C34\u5370",
+      "\u89C4\u5212\u4E2D\u7684\u5C40\u90E8\u4FEE\u590D\u80FD\u529B\uFF0C\u4EC5\u5728\u6548\u679C\u548C\u4EA4\u4E92\u8FBE\u5230\u53EF\u7528\u6807\u51C6\u540E\u518D\u6062\u590D\u3002"
+    ),
     createScaffoldedFeature(
       "drag-resize",
       "\u62D6\u62FD\u8C03\u6574\u5C3A\u5BF8",
@@ -5089,27 +4981,6 @@ var ImageProcessor = class {
     );
     return this.canvasToArrayBuffer(canvas, this.extensionToFormat(file.extension), this.getSettings().defaultQuality);
   }
-  async removeWatermark(file, selection) {
-    this.assertOutputFormatSupported(this.extensionToFormat(file.extension));
-    const source = await this.app.vault.readBinary(file);
-    const image = await this.loadImage(source, file.extension);
-    const region = normalizeImageSelection(selection, image.width, image.height);
-    if (!region) {
-      throw new Error("Watermark selection is empty");
-    }
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    if (!ctx) {
-      throw new Error("Canvas context is unavailable");
-    }
-    canvas.width = image.width;
-    canvas.height = image.height;
-    ctx.drawImage(image, 0, 0, image.width, image.height);
-    const imageData = ctx.getImageData(0, 0, image.width, image.height);
-    fillWatermarkSelection(imageData.data, image.width, image.height, region);
-    ctx.putImageData(imageData, 0, 0);
-    return this.canvasToArrayBuffer(canvas, this.extensionToFormat(file.extension), this.getSettings().defaultQuality);
-  }
   async process(file, options) {
     var _a, _b;
     const source = await this.app.vault.readBinary(file);
@@ -5546,6 +5417,463 @@ var SettingsManager = class {
 // src/ui/settings/image-manager-setting-tab.ts
 var import_obsidian21 = require("obsidian");
 
+// src/ui/settings/setting-tab-copy.ts
+var ZH = {
+  languageLabel: "\u754C\u9762\u8BED\u8A00",
+  languageDescription: "\u5207\u6362\u8BBE\u7F6E\u9875\u4E0E\u529F\u80FD\u72B6\u6001\u7684\u663E\u793A\u8BED\u8A00\u3002\u9ED8\u8BA4\u4E2D\u6587\u3002",
+  languageOptions: {
+    "zh-CN": "\u7B80\u4F53\u4E2D\u6587",
+    en: "English"
+  },
+  header: {
+    title: "Image Manager \u8BBE\u7F6E",
+    subtitle: "\u5728 Obsidian \u91CC\u628A\u56FE\u7247\u5904\u7406\u505A\u5230\u591F\u7528\u3001\u987A\u624B\u3001\u53EF\u6062\u590D\uFF0C\u4E0D\u4E3A\u8FC7\u5EA6\u8BBE\u8BA1\u589E\u52A0\u7EF4\u62A4\u71B5\u3002",
+    reset: "\u6062\u590D\u9ED8\u8BA4\u8BBE\u7F6E",
+    resetNotice: "Image Manager \u8BBE\u7F6E\u5DF2\u6062\u590D\u4E3A\u9ED8\u8BA4\u503C"
+  },
+  sections: {
+    naming: {
+      title: "\u4FDD\u5B58\u4E0E\u547D\u540D",
+      description: "\u5148\u5B9A\u4FDD\u5B58\u4F4D\u7F6E\uFF0C\u518D\u5B9A\u6587\u4EF6\u540D\u89C4\u5219\uFF1B\u8FD9\u4E24\u9879\u51B3\u5B9A\u56FE\u7247\u6700\u7EC8\u5982\u4F55\u843D\u76D8\u3002"
+    },
+    convert: {
+      title: "\u8F6C\u6362\u4E0E\u538B\u7F29",
+      description: "\u63A7\u5236\u9ED8\u8BA4\u8F93\u51FA\u8D28\u91CF\u3001\u81EA\u52A8\u8F6C\u6362\u4E0E\u538B\u7F29\u7B56\u7565\u3002"
+    },
+    editor: {
+      title: "\u7C98\u8D34\u4E0E\u7F16\u8F91",
+      description: "\u63A7\u5236\u7C98\u8D34\u63A5\u7BA1\u3001\u53F3\u952E\u7F16\u8F91\u548C\u56FE\u7247\u4EA4\u4E92\u884C\u4E3A\u3002"
+    },
+    gallery: {
+      title: "\u56FE\u7247\u753B\u5ECA",
+      description: "\u63A7\u5236\u753B\u5ECA\u5165\u53E3\u3001\u9ED8\u8BA4\u5E03\u5C40\u548C\u6392\u5E8F\u89C4\u5219\u3002"
+    },
+    compatibility: {
+      title: "\u517C\u5BB9\u6027\u4E0E\u51B2\u7A81\u89C4\u907F",
+      description: "\u68C0\u67E5\u5E73\u53F0\u9650\u5236\u3001\u539F\u751F\u9644\u4EF6\u89C4\u5219\u548C\u5E38\u89C1\u63D2\u4EF6\u51B2\u7A81\u3002"
+    },
+    featureStatus: {
+      title: "\u529F\u80FD\u72B6\u6001",
+      description: "\u533A\u5206\u5F53\u524D\u5DF2\u53EF\u7528\u80FD\u529B\u4E0E\u540E\u7EED\u89C4\u5212\u80FD\u529B\u3002"
+    }
+  },
+  samples: {
+    noteName: "\u9879\u76EE\u5468\u62A5",
+    fileName: "\u9875\u9762\u622A\u56FE",
+    notePath: "Projects/\u9879\u76EE\u5468\u62A5.md",
+    vaultRoot: "(\u4ED3\u5E93\u6839\u76EE\u5F55)"
+  },
+  previews: {
+    outputFolder: "\u5B9E\u9645\u4FDD\u5B58\u4F4D\u7F6E\u9884\u89C8",
+    renamePattern: "\u547D\u540D\u6A21\u677F\u9884\u89C8"
+  },
+  exampleTitles: {
+    outputFolder: "\u5E38\u7528\u4FDD\u5B58\u4F4D\u7F6E",
+    renamePattern: "\u5E38\u7528\u547D\u540D\u89C4\u5219",
+    compressionIgnore: "\u538B\u7F29\u5FFD\u7565\u793A\u4F8B",
+    conversionIgnore: "\u8F6C\u6362\u5FFD\u7565\u793A\u4F8B",
+    presets: "\u63A8\u8350\u7EC4\u5408",
+    variables: "\u53EF\u7528\u53D8\u91CF"
+  },
+  settings: {
+    outputFolderName: "\u56FE\u7247\u4FDD\u5B58\u4F4D\u7F6E",
+    outputFolderDesc: "\u652F\u6301\u76F8\u5BF9\u8DEF\u5F84\u548C\u53D8\u91CF\u6A21\u677F\u3002\u7559\u7A7A\u65F6\u4FDD\u5B58\u5230\u5F53\u524D\u7B14\u8BB0\u76EE\u5F55\u3002",
+    defaultFormatName: "\u9ED8\u8BA4\u56FE\u7247\u683C\u5F0F",
+    defaultFormatDesc: "\u7528\u4E8E\u81EA\u52A8\u8F6C\u6362\u548C\u624B\u52A8\u8F6C\u6362\u7684\u76EE\u6807\u683C\u5F0F\u3002",
+    defaultLinkFormatName: "\u9ED8\u8BA4\u94FE\u63A5\u683C\u5F0F",
+    defaultLinkFormatDesc: "\u51B3\u5B9A\u65B0\u63D2\u5165\u56FE\u7247\u4F7F\u7528\u54EA\u79CD\u94FE\u63A5\u8BED\u6CD5\u3002",
+    defaultPathFormatName: "\u9ED8\u8BA4\u8DEF\u5F84\u683C\u5F0F",
+    defaultPathFormatDesc: "\u51B3\u5B9A\u63D2\u5165\u94FE\u63A5\u65F6\u4F18\u5148\u4F7F\u7528\u54EA\u79CD\u8DEF\u5F84\u3002",
+    markdownPathName: "Markdown \u8DEF\u5F84\u8F93\u51FA\u7B56\u7565",
+    markdownPathDesc: "\u4EC5\u5BF9 Markdown \u56FE\u7247\u94FE\u63A5\u751F\u6548\u3002",
+    renamePatternName: "\u751F\u6210\u7684\u56FE\u7247\u6587\u4EF6\u540D",
+    renamePatternDesc: "\u652F\u6301\u53D8\u91CF\u6A21\u677F\u3002\u7559\u7A7A\u65F6\u56DE\u9000\u4E3A\u539F\u6587\u4EF6\u540D\u3002",
+    enableAutoRenameName: "\u542F\u7528\u81EA\u52A8\u91CD\u547D\u540D",
+    enableAutoRenameDesc: "\u5173\u95ED\u540E\u4FDD\u7559\u539F\u6587\u4EF6\u540D\uFF0C\u4EC5\u5728\u8F6C\u6362\u65F6\u66F4\u65B0\u6269\u5C55\u540D\u3002",
+    renameImagesOnRelocateName: "\u7B14\u8BB0\u6539\u540D\u540E\u540C\u6B65\u91CD\u547D\u540D\u56FE\u7247",
+    renameImagesOnRelocateDesc: "\u4EC5\u5728\u53D7\u7BA1\u76EE\u5F55\u540C\u6B65\u5F00\u542F\u65F6\u751F\u6548\u3002",
+    deleteEmptyFoldersName: "\u5220\u9664\u7A7A\u56FE\u7247\u6587\u4EF6\u5939",
+    deleteEmptyFoldersDesc: "\u53EA\u6E05\u7406\u56FE\u7247\u9644\u4EF6\u76EE\u5F55\u4E2D\u56E0\u8FC1\u79FB\u6216\u5220\u9664\u800C\u7559\u4E0B\u7684\u7A7A\u76EE\u5F55\u3002",
+    deleteOrphanImagesName: "\u5220\u9664\u5B64\u7ACB\u56FE\u7247",
+    deleteOrphanImagesDesc: "\u6267\u884C\u201C\u66F4\u65B0\u56FE\u7247\u94FE\u63A5\u4E0E\u76EE\u5F55\u201D\u65F6\uFF0C\u987A\u5E26\u6E05\u7406\u5F53\u524D\u8303\u56F4\u5185\u672A\u88AB\u5F15\u7528\u7684\u56FE\u7247\u3002",
+    defaultQualityName: "\u9ED8\u8BA4\u5904\u7406\u8D28\u91CF",
+    defaultQualityDesc: "\u7528\u4E8E\u8F6C\u6362\u3001\u65CB\u8F6C\u3001\u7FFB\u8F6C\u548C\u7F29\u653E\u3002",
+    compressionQualityName: "\u538B\u7F29\u8D28\u91CF",
+    compressionQualityDesc: "\u8D8A\u4F4E\u8D8A\u7701\u7A7A\u95F4\uFF0C\u753B\u8D28\u635F\u5931\u4E5F\u8D8A\u660E\u663E\u3002",
+    enableAutoConvertName: "\u7C98\u8D34\u56FE\u7247\u65F6\u81EA\u52A8\u8F6C\u6362\u683C\u5F0F",
+    enableAutoConvertDesc: "\u542F\u7528\u540E\uFF0C\u7C98\u8D34\u56FE\u7247\u4F1A\u5148\u8F6C\u4E3A\u9ED8\u8BA4\u683C\u5F0F\u518D\u4FDD\u5B58\u3002",
+    showOperationNotificationsName: "\u663E\u793A\u64CD\u4F5C\u901A\u77E5",
+    showOperationNotificationsDesc: "\u5173\u95ED\u540E\uFF0C\u4EC5\u4FDD\u7559\u5931\u8D25\u63D0\u793A\u3002",
+    showSpaceSavedNotificationName: "\u538B\u7F29\u540E\u63D0\u793A\u8282\u7701\u7A7A\u95F4",
+    showSpaceSavedNotificationDesc: "\u663E\u793A\u538B\u7F29\u524D\u540E\u5927\u5C0F\u548C\u6BD4\u4F8B\u3002",
+    compressionIgnorePatternName: "\u538B\u7F29\u5FFD\u7565\u6B63\u5219",
+    compressionIgnorePatternDesc: "\u6BCF\u884C\u4E00\u4E2A\u6B63\u5219\uFF1B\u547D\u4E2D\u8DEF\u5F84\u65F6\u8DF3\u8FC7\u538B\u7F29\u3002\u652F\u6301 `#` \u6CE8\u91CA\u3002",
+    conversionIgnorePatternName: "\u8F6C\u6362\u5FFD\u7565\u6B63\u5219",
+    conversionIgnorePatternDesc: "\u6BCF\u884C\u4E00\u4E2A\u6B63\u5219\uFF1B\u547D\u4E2D\u8DEF\u5F84\u65F6\u8DF3\u8FC7\u8F6C\u6362\u3002\u652F\u6301 `#` \u6CE8\u91CA\u3002",
+    compressionThresholdKBName: "\u538B\u7F29\u9608\u503C\uFF08KB\uFF09",
+    compressionThresholdKBDesc: "\u4F4E\u4E8E\u8BE5\u4F53\u79EF\u7684\u56FE\u7247\u8DF3\u8FC7\u538B\u7F29\u3002",
+    enablePasteHandlerName: "\u63A5\u7BA1\u7F16\u8F91\u5668\u56FE\u7247\u7C98\u8D34",
+    enablePasteHandlerDesc: "\u542F\u7528\u540E\uFF0C\u63D2\u4EF6\u4F1A\u63A5\u7BA1\u56FE\u7247\u7C98\u8D34\u5E76\u4F7F\u7528\u672C\u63D2\u4EF6\u89C4\u5219\u4FDD\u5B58\u3002",
+    enableAutoDownloadImagesFromTextName: "\u81EA\u52A8\u4E0B\u8F7D\u6587\u672C\u56FE\u7247\u6E90",
+    enableAutoDownloadImagesFromTextDesc: "\u7C98\u8D34\u56FE\u7247 URL\u3001`file://` \u6216 `data:image` \u65F6\u81EA\u52A8\u4E0B\u8F7D\u5E76\u63D2\u5165\u3002",
+    dropPasteCursorLocationName: "\u63D2\u5165\u56FE\u7247\u540E\u5149\u6807\u4F4D\u7F6E",
+    dropPasteCursorLocationDesc: "\u63A7\u5236\u56FE\u7247\u94FE\u63A5\u63D2\u5165\u540E\uFF0C\u5149\u6807\u505C\u5728\u524D\u9762\u8FD8\u662F\u540E\u9762\u3002",
+    enableContextMenuName: "\u542F\u7528\u6587\u4EF6\u53F3\u952E\u83DC\u5355\u64CD\u4F5C",
+    enableContextMenuDesc: "\u663E\u793A\u590D\u5236\u3001\u753B\u5ECA\u3001\u538B\u7F29\u3001\u8F6C\u6362\u3001\u88C1\u526A\u3001\u65CB\u8F6C\u548C\u7FFB\u8F6C\u7B49\u56FE\u7247\u64CD\u4F5C\u3002",
+    enableImageAlignName: "\u542F\u7528\u56FE\u7247\u9ED8\u8BA4\u5BF9\u9F50",
+    enableImageAlignDesc: "\u4E3A\u6E32\u67D3\u540E\u7684\u56FE\u7247\u9644\u52A0\u9ED8\u8BA4\u5BF9\u9F50\u6837\u5F0F\uFF0C\u4E0D\u4FEE\u6539 Markdown \u6E90\u6587\u3002",
+    imageAlignmentDefaultName: "\u9ED8\u8BA4\u56FE\u7247\u5BF9\u9F50\u65B9\u5F0F",
+    imageAlignmentDefaultDesc: "\u4EC5\u5728\u542F\u7528\u56FE\u7247\u9ED8\u8BA4\u5BF9\u9F50\u65F6\u751F\u6548\u3002",
+    disableImageSelectionName: "\u7981\u7528 Obsidian \u56FE\u7247\u70B9\u51FB\u9009\u4E2D",
+    disableImageSelectionDesc: "\u542F\u7528\u540E\uFF0C\u9884\u89C8\u6A21\u5F0F\u4E0B\u4F18\u5148\u963B\u6B62\u539F\u751F\u70B9\u51FB\u9009\u4E2D\u3002",
+    enableGalleryName: "\u542F\u7528\u56FE\u7247\u753B\u5ECA",
+    enableGalleryDesc: "\u63A7\u5236\u753B\u5ECA\u547D\u4EE4\u3001\u53F3\u952E\u5165\u53E3\u548C\u9605\u8BFB\u89C6\u56FE\u53CC\u51FB\u5165\u53E3\u3002",
+    galleryGridSizeName: "\u753B\u5ECA\u7F51\u683C\u5C3A\u5BF8",
+    galleryGridSizeDesc: "\u51B3\u5B9A\u6BCF\u884C\u663E\u793A\u6570\u91CF\u548C\u7F29\u7565\u56FE\u5927\u5C0F\u3002",
+    gallerySortByName: "\u753B\u5ECA\u9ED8\u8BA4\u6392\u5E8F",
+    gallerySortByDesc: "\u6253\u5F00\u753B\u5ECA\u65F6\u9ED8\u8BA4\u91C7\u7528\u7684\u6392\u5E8F\u65B9\u5F0F\u3002",
+    enableNoteRenameSyncName: "\u7B14\u8BB0\u6539\u540D\u6216\u79FB\u52A8\u65F6\u540C\u6B65\u53D7\u7BA1\u56FE\u7247\u76EE\u5F55",
+    enableNoteRenameSyncDesc: "\u4EC5\u5BF9\u53EF\u5B89\u5168\u8BC6\u522B\u7684\u53D7\u7BA1\u76EE\u5F55\u751F\u6548\u3002"
+  },
+  buttons: {
+    applyPreset: "\u5E94\u7528\u6B64\u7EC4\u5408"
+  },
+  labels: {
+    outputFolderFallback: "(\u8DDF\u968F\u5F53\u524D\u7B14\u8BB0\u76EE\u5F55)",
+    invalidVariables: "\u672A\u8BC6\u522B\u7684\u53D8\u91CF\uFF1A",
+    invalidRegex: "\u65E0\u6548\u6B63\u5219\uFF1A",
+    compatibilityOk: "\u517C\u5BB9",
+    compatibilityWarning: "\u6CE8\u610F"
+  },
+  options: {
+    linkFormat: { wiki: "Wiki \u94FE\u63A5", markdown: "Markdown \u94FE\u63A5" },
+    pathFormat: { shortest: "\u6700\u77ED\u552F\u4E00\u8DEF\u5F84", relative: "\u76F8\u5BF9\u8DEF\u5F84", absolute: "\u7EDD\u5BF9\u8DEF\u5F84" },
+    markdownPathEncodingStrategy: { encoded: "\u5F3A\u5236\u7F16\u7801", readable: "\u4E2D\u6587\u53EF\u8BFB", auto: "\u81EA\u52A8" },
+    dropPasteCursorLocation: { front: "\u505C\u5728\u524D\u9762", back: "\u79FB\u5230\u540E\u9762" },
+    imageAlignment: { none: "\u4E0D\u5904\u7406", left: "\u5DE6\u5BF9\u9F50", center: "\u5C45\u4E2D", right: "\u53F3\u5BF9\u9F50" },
+    galleryGridSize: { small: "\u5C0F", medium: "\u4E2D", large: "\u5927" },
+    gallerySortBy: { date: "\u6700\u65B0\u4F18\u5148", name: "\u6309\u540D\u79F0", size: "\u5927\u56FE\u4F18\u5148" }
+  },
+  variableDescriptions: [
+    { token: "{noteName}", description: "\u5F53\u524D\u7B14\u8BB0\u540D\uFF08\u4E0D\u542B\u6269\u5C55\u540D\uFF09" },
+    { token: "{noteFileName}", description: "\u4E0E {noteName} \u7B49\u4EF7\uFF0C\u9002\u5408\u76EE\u5F55\u6A21\u677F" },
+    { token: "{fileName}", description: "\u539F\u59CB\u56FE\u7247\u6587\u4EF6\u540D\uFF08\u4E0D\u542B\u6269\u5C55\u540D\uFF09" },
+    { token: "{date}", description: "\u5F53\u524D\u65E5\u671F\uFF0C\u683C\u5F0F\u4E3A YYYY-MM-DD" },
+    { token: "{time}", description: "\u5F53\u524D\u65F6\u95F4\uFF0C\u683C\u5F0F\u4E3A HH-MM-SS" },
+    { token: "{random}", description: "\u968F\u673A\u540E\u7F00\uFF0C\u907F\u514D\u91CD\u540D" }
+  ],
+  renameExamples: [
+    { label: "\u7B14\u8BB0\u540D + \u65E5\u671F", value: "{noteName}-{date}", description: "\u9002\u5408\u6309\u7B14\u8BB0\u6C89\u6DC0\u56FE\u7247\u3002" },
+    { label: "\u7B14\u8BB0\u540D + \u65F6\u95F4", value: "{noteName}-{date}-{time}", description: "\u9002\u5408\u8FDE\u7EED\u7C98\u8D34\u622A\u56FE\u3002" },
+    { label: "\u6CBF\u7528\u539F\u56FE\u540D", value: "{fileName}", description: "\u4FDD\u7559\u539F\u59CB\u547D\u540D\u3002" },
+    { label: "\u7B14\u8BB0\u540D + \u968F\u673A\u4E32", value: "{noteName}-{random}", description: "\u907F\u514D\u540C\u65E5\u91CD\u540D\u3002" }
+  ],
+  outputFolderExamples: [
+    { label: "\u8DDF\u968F\u5F53\u524D\u7B14\u8BB0", value: "", description: "\u4FDD\u5B58\u5230\u5F53\u524D\u7B14\u8BB0\u540C\u76EE\u5F55\u3002" },
+    { label: "\u56FA\u5B9A\u9644\u4EF6\u76EE\u5F55", value: "Attachments/Images", description: "\u7EDF\u4E00\u7BA1\u7406\u5168\u5E93\u56FE\u7247\u3002" },
+    { label: "\u7B14\u8BB0\u540C\u7EA7 assets", value: "./assets", description: "\u5728\u7B14\u8BB0\u76EE\u5F55\u4E0B\u521B\u5EFA\u9644\u4EF6\u6587\u4EF6\u5939\u3002" },
+    { label: "\u6309\u7B14\u8BB0\u540D\u5206\u76EE\u5F55", value: "./assets/${noteFileName}", description: "\u6BCF\u7BC7\u7B14\u8BB0\u4E00\u4EFD\u72EC\u7ACB\u76EE\u5F55\u3002" }
+  ],
+  compressionIgnoreExamples: [
+    { label: "\u5FFD\u7565\u539F\u59CB\u76EE\u5F55", value: "^assets/raw/", description: "\u8DF3\u8FC7\u539F\u59CB\u7D20\u6750\u76EE\u5F55\u3002" },
+    { label: "\u5FFD\u7565 GIF", value: "\\.gif$", description: "\u4FDD\u7559\u52A8\u56FE\u539F\u6837\u3002" }
+  ],
+  conversionIgnoreExamples: [
+    { label: "\u5FFD\u7565\u622A\u56FE\u76EE\u5F55", value: "^Screenshots/", description: "\u8DF3\u8FC7\u6307\u5B9A\u76EE\u5F55\u3002" },
+    { label: "\u5FFD\u7565 PNG", value: "\\.png$", description: "\u4FDD\u7559 PNG \u539F\u683C\u5F0F\u3002" }
+  ],
+  rulePresets: [
+    { label: "\u65E5\u5E38\u622A\u56FE", description: "\u6309\u7B14\u8BB0\u5206\u76EE\u5F55\u4FDD\u5B58\u622A\u56FE\u3002", renamePattern: "{noteName}-{date}-{time}", outputFolder: "./assets/${noteFileName}" },
+    { label: "\u7EDF\u4E00\u56FE\u5E93", description: "\u8DE8\u7B14\u8BB0\u590D\u7528\u56FE\u7247\u65F6\u66F4\u7701\u5FC3\u3002", renamePattern: "{date}-{time}-{random}", outputFolder: "Attachments/Images" },
+    { label: "\u4FDD\u7559\u539F\u59CB\u547D\u540D", description: "\u9002\u5408\u6574\u7406\u5916\u90E8\u4E0B\u8F7D\u56FE\u7247\u3002", renamePattern: "{fileName}", outputFolder: "./assets" }
+  ],
+  featureLabels: {
+    rename: "\u81EA\u52A8\u547D\u540D\u4E0E\u8FC1\u79FB",
+    compress: "\u56FE\u7247\u538B\u7F29",
+    convert: "\u683C\u5F0F\u8F6C\u6362",
+    preview: "\u56FE\u7247\u9884\u89C8",
+    editor: "\u5FEB\u901F\u7F16\u8F91",
+    gallery: "\u56FE\u7247\u753B\u5ECA",
+    batch: "\u6279\u91CF\u5904\u7406",
+    recovery: "\u6062\u590D\u4E8B\u52A1",
+    resize: "\u5C3A\u5BF8\u8C03\u6574",
+    "drag-resize": "\u62D6\u62FD\u8C03\u6574\u5C3A\u5BF8",
+    "watermark-removal": "\u53BB\u6C34\u5370",
+    align: "\u56FE\u7247\u5BF9\u9F50",
+    "context-menu": "\u53F3\u952E\u83DC\u5355"
+  },
+  featureStates: { implemented: "\u5DF2\u542F\u7528", scaffolded: "\u89C4\u5212\u4E2D" },
+  featureSummaries: {
+    rename: "\u6309\u53D8\u91CF\u547D\u540D\u56FE\u7247\uFF0C\u5E76\u5728\u7B14\u8BB0\u6539\u540D\u6216\u79FB\u52A8\u65F6\u540C\u6B65\u53D7\u7BA1\u76EE\u5F55\u3002",
+    compress: "\u652F\u6301\u5355\u56FE\u548C\u6279\u91CF\u538B\u7F29\uFF0C\u5E76\u8BB0\u5F55\u538B\u7F29\u5386\u53F2\u907F\u514D\u91CD\u590D\u5904\u7406\u3002",
+    convert: "\u652F\u6301\u9ED8\u8BA4\u683C\u5F0F\u8F6C\u6362\uFF0C\u5E76\u5904\u7406\u91CD\u540D\u76EE\u6807\u6587\u4EF6\u3002",
+    preview: "\u4E3A\u9884\u89C8\u56FE\u63D0\u4F9B\u6807\u8BB0\u548C\u5237\u65B0\u94A9\u5B50\uFF0C\u65B9\u4FBF\u753B\u5ECA\u4E0E\u6837\u5F0F\u63A5\u5165\u3002",
+    editor: "\u63D0\u4F9B\u65CB\u8F6C\u3001\u7FFB\u8F6C\u7B49\u8F7B\u91CF\u7F16\u8F91\u80FD\u529B\uFF1B\u88C1\u526A\u5165\u53E3\u653E\u5728\u53F3\u952E\u83DC\u5355\u4E2D\u3002",
+    gallery: "\u63D0\u4F9B\u5F53\u524D\u56FE\u7247\u3001\u5F53\u524D\u7B14\u8BB0\u548C\u5F53\u524D\u6587\u4EF6\u5939\u7684\u753B\u5ECA\u89C6\u56FE\u3002",
+    batch: "\u652F\u6301\u6309\u7B14\u8BB0\u3001\u6587\u4EF6\u5939\u6216\u6574\u5E93\u6267\u884C\u6279\u91CF\u4EFB\u52A1\u3002",
+    recovery: "\u4E3A\u56FE\u7247\u548C Markdown \u4FEE\u6539\u8BB0\u5F55\u4E8B\u52A1\uFF0C\u652F\u6301\u64A4\u9500\u4E0E\u91CD\u505A\u3002",
+    resize: "\u652F\u6301\u5C06\u56FE\u7247\u7F29\u653E\u5230\u5B89\u5168\u7684\u8FB9\u754C\u5C3A\u5BF8\u3002",
+    "drag-resize": "\u540E\u7EED\u4F1A\u8865\u4E0A\u7F16\u8F91\u5668\u5185\u76F4\u63A5\u62D6\u62FD\u8C03\u6574\u56FE\u7247\u663E\u793A\u5C3A\u5BF8\u7684\u4EA4\u4E92\u3002",
+    "watermark-removal": "\u89C4\u5212\u4E2D\u7684\u5C40\u90E8\u4FEE\u590D\u80FD\u529B\uFF0C\u5F85\u6548\u679C\u548C\u4EA4\u4E92\u8FBE\u6807\u540E\u518D\u6062\u590D\u3002",
+    align: "\u4E3A\u6E32\u67D3\u540E\u7684\u56FE\u7247\u9644\u52A0\u9ED8\u8BA4\u5BF9\u9F50\u6837\u5F0F\u3002",
+    "context-menu": "\u4E3A\u56FE\u7247\u6587\u4EF6\u63D0\u4F9B\u590D\u5236\u3001\u753B\u5ECA\u3001\u538B\u7F29\u3001\u8F6C\u6362\u3001\u88C1\u526A\u548C\u8F7B\u91CF\u7F16\u8F91\u5165\u53E3\u3002"
+  },
+  compatibility: {
+    platformTitle: "\u5F53\u524D\u5E73\u53F0",
+    platformDescription: (platform, canWriteClipboard) => `\u5F53\u524D\u8FD0\u884C\u73AF\u5883\uFF1A${platform}\u3002\u53F3\u952E\u590D\u5236\u56FE\u7247\u5230\u526A\u8D34\u677F${canWriteClipboard ? "\u53EF\u7528" : "\u4E0D\u53EF\u7528"}\u3002`,
+    debugTitle: "\u8C03\u8BD5\u65E5\u5FD7\u6A21\u5F0F",
+    debugEnabled: "\u68C0\u6D4B\u5230 Obsidian \u8C03\u8BD5\u6A21\u5F0F\u5DF2\u5F00\u542F\u3002\u63D2\u4EF6\u4F1A\u8F93\u51FA\u66F4\u8BE6\u7EC6\u7684\u8BCA\u65AD\u65E5\u5FD7\u3002",
+    debugDisabled: "Obsidian \u8C03\u8BD5\u6A21\u5F0F\u5F53\u524D\u5173\u95ED\uFF0C\u63D2\u4EF6\u4E0D\u4F1A\u989D\u5916\u8F93\u51FA\u8BE6\u7EC6\u65E5\u5FD7\u3002",
+    formatsTitle: "\u53EF\u7F16\u7801\u8F93\u51FA\u683C\u5F0F",
+    formatsAvailable: (formats) => `\u5F53\u524D\u73AF\u5883\u53EF\u7A33\u5B9A\u8F93\u51FA\uFF1A${formats.join("\u3001")}\u3002GIF\u3001HEIC\u3001TIFF \u4E0D\u4FDD\u8BC1\u53EF\u76F4\u63A5\u91CD\u65B0\u7F16\u7801\u3002`,
+    formatsUnavailable: "\u5F53\u524D\u73AF\u5883\u672A\u68C0\u6D4B\u5230\u7A33\u5B9A\u7684\u53EF\u7F16\u7801\u683C\u5F0F\uFF0C\u5EFA\u8BAE\u5173\u95ED\u81EA\u52A8\u8F6C\u6362\u5E76\u4FDD\u7559\u539F\u56FE\u3002",
+    pasteConflictTitle: "\u7C98\u8D34\u63A5\u7BA1\u51B2\u7A81",
+    pasteConflictEnabled: "\u5DF2\u542F\u7528\u672C\u63D2\u4EF6\u7684\u7C98\u8D34\u63A5\u7BA1\uFF0C\u53EF\u80FD\u4E0E\u5176\u4ED6\u7C98\u8D34\u6216\u9644\u4EF6\u63D2\u4EF6\u91CD\u590D\u5904\u7406\u540C\u4E00\u5F20\u56FE\u7247\u3002",
+    pasteConflictDisabled: "\u5DF2\u5173\u95ED\u672C\u63D2\u4EF6\u7684\u7C98\u8D34\u63A5\u7BA1\uFF0C\u56FE\u7247\u7C98\u8D34\u5C06\u4EA4\u7ED9 Obsidian \u539F\u751F\u6D41\u7A0B\u6216\u5176\u4ED6\u63D2\u4EF6\u5904\u7406\u3002",
+    nativeAttachmentTitle: "Obsidian \u539F\u751F\u9644\u4EF6\u76EE\u5F55",
+    nativeAttachmentDescription: (folder) => `\u68C0\u6D4B\u5230 Obsidian \u539F\u751F\u9644\u4EF6\u76EE\u5F55\u4E3A\u201C${folder}\u201D\u3002\u542F\u7528\u672C\u63D2\u4EF6\u7C98\u8D34\u63A5\u7BA1\u65F6\uFF0C\u5C06\u4F18\u5148\u4F7F\u7528\u672C\u63D2\u4EF6\u7684\u8F93\u51FA\u89C4\u5219\u3002`,
+    pluginConflictTitle: (featureLabel) => `${featureLabel} \u4E0E\u63D2\u4EF6\u51B2\u7A81`,
+    pluginConflictDescription: (pluginName, pluginId, description) => `\u68C0\u6D4B\u5230\u5DF2\u542F\u7528\u63D2\u4EF6\u201C${pluginName}\u201D\uFF08${pluginId}\uFF09\u3002${description}`,
+    renameSyncTitle: "\u7B14\u8BB0\u6539\u540D\u540C\u6B65\u8303\u56F4",
+    renameSyncUnsafe: "\u5F53\u524D\u8F93\u51FA\u76EE\u5F55\u89C4\u5219\u4E0D\u5C5E\u4E8E\u53EF\u5B89\u5168\u8FC1\u79FB\u7684\u53D7\u7BA1\u6A21\u677F\uFF0C\u63D2\u4EF6\u4F1A\u8DF3\u8FC7\u81EA\u52A8\u540C\u6B65\u76EE\u5F55\u3002",
+    renameSyncSafe: "\u5F53\u524D\u8F93\u51FA\u76EE\u5F55\u89C4\u5219\u53EF\u5B89\u5168\u8BC6\u522B\u4E3A\u53D7\u7BA1\u76EE\u5F55\uFF0C\u7B14\u8BB0\u6539\u540D\u6216\u79FB\u52A8\u65F6\u4F1A\u540C\u6B65\u56FE\u7247\u76EE\u5F55\u3002",
+    renameSyncDisabled: "\u5DF2\u5173\u95ED\u7B14\u8BB0\u6539\u540D\u540C\u6B65\uFF0C\u53EF\u51CF\u5C11\u4E0E\u9644\u4EF6\u6574\u7406\u7C7B\u63D2\u4EF6\u4E92\u76F8\u5E72\u9884\u3002",
+    conflictFeatureLabels: {
+      "paste-handler": "\u7C98\u8D34\u63A5\u7BA1",
+      "note-rename-sync": "\u7B14\u8BB0\u6539\u540D\u540C\u6B65"
+    }
+  }
+};
+var EN = {
+  languageLabel: "Interface Language",
+  languageDescription: "Switch the settings page and feature-status panel language. Default: Chinese.",
+  languageOptions: {
+    "zh-CN": "\u7B80\u4F53\u4E2D\u6587",
+    en: "English"
+  },
+  header: {
+    title: "Image Manager Settings",
+    subtitle: "Keep image workflows practical, pleasant, and recoverable in Obsidian without adding design entropy.",
+    reset: "Reset To Defaults",
+    resetNotice: "Image Manager settings were reset to defaults"
+  },
+  sections: {
+    naming: {
+      title: "Storage And Naming",
+      description: "Choose where images go first, then decide how they are named."
+    },
+    convert: {
+      title: "Convert And Compress",
+      description: "Control default output quality, auto-convert behavior, and compression rules."
+    },
+    editor: {
+      title: "Paste And Editing",
+      description: "Control paste takeover, context-menu editing, and image interaction behavior."
+    },
+    gallery: {
+      title: "Gallery",
+      description: "Control gallery entry points, default layout, and sort order."
+    },
+    compatibility: {
+      title: "Compatibility",
+      description: "Review platform limits, native attachment rules, and likely plugin conflicts."
+    },
+    featureStatus: {
+      title: "Feature Status",
+      description: "See what is shipped now and what is still planned."
+    }
+  },
+  samples: {
+    noteName: "weekly-notes",
+    fileName: "page-capture",
+    notePath: "Projects/weekly-notes.md",
+    vaultRoot: "(vault root)"
+  },
+  previews: {
+    outputFolder: "Resolved save path",
+    renamePattern: "Filename preview"
+  },
+  exampleTitles: {
+    outputFolder: "Common save paths",
+    renamePattern: "Common naming rules",
+    compressionIgnore: "Compression ignore examples",
+    conversionIgnore: "Conversion ignore examples",
+    presets: "Recommended presets",
+    variables: "Available variables"
+  },
+  settings: {
+    outputFolderName: "Image save path",
+    outputFolderDesc: "Supports relative paths and variables. Leave empty to save beside the current note.",
+    defaultFormatName: "Default image format",
+    defaultFormatDesc: "Used by auto-convert and manual convert actions.",
+    defaultLinkFormatName: "Default link format",
+    defaultLinkFormatDesc: "Choose which syntax new image links use.",
+    defaultPathFormatName: "Default path format",
+    defaultPathFormatDesc: "Choose which path style is preferred when inserting links.",
+    markdownPathName: "Markdown path strategy",
+    markdownPathDesc: "Applies only to Markdown image links.",
+    renamePatternName: "Generated image filename",
+    renamePatternDesc: "Supports variables. Leave empty to fall back to the original file name.",
+    enableAutoRenameName: "Enable auto rename",
+    enableAutoRenameDesc: "When off, the original filename is kept unless format conversion changes the extension.",
+    renameImagesOnRelocateName: "Rename images when notes move or rename",
+    renameImagesOnRelocateDesc: "Applies only when managed-folder sync is enabled.",
+    deleteEmptyFoldersName: "Delete empty image folders",
+    deleteEmptyFoldersDesc: "Only removes empty folders left behind inside managed image directories.",
+    deleteOrphanImagesName: "Delete orphan images",
+    deleteOrphanImagesDesc: "Also removes unreferenced images in scope when running link and directory updates.",
+    defaultQualityName: "Default processing quality",
+    defaultQualityDesc: "Used by convert, rotate, flip, and resize operations.",
+    compressionQualityName: "Compression quality",
+    compressionQualityDesc: "Lower values save more space but degrade quality faster.",
+    enableAutoConvertName: "Auto-convert pasted images",
+    enableAutoConvertDesc: "Convert pasted images into the default format before saving them.",
+    showOperationNotificationsName: "Show operation notices",
+    showOperationNotificationsDesc: "When off, only failure notices remain.",
+    showSpaceSavedNotificationName: "Show saved space after compression",
+    showSpaceSavedNotificationDesc: "Show before/after size and ratio after compression.",
+    compressionIgnorePatternName: "Compression ignore regex",
+    compressionIgnorePatternDesc: "One regex per line. Skip compression when a path matches. `#` comments are allowed.",
+    conversionIgnorePatternName: "Conversion ignore regex",
+    conversionIgnorePatternDesc: "One regex per line. Skip conversion when a path matches. `#` comments are allowed.",
+    compressionThresholdKBName: "Compression threshold (KB)",
+    compressionThresholdKBDesc: "Skip compression for images below this size.",
+    enablePasteHandlerName: "Take over editor image paste",
+    enablePasteHandlerDesc: "When enabled, the plugin handles image paste and saves files with its own rules.",
+    enableAutoDownloadImagesFromTextName: "Auto-download text image sources",
+    enableAutoDownloadImagesFromTextDesc: "Automatically fetch pasted image URLs, `file://` paths, or `data:image` payloads.",
+    dropPasteCursorLocationName: "Cursor position after insert",
+    dropPasteCursorLocationDesc: "Choose whether the cursor stays before or moves after the inserted image link.",
+    enableContextMenuName: "Enable file context-menu actions",
+    enableContextMenuDesc: "Show copy, gallery, compress, convert, crop, rotate, and flip actions for image files.",
+    enableImageAlignName: "Enable default image alignment",
+    enableImageAlignDesc: "Apply default alignment styles to rendered images without changing Markdown source.",
+    imageAlignmentDefaultName: "Default image alignment",
+    imageAlignmentDefaultDesc: "Applies only when default image alignment is enabled.",
+    disableImageSelectionName: "Disable Obsidian image click selection",
+    disableImageSelectionDesc: "Prefer blocking native click-to-select in reading view.",
+    enableGalleryName: "Enable image gallery",
+    enableGalleryDesc: "Controls gallery commands, context-menu entry, and reading-view double-click entry.",
+    galleryGridSizeName: "Gallery grid size",
+    galleryGridSizeDesc: "Controls thumbnails per row and their size.",
+    gallerySortByName: "Default gallery sort",
+    gallerySortByDesc: "Choose the default sort order when the gallery opens.",
+    enableNoteRenameSyncName: "Sync managed image folders when notes move or rename",
+    enableNoteRenameSyncDesc: "Applies only to managed folders that can be recognized safely."
+  },
+  buttons: {
+    applyPreset: "Apply preset"
+  },
+  labels: {
+    outputFolderFallback: "(same folder as the current note)",
+    invalidVariables: "Unknown variables: ",
+    invalidRegex: "Invalid regex: ",
+    compatibilityOk: "OK",
+    compatibilityWarning: "Review"
+  },
+  options: {
+    linkFormat: { wiki: "Wiki link", markdown: "Markdown link" },
+    pathFormat: { shortest: "Shortest unique path", relative: "Relative path", absolute: "Absolute path" },
+    markdownPathEncodingStrategy: { encoded: "Always encode", readable: "Readable path", auto: "Automatic" },
+    dropPasteCursorLocation: { front: "Stay before", back: "Move after" },
+    imageAlignment: { none: "Do nothing", left: "Left", center: "Center", right: "Right" },
+    galleryGridSize: { small: "Small", medium: "Medium", large: "Large" },
+    gallerySortBy: { date: "Newest first", name: "By name", size: "Largest first" }
+  },
+  variableDescriptions: [
+    { token: "{noteName}", description: "Current note name without extension" },
+    { token: "{noteFileName}", description: "Alias of {noteName}; useful in folder templates" },
+    { token: "{fileName}", description: "Original image filename without extension" },
+    { token: "{date}", description: "Current date in YYYY-MM-DD" },
+    { token: "{time}", description: "Current time in HH-MM-SS" },
+    { token: "{random}", description: "Random suffix to avoid collisions" }
+  ],
+  renameExamples: [
+    { label: "Note + date", value: "{noteName}-{date}", description: "Good when each note owns its images." },
+    { label: "Note + time", value: "{noteName}-{date}-{time}", description: "Good for frequent screenshots." },
+    { label: "Keep original name", value: "{fileName}", description: "Preserve the incoming filename." },
+    { label: "Note + random", value: "{noteName}-{random}", description: "Avoid same-day collisions." }
+  ],
+  outputFolderExamples: [
+    { label: "Follow current note", value: "", description: "Save beside the current note." },
+    { label: "Fixed attachment folder", value: "Attachments/Images", description: "Centralize images for the whole vault." },
+    { label: "Sibling assets folder", value: "./assets", description: "Create one shared folder beside the note." },
+    { label: "Folder per note", value: "./assets/${noteFileName}", description: "Give each note its own image folder." }
+  ],
+  compressionIgnoreExamples: [
+    { label: "Ignore raw folder", value: "^assets/raw/", description: "Skip original source assets." },
+    { label: "Ignore GIF", value: "\\.gif$", description: "Keep animated GIFs unchanged." }
+  ],
+  conversionIgnoreExamples: [
+    { label: "Ignore screenshots folder", value: "^Screenshots/", description: "Skip a specific directory." },
+    { label: "Ignore PNG", value: "\\.png$", description: "Keep PNG files as PNG." }
+  ],
+  rulePresets: [
+    { label: "Daily screenshots", description: "Store screenshots per note with stable timestamps.", renamePattern: "{noteName}-{date}-{time}", outputFolder: "./assets/${noteFileName}" },
+    { label: "Shared library", description: "Better when images are reused across notes.", renamePattern: "{date}-{time}-{random}", outputFolder: "Attachments/Images" },
+    { label: "Keep source names", description: "Useful for downloaded or imported images.", renamePattern: "{fileName}", outputFolder: "./assets" }
+  ],
+  featureLabels: {
+    rename: "Auto naming and relocation",
+    compress: "Compression",
+    convert: "Format conversion",
+    preview: "Preview hooks",
+    editor: "Quick editing",
+    gallery: "Image gallery",
+    batch: "Batch processing",
+    recovery: "Recovery transactions",
+    resize: "Resize",
+    "drag-resize": "Drag resize",
+    "watermark-removal": "Watermark removal",
+    align: "Image alignment",
+    "context-menu": "Context menu"
+  },
+  featureStates: { implemented: "Shipped", scaffolded: "Planned" },
+  featureSummaries: {
+    rename: "Name images from variables and keep managed folders in sync when notes move or rename.",
+    compress: "Compress single images or batches and avoid rerunning the same file version.",
+    convert: "Convert images into the preferred format while handling filename collisions safely.",
+    preview: "Provide preview and refresh hooks for rendered images and gallery integrations.",
+    editor: "Provide lightweight rotate and flip actions, with crop exposed from the context menu.",
+    gallery: "Open current-image, note-level, and folder-level galleries with useful browsing tools.",
+    batch: "Run scoped tasks across a note, folder, or the whole vault.",
+    recovery: "Persist transactions for image and Markdown changes so undo and redo stay reliable.",
+    resize: "Resize images to a safe boundary preset for large assets.",
+    "drag-resize": "Direct drag-to-resize inside the editor is still planned.",
+    "watermark-removal": "Planned object-removal tooling will only return after quality and interaction reach a practical bar.",
+    align: "Apply configurable default alignment styles to rendered note images.",
+    "context-menu": "Expose copy, gallery, compress, convert, crop, and lightweight edit actions from the file menu."
+  },
+  compatibility: {
+    platformTitle: "Current platform",
+    platformDescription: (platform, canWriteClipboard) => `Current runtime: ${platform}. Copy image to clipboard from the file menu is ${canWriteClipboard ? "available" : "unavailable"}.`,
+    debugTitle: "Debug logging mode",
+    debugEnabled: "Obsidian debug mode is enabled. The plugin will emit more detailed diagnostic logs.",
+    debugDisabled: "Obsidian debug mode is off. The plugin will not emit extra verbose logs.",
+    formatsTitle: "Encodable output formats",
+    formatsAvailable: (formats) => `This environment can encode: ${formats.join(", ")}. GIF, HEIC, and TIFF are not guaranteed to round-trip safely.`,
+    formatsUnavailable: "No stable output format was detected in this environment. Consider disabling auto-convert and keeping originals.",
+    pasteConflictTitle: "Paste takeover conflicts",
+    pasteConflictEnabled: "Paste takeover is enabled and may overlap with other paste or attachment plugins.",
+    pasteConflictDisabled: "Paste takeover is disabled, so image paste is handled by Obsidian or another plugin.",
+    nativeAttachmentTitle: "Native attachment folder",
+    nativeAttachmentDescription: (folder) => `Obsidian currently uses \u201C${folder}\u201D as its native attachment folder. When paste takeover is enabled, Image Manager rules take priority.`,
+    pluginConflictTitle: (featureLabel) => `${featureLabel} conflict`,
+    pluginConflictDescription: (pluginName, pluginId, description) => `Detected enabled plugin "${pluginName}" (${pluginId}). ${description}`,
+    renameSyncTitle: "Rename-sync scope",
+    renameSyncUnsafe: "The current output-folder rule is not a safely relocatable managed template, so auto-sync is skipped.",
+    renameSyncSafe: "The current output-folder rule is a safely managed template, so note rename or move will sync image folders.",
+    renameSyncDisabled: "Note rename sync is disabled, which reduces interference with attachment-management plugins.",
+    conflictFeatureLabels: {
+      "paste-handler": "Paste takeover",
+      "note-rename-sync": "Note rename sync"
+    }
+  }
+};
+function getSettingTabCopy(language) {
+  return language === "en" ? EN : ZH;
+}
+
 // src/utils/plugin-conflicts.ts
 var CONFLICT_RULES = [
   {
@@ -5653,123 +5981,6 @@ function dedupePluginConflicts(conflicts) {
 }
 
 // src/ui/settings/image-manager-setting-tab.ts
-var SAMPLE_NOTE_NAME = "\u9879\u76EE\u5468\u62A5";
-var SAMPLE_FILE_NAME = "\u9875\u9762\u622A\u56FE";
-var SAMPLE_NOTE_PATH = "Projects/\u9879\u76EE\u5468\u62A5.md";
-var VARIABLE_DESCRIPTIONS = [
-  { token: "{noteName}", description: "\u5F53\u524D\u7B14\u8BB0\u540D\uFF08\u4E0D\u542B\u6269\u5C55\u540D\uFF09" },
-  { token: "{noteFileName}", description: "\u4E0E {noteName} \u7B49\u4EF7\uFF0C\u9002\u5408\u76EE\u5F55\u6A21\u677F" },
-  { token: "{fileName}", description: "\u539F\u59CB\u56FE\u7247\u6587\u4EF6\u540D\uFF08\u4E0D\u542B\u6269\u5C55\u540D\uFF09" },
-  { token: "{date}", description: "\u5F53\u524D\u65E5\u671F\uFF0C\u683C\u5F0F\u4E3A YYYY-MM-DD" },
-  { token: "{time}", description: "\u5F53\u524D\u65F6\u95F4\uFF0C\u683C\u5F0F\u4E3A HH-MM-SS" },
-  { token: "{random}", description: "\u968F\u673A\u540E\u7F00\uFF0C\u907F\u514D\u91CD\u540D" }
-];
-var RENAME_PATTERN_EXAMPLES = [
-  {
-    label: "\u7B14\u8BB0\u540D + \u65E5\u671F",
-    value: "{noteName}-{date}",
-    description: "\u9002\u5408\u6BCF\u7BC7\u7B14\u8BB0\u90FD\u7EF4\u62A4\u4E00\u7EC4\u56FE\u7247\u7684\u573A\u666F\u3002"
-  },
-  {
-    label: "\u7B14\u8BB0\u540D + \u65F6\u95F4",
-    value: "{noteName}-{date}-{time}",
-    description: "\u9002\u5408\u9891\u7E41\u7C98\u8D34\u622A\u56FE\uFF0C\u6587\u4EF6\u540D\u66F4\u7A33\u5B9A\u3002"
-  },
-  {
-    label: "\u6CBF\u7528\u539F\u56FE\u540D",
-    value: "{fileName}",
-    description: "\u4FDD\u7559\u622A\u56FE\u5DE5\u5177\u6216\u4E0B\u8F7D\u6587\u4EF6\u7684\u539F\u59CB\u547D\u540D\u3002"
-  },
-  {
-    label: "\u7B14\u8BB0\u540D + \u968F\u673A\u4E32",
-    value: "{noteName}-{random}",
-    description: "\u907F\u514D\u540C\u4E00\u5929\u91CD\u590D\u7C98\u8D34\u65F6\u91CD\u540D\u3002"
-  }
-];
-var OUTPUT_FOLDER_EXAMPLES = [
-  {
-    label: "\u8DDF\u968F\u5F53\u524D\u7B14\u8BB0",
-    value: "",
-    description: "\u7559\u7A7A\u65F6\uFF0C\u56FE\u7247\u4FDD\u5B58\u5230\u5F53\u524D\u7B14\u8BB0\u540C\u76EE\u5F55\u3002"
-  },
-  {
-    label: "\u56FA\u5B9A\u9644\u4EF6\u76EE\u5F55",
-    value: "Attachments/Images",
-    description: "\u9002\u5408\u7EDF\u4E00\u7BA1\u7406\u6574\u4E2A\u4ED3\u5E93\u7684\u56FE\u7247\u8D44\u6E90\u3002"
-  },
-  {
-    label: "\u7B14\u8BB0\u540C\u7EA7 assets",
-    value: "./assets",
-    description: "\u5728\u5F53\u524D\u7B14\u8BB0\u76EE\u5F55\u4E0B\u521B\u5EFA\u7EDF\u4E00\u9644\u4EF6\u6587\u4EF6\u5939\u3002"
-  },
-  {
-    label: "\u6309\u7B14\u8BB0\u540D\u5206\u76EE\u5F55",
-    value: "./assets/${noteFileName}",
-    description: "\u6BCF\u7BC7\u7B14\u8BB0\u62E5\u6709\u72EC\u7ACB\u56FE\u7247\u76EE\u5F55\uFF0C\u8FC1\u79FB\u65F6\u66F4\u6613\u540C\u6B65\u3002"
-  }
-];
-var COMPRESSION_IGNORE_EXAMPLES = [
-  {
-    label: "\u5FFD\u7565\u539F\u59CB\u76EE\u5F55",
-    value: "^assets/raw/",
-    description: "\u8DF3\u8FC7\u539F\u59CB\u7D20\u6750\u76EE\u5F55\u4E2D\u7684\u56FE\u7247\u3002"
-  },
-  {
-    label: "\u5FFD\u7565 GIF",
-    value: "\\.gif$",
-    description: "\u538B\u7F29\u65F6\u4FDD\u7559\u52A8\u56FE\u3002"
-  }
-];
-var CONVERSION_IGNORE_EXAMPLES = [
-  {
-    label: "\u5FFD\u7565\u622A\u56FE\u76EE\u5F55",
-    value: "^Screenshots/",
-    description: "\u8F6C\u6362\u65F6\u8DF3\u8FC7\u6307\u5B9A\u76EE\u5F55\u3002"
-  },
-  {
-    label: "\u5FFD\u7565 PNG",
-    value: "\\.png$",
-    description: "\u8F6C\u6362\u65F6\u4FDD\u7559 PNG \u539F\u683C\u5F0F\u3002"
-  }
-];
-var RULE_PRESETS = [
-  {
-    label: "\u65E5\u5E38\u622A\u56FE",
-    description: "\u9002\u5408\u5199\u4F5C\u65F6\u76F4\u63A5\u7C98\u8D34\u622A\u56FE\uFF0C\u6309\u7B14\u8BB0\u5206\u76EE\u5F55\u4FDD\u5B58\u3002",
-    renamePattern: "{noteName}-{date}-{time}",
-    outputFolder: "./assets/${noteFileName}"
-  },
-  {
-    label: "\u7EDF\u4E00\u56FE\u5E93",
-    description: "\u9002\u5408\u8DE8\u7B14\u8BB0\u590D\u7528\u56FE\u7247\uFF0C\u7EDF\u4E00\u4FDD\u5B58\u5230\u5168\u5C40\u76EE\u5F55\u3002",
-    renamePattern: "{date}-{time}-{random}",
-    outputFolder: "Attachments/Images"
-  },
-  {
-    label: "\u4FDD\u7559\u539F\u59CB\u547D\u540D",
-    description: "\u9002\u5408\u6574\u7406\u5916\u90E8\u4E0B\u8F7D\u56FE\u7247\uFF0C\u51CF\u5C11\u4E8C\u6B21\u547D\u540D\u3002",
-    renamePattern: "{fileName}",
-    outputFolder: "./assets"
-  }
-];
-var FEATURE_LABELS = {
-  rename: "\u81EA\u52A8\u547D\u540D\u4E0E\u8FC1\u79FB",
-  compress: "\u56FE\u7247\u538B\u7F29",
-  convert: "\u683C\u5F0F\u8F6C\u6362",
-  preview: "\u56FE\u7247\u9884\u89C8",
-  editor: "\u5FEB\u901F\u7F16\u8F91",
-  gallery: "\u56FE\u7247\u753B\u5ECA",
-  batch: "\u6279\u91CF\u5904\u7406",
-  recovery: "\u6062\u590D\u4E8B\u52A1",
-  resize: "\u5C3A\u5BF8\u8C03\u6574",
-  "drag-resize": "\u62D6\u62FD\u8C03\u6574\u5C3A\u5BF8",
-  align: "\u56FE\u7247\u5BF9\u9F50",
-  "context-menu": "\u53F3\u952E\u83DC\u5355"
-};
-var FEATURE_STATE_LABELS = {
-  implemented: "\u5DF2\u542F\u7528",
-  scaffolded: "\u89C4\u5212\u4E2D"
-};
 var ImageManagerSettingTab = class extends import_obsidian21.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
@@ -5779,6 +5990,7 @@ var ImageManagerSettingTab = class extends import_obsidian21.PluginSettingTab {
   display() {
     const { containerEl } = this;
     const settings = this.plugin.getSettings();
+    const copy = this.getCopy();
     let renameInput = null;
     let outputFolderInput = null;
     let renameSetting = null;
@@ -5790,10 +6002,10 @@ var ImageManagerSettingTab = class extends import_obsidian21.PluginSettingTab {
     this.renderHeader(containerEl);
     const namingSection = this.createSection(
       containerEl,
-      "\u4FDD\u5B58\u4E0E\u547D\u540D",
-      "\u5148\u786E\u5B9A\u56FE\u7247\u4FDD\u5B58\u5230\u54EA\u91CC\uFF0C\u518D\u5B9A\u4E49\u6587\u4EF6\u540D\u89C4\u5219\uFF1B\u4E0B\u9762\u7684\u683C\u5F0F\u548C\u8DEF\u5F84\u9009\u9879\u4F1A\u5F71\u54CD\u5B9E\u9645\u5199\u5165\u7ED3\u679C\u3002"
+      copy.sections.naming.title,
+      copy.sections.naming.description
     );
-    outputFolderSetting = new import_obsidian21.Setting(namingSection).setName("\u56FE\u7247\u6587\u4EF6\u4FDD\u5B58\u4F4D\u7F6E").setDesc("\u652F\u6301\u76F8\u5BF9\u8DEF\u5F84\u548C\u53D8\u91CF\u6A21\u677F\u3002\u53EA\u8981\u542F\u7528\u672C\u63D2\u4EF6\u7684\u56FE\u7247\u7C98\u8D34\u63A5\u7BA1\uFF0C\u56FE\u7247\u5C31\u4F1A\u4F18\u5148\u4FDD\u5B58\u5230\u8FD9\u91CC\u3002\u7559\u7A7A\u65F6\u4FDD\u5B58\u5230\u5F53\u524D\u7B14\u8BB0\u6240\u5728\u76EE\u5F55\u3002").addTextArea((text) => {
+    outputFolderSetting = new import_obsidian21.Setting(namingSection).setName(copy.settings.outputFolderName).setDesc(copy.settings.outputFolderDesc).addTextArea((text) => {
       outputFolderInput = text;
       text.inputEl.rows = 2;
       text.setPlaceholder("./assets/${noteFileName}");
@@ -5810,15 +6022,15 @@ var ImageManagerSettingTab = class extends import_obsidian21.PluginSettingTab {
     });
     this.createExampleRow(
       namingSection,
-      "\u5E38\u7528\u4FDD\u5B58\u4F4D\u7F6E\u793A\u4F8B",
-      OUTPUT_FOLDER_EXAMPLES,
+      copy.exampleTitles.outputFolder,
+      copy.outputFolderExamples,
       (value) => {
         void this.applyOutputFolderExample(outputFolderInput, outputFolderSetting, outputFolderPreviewValue, value);
       }
     );
-    outputFolderPreviewValue = this.createPreviewBlock(namingSection, "\u5B9E\u9645\u4FDD\u5B58\u4F4D\u7F6E\u9884\u89C8");
+    outputFolderPreviewValue = this.createPreviewBlock(namingSection, copy.previews.outputFolder);
     this.updateOutputFolderFeedback(outputFolderSetting, outputFolderPreviewValue, settings.outputFolder);
-    new import_obsidian21.Setting(namingSection).setName("\u9ED8\u8BA4\u56FE\u7247\u683C\u5F0F").setDesc("\u7528\u4E8E\u7C98\u8D34\u56FE\u7247\u81EA\u52A8\u8F6C\u6362\uFF0C\u4EE5\u53CA\u624B\u52A8\u6267\u884C\u683C\u5F0F\u8F6C\u6362\u65F6\u7684\u76EE\u6807\u683C\u5F0F\u3002").addDropdown(
+    new import_obsidian21.Setting(namingSection).setName(copy.settings.defaultFormatName).setDesc(copy.settings.defaultFormatDesc).addDropdown(
       (dropdown) => dropdown.addOption("webp" /* WEBP */, "WebP").addOption("jpeg" /* JPEG */, "JPEG").addOption("png" /* PNG */, "PNG").setValue(settings.defaultFormat).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.defaultFormat = value;
@@ -5828,28 +6040,28 @@ var ImageManagerSettingTab = class extends import_obsidian21.PluginSettingTab {
         }
       })
     );
-    new import_obsidian21.Setting(namingSection).setName("\u9ED8\u8BA4\u94FE\u63A5\u683C\u5F0F").setDesc("\u51B3\u5B9A\u65B0\u63D2\u5165\u56FE\u7247\u5728\u7B14\u8BB0\u4E2D\u7684\u94FE\u63A5\u8BED\u6CD5\u3002").addDropdown(
-      (dropdown) => dropdown.addOption("wiki" /* WIKI */, "Wiki \u94FE\u63A5").addOption("markdown" /* MARKDOWN */, "Markdown \u94FE\u63A5").setValue(settings.defaultLinkFormat).onChange(async (value) => {
+    new import_obsidian21.Setting(namingSection).setName(copy.settings.defaultLinkFormatName).setDesc(copy.settings.defaultLinkFormatDesc).addDropdown(
+      (dropdown) => dropdown.addOption("wiki" /* WIKI */, copy.options.linkFormat.wiki).addOption("markdown" /* MARKDOWN */, copy.options.linkFormat.markdown).setValue(settings.defaultLinkFormat).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.defaultLinkFormat = value;
         });
       })
     );
-    new import_obsidian21.Setting(namingSection).setName("\u9ED8\u8BA4\u8DEF\u5F84\u683C\u5F0F").setDesc("\u63A7\u5236\u63D2\u5165\u94FE\u63A5\u65F6\u4F18\u5148\u4F7F\u7528\u6700\u77ED\u552F\u4E00\u8DEF\u5F84\u3001\u76F8\u5BF9\u8DEF\u5F84\u6216\u7EDD\u5BF9\u8DEF\u5F84\u3002").addDropdown(
-      (dropdown) => dropdown.addOption("shortest" /* SHORTEST */, "\u6700\u77ED\u552F\u4E00\u8DEF\u5F84").addOption("relative" /* RELATIVE */, "\u76F8\u5BF9\u8DEF\u5F84").addOption("absolute" /* ABSOLUTE */, "\u7EDD\u5BF9\u8DEF\u5F84").setValue(settings.defaultPathFormat).onChange(async (value) => {
+    new import_obsidian21.Setting(namingSection).setName(copy.settings.defaultPathFormatName).setDesc(copy.settings.defaultPathFormatDesc).addDropdown(
+      (dropdown) => dropdown.addOption("shortest" /* SHORTEST */, copy.options.pathFormat.shortest).addOption("relative" /* RELATIVE */, copy.options.pathFormat.relative).addOption("absolute" /* ABSOLUTE */, copy.options.pathFormat.absolute).setValue(settings.defaultPathFormat).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.defaultPathFormat = value;
         });
       })
     );
-    new import_obsidian21.Setting(namingSection).setName("Markdown \u8DEF\u5F84\u8F93\u51FA\u7B56\u7565").setDesc("\u4EC5\u5BF9 Markdown \u56FE\u7247\u94FE\u63A5\u751F\u6548\u3002\u53EF\u9009\u62E9\u5F3A\u5236 URL \u7F16\u7801\u3001\u4E2D\u6587\u53EF\u8BFB\u8DEF\u5F84\uFF0C\u6216\u81EA\u52A8\u6309\u9700\u8981\u5305\u88F9\u8DEF\u5F84\u3002").addDropdown(
-      (dropdown) => dropdown.addOption("encoded" /* ENCODED */, "\u5F3A\u5236\u7F16\u7801").addOption("readable" /* READABLE */, "\u4E2D\u6587\u53EF\u8BFB").addOption("auto" /* AUTO */, "\u81EA\u52A8").setValue(settings.markdownPathEncodingStrategy).onChange(async (value) => {
+    new import_obsidian21.Setting(namingSection).setName(copy.settings.markdownPathName).setDesc(copy.settings.markdownPathDesc).addDropdown(
+      (dropdown) => dropdown.addOption("encoded" /* ENCODED */, copy.options.markdownPathEncodingStrategy.encoded).addOption("readable" /* READABLE */, copy.options.markdownPathEncodingStrategy.readable).addOption("auto" /* AUTO */, copy.options.markdownPathEncodingStrategy.auto).setValue(settings.markdownPathEncodingStrategy).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.markdownPathEncodingStrategy = value;
         });
       })
     );
-    renameSetting = new import_obsidian21.Setting(namingSection).setName("\u751F\u6210\u7684\u56FE\u7247\u6587\u4EF6\u540D").setDesc("\u652F\u6301\u53D8\u91CF\u6A21\u677F\u3002\u7559\u7A7A\u65F6\u56DE\u9000\u4E3A\u539F\u59CB\u6587\u4EF6\u540D\uFF1B\u5982\u679C\u7B14\u8BB0\u540D\u4E0E\u65E5\u671F\u91CD\u590D\uFF0C\u4F1A\u81EA\u52A8\u53BB\u91CD\u3002").addTextArea((text) => {
+    renameSetting = new import_obsidian21.Setting(namingSection).setName(copy.settings.renamePatternName).setDesc(copy.settings.renamePatternDesc).addTextArea((text) => {
       renameInput = text;
       text.inputEl.rows = 2;
       text.setPlaceholder(DEFAULT_SETTINGS.renamePattern);
@@ -5866,18 +6078,18 @@ var ImageManagerSettingTab = class extends import_obsidian21.PluginSettingTab {
     });
     this.createExampleRow(
       namingSection,
-      "\u5E38\u7528\u547D\u540D\u793A\u4F8B",
-      RENAME_PATTERN_EXAMPLES,
+      copy.exampleTitles.renamePattern,
+      copy.renameExamples,
       (value) => {
         void this.applyRenameExample(renameInput, renameSetting, renamePreviewValue, value);
       }
     );
-    renamePreviewValue = this.createPreviewBlock(namingSection, "\u547D\u540D\u6A21\u677F\u9884\u89C8");
+    renamePreviewValue = this.createPreviewBlock(namingSection, copy.previews.renamePattern);
     this.updateRenameFeedback(renameSetting, renamePreviewValue, settings.renamePattern);
     this.createPresetRow(
       namingSection,
-      "\u63A8\u8350\u89C4\u5219\u7EC4\u5408",
-      RULE_PRESETS,
+      copy.exampleTitles.presets,
+      copy.rulePresets,
       (preset) => {
         void this.applyRulePreset(
           renameInput,
@@ -5891,7 +6103,7 @@ var ImageManagerSettingTab = class extends import_obsidian21.PluginSettingTab {
       }
     );
     this.createVariableReference(namingSection);
-    new import_obsidian21.Setting(namingSection).setName("\u542F\u7528\u81EA\u52A8\u91CD\u547D\u540D").setDesc("\u5173\u95ED\u540E\uFF0C\u56FE\u7247\u9ED8\u8BA4\u4FDD\u7559\u539F\u59CB\u6587\u4EF6\u540D\uFF0C\u4EC5\u5728\u683C\u5F0F\u8F6C\u6362\u65F6\u66F4\u65B0\u6269\u5C55\u540D\u3002").addToggle(
+    new import_obsidian21.Setting(namingSection).setName(copy.settings.enableAutoRenameName).setDesc(copy.settings.enableAutoRenameDesc).addToggle(
       (toggle) => toggle.setValue(settings.enableAutoRename).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.enableAutoRename = value;
@@ -5901,21 +6113,21 @@ var ImageManagerSettingTab = class extends import_obsidian21.PluginSettingTab {
         }
       })
     );
-    new import_obsidian21.Setting(namingSection).setName("\u7B14\u8BB0\u91CD\u547D\u540D\u6216\u79FB\u52A8\u540E\uFF0C\u540C\u6B65\u91CD\u547D\u540D\u56FE\u7247").setDesc("\u4EC5\u5728\u201C\u540C\u6B65\u53D7\u7BA1\u56FE\u7247\u76EE\u5F55\u201D\u5F00\u542F\u540E\u751F\u6548\uFF0C\u7528\u5F53\u524D\u547D\u540D\u6A21\u677F\u91CD\u65B0\u751F\u6210\u56FE\u7247\u6587\u4EF6\u540D\u3002").addToggle(
+    new import_obsidian21.Setting(namingSection).setName(copy.settings.renameImagesOnRelocateName).setDesc(copy.settings.renameImagesOnRelocateDesc).addToggle(
       (toggle) => toggle.setValue(settings.renameImagesOnNoteRelocate).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.renameImagesOnNoteRelocate = value;
         });
       })
     );
-    new import_obsidian21.Setting(namingSection).setName("\u5220\u9664\u7A7A\u56FE\u7247\u6587\u4EF6\u5939").setDesc("\u4EC5\u6E05\u7406\u56FE\u7247\u9644\u4EF6\u76EE\u5F55\u4E0B\u56E0\u56FE\u7247\u8FC1\u79FB\u6216\u6E05\u7406\u4EA7\u751F\u7684\u7A7A\u76EE\u5F55\uFF0C\u4E0D\u4F1A\u5220\u9664\u7B14\u8BB0\u79FB\u52A8\u540E\u7559\u4E0B\u7684\u539F\u59CB\u7B14\u8BB0\u76EE\u5F55\u3002").addToggle(
+    new import_obsidian21.Setting(namingSection).setName(copy.settings.deleteEmptyFoldersName).setDesc(copy.settings.deleteEmptyFoldersDesc).addToggle(
       (toggle) => toggle.setValue(settings.deleteEmptyFolders).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.deleteEmptyFolders = value;
         });
       })
     );
-    new import_obsidian21.Setting(namingSection).setName("\u5220\u9664\u5B64\u7ACB\u56FE\u7247").setDesc("\u5F00\u542F\u540E\uFF0C\u201C\u66F4\u65B0\u56FE\u7247\u94FE\u63A5\u4E0E\u76EE\u5F55\u201D\u4F1A\u987A\u5E26\u5220\u9664\u5F53\u524D\u5904\u7406\u8303\u56F4\u5185\u672A\u88AB\u4EFB\u4F55\u7B14\u8BB0\u5F15\u7528\u7684\u56FE\u7247\uFF0C\u5E76\u6E05\u7406\u5B83\u4EEC\u6240\u5728\u7684\u7A7A\u56FE\u7247\u9644\u4EF6\u76EE\u5F55\u3002").addToggle(
+    new import_obsidian21.Setting(namingSection).setName(copy.settings.deleteOrphanImagesName).setDesc(copy.settings.deleteOrphanImagesDesc).addToggle(
       (toggle) => toggle.setValue(settings.deleteOrphanImages).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.deleteOrphanImages = value;
@@ -5924,45 +6136,45 @@ var ImageManagerSettingTab = class extends import_obsidian21.PluginSettingTab {
     );
     const convertSection = this.createSection(
       containerEl,
-      "\u8F6C\u6362\u4E0E\u538B\u7F29",
-      "\u63A7\u5236\u7C98\u8D34\u81EA\u52A8\u8F6C\u6362\u3001\u538B\u7F29\u8D28\u91CF\u548C\u5904\u7406\u540E\u7684\u63D0\u793A\u884C\u4E3A\u3002"
+      copy.sections.convert.title,
+      copy.sections.convert.description
     );
-    new import_obsidian21.Setting(convertSection).setName("\u9ED8\u8BA4\u5904\u7406\u8D28\u91CF").setDesc("\u7528\u4E8E\u683C\u5F0F\u8F6C\u6362\u3001\u65CB\u8F6C\u3001\u7FFB\u8F6C\u548C\u7F29\u653E\u7B49\u5904\u7406\u64CD\u4F5C\u3002").addSlider(
+    new import_obsidian21.Setting(convertSection).setName(copy.settings.defaultQualityName).setDesc(copy.settings.defaultQualityDesc).addSlider(
       (slider) => slider.setLimits(1, 100, 1).setDynamicTooltip().setValue(settings.defaultQuality).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.defaultQuality = value;
         });
       })
     );
-    new import_obsidian21.Setting(convertSection).setName("\u538B\u7F29\u8D28\u91CF").setDesc("\u6570\u503C\u8D8A\u4F4E\uFF0C\u538B\u7F29\u8D8A\u6FC0\u8FDB\uFF0C\u6587\u4EF6\u4F53\u79EF\u901A\u5E38\u66F4\u5C0F\u3002").addSlider(
+    new import_obsidian21.Setting(convertSection).setName(copy.settings.compressionQualityName).setDesc(copy.settings.compressionQualityDesc).addSlider(
       (slider) => slider.setLimits(1, 100, 1).setDynamicTooltip().setValue(settings.compressionQuality).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.compressionQuality = value;
         });
       })
     );
-    new import_obsidian21.Setting(convertSection).setName("\u7C98\u8D34\u56FE\u7247\u65F6\u81EA\u52A8\u8F6C\u6362\u683C\u5F0F").setDesc("\u542F\u7528\u540E\uFF0C\u7C98\u8D34\u5230\u7B14\u8BB0\u4E2D\u7684\u56FE\u7247\u4F1A\u5148\u8F6C\u6362\u4E3A\u9ED8\u8BA4\u56FE\u7247\u683C\u5F0F\uFF0C\u518D\u5199\u5165\u4ED3\u5E93\u3002").addToggle(
+    new import_obsidian21.Setting(convertSection).setName(copy.settings.enableAutoConvertName).setDesc(copy.settings.enableAutoConvertDesc).addToggle(
       (toggle) => toggle.setValue(settings.enableAutoConvert).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.enableAutoConvert = value;
         });
       })
     );
-    new import_obsidian21.Setting(convertSection).setName("\u663E\u793A\u64CD\u4F5C\u901A\u77E5").setDesc("\u5173\u95ED\u540E\uFF0C\u4EC5\u4FDD\u7559\u5931\u8D25\u7C7B\u63D0\u793A\uFF1B\u6210\u529F\u3001\u8DF3\u8FC7\u548C\u6C47\u603B\u63D0\u793A\u4E0D\u518D\u5F39\u51FA\u3002").addToggle(
+    new import_obsidian21.Setting(convertSection).setName(copy.settings.showOperationNotificationsName).setDesc(copy.settings.showOperationNotificationsDesc).addToggle(
       (toggle) => toggle.setValue(settings.showOperationNotifications).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.showOperationNotifications = value;
         });
       })
     );
-    new import_obsidian21.Setting(convertSection).setName("\u538B\u7F29\u5B8C\u6210\u540E\u63D0\u793A\u8282\u7701\u7A7A\u95F4").setDesc("\u5728\u6267\u884C\u538B\u7F29\u547D\u4EE4\u540E\u663E\u793A\u538B\u7F29\u524D\u540E\u5927\u5C0F\u5BF9\u6BD4\u548C\u538B\u7F29\u6BD4\u4F8B\u3002").addToggle(
+    new import_obsidian21.Setting(convertSection).setName(copy.settings.showSpaceSavedNotificationName).setDesc(copy.settings.showSpaceSavedNotificationDesc).addToggle(
       (toggle) => toggle.setValue(settings.showSpaceSavedNotification).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.showSpaceSavedNotification = value;
         });
       })
     );
-    const compressionIgnoreSetting = new import_obsidian21.Setting(convertSection).setName("\u538B\u7F29\u5FFD\u7565\u6B63\u5219").setDesc("\u6BCF\u884C\u4E00\u4E2A\u6B63\u5219\uFF1B\u547D\u4E2D\u56FE\u7247\u8DEF\u5F84\u65F6\u8DF3\u8FC7\u538B\u7F29\u3002\u652F\u6301\u6CE8\u91CA\u884C `# ...`\u3002").addTextArea((text) => {
+    const compressionIgnoreSetting = new import_obsidian21.Setting(convertSection).setName(copy.settings.compressionIgnorePatternName).setDesc(copy.settings.compressionIgnorePatternDesc).addTextArea((text) => {
       text.inputEl.rows = 3;
       text.setPlaceholder("^assets/raw/\n\\.gif$");
       text.setValue(settings.compressionIgnorePattern).onChange(async (value) => {
@@ -5975,12 +6187,12 @@ var ImageManagerSettingTab = class extends import_obsidian21.PluginSettingTab {
       text.inputEl.addClass("image-manager-settings-textarea");
     });
     this.updateRegexPatternFeedback(compressionIgnoreSetting, settings.compressionIgnorePattern);
-    this.createExampleRow(convertSection, "\u538B\u7F29\u5FFD\u7565\u793A\u4F8B", COMPRESSION_IGNORE_EXAMPLES, (value) => {
+    this.createExampleRow(convertSection, copy.exampleTitles.compressionIgnore, copy.compressionIgnoreExamples, (value) => {
       void this.applySettingValue((draft) => {
         draft.compressionIgnorePattern = value;
       });
     });
-    const conversionIgnoreSetting = new import_obsidian21.Setting(convertSection).setName("\u8F6C\u6362\u5FFD\u7565\u6B63\u5219").setDesc("\u6BCF\u884C\u4E00\u4E2A\u6B63\u5219\uFF1B\u547D\u4E2D\u56FE\u7247\u8DEF\u5F84\u65F6\u8DF3\u8FC7\u683C\u5F0F\u8F6C\u6362\u548C\u7C98\u8D34\u81EA\u52A8\u8F6C\u6362\u3002\u652F\u6301\u6CE8\u91CA\u884C `# ...`\u3002").addTextArea((text) => {
+    const conversionIgnoreSetting = new import_obsidian21.Setting(convertSection).setName(copy.settings.conversionIgnorePatternName).setDesc(copy.settings.conversionIgnorePatternDesc).addTextArea((text) => {
       text.inputEl.rows = 3;
       text.setPlaceholder("^Screenshots/\n\\.png$");
       text.setValue(settings.conversionIgnorePattern).onChange(async (value) => {
@@ -5993,12 +6205,12 @@ var ImageManagerSettingTab = class extends import_obsidian21.PluginSettingTab {
       text.inputEl.addClass("image-manager-settings-textarea");
     });
     this.updateRegexPatternFeedback(conversionIgnoreSetting, settings.conversionIgnorePattern);
-    this.createExampleRow(convertSection, "\u8F6C\u6362\u5FFD\u7565\u793A\u4F8B", CONVERSION_IGNORE_EXAMPLES, (value) => {
+    this.createExampleRow(convertSection, copy.exampleTitles.conversionIgnore, copy.conversionIgnoreExamples, (value) => {
       void this.applySettingValue((draft) => {
         draft.conversionIgnorePattern = value;
       });
     });
-    new import_obsidian21.Setting(convertSection).setName("\u538B\u7F29\u9608\u503C\uFF08KB\uFF09").setDesc("\u4F4E\u4E8E\u8BE5\u4F53\u79EF\u7684\u56FE\u7247\u4F1A\u8DF3\u8FC7\u538B\u7F29\uFF0C\u907F\u514D\u5904\u7406\u6781\u5C0F\u6587\u4EF6\u3002").addText(
+    new import_obsidian21.Setting(convertSection).setName(copy.settings.compressionThresholdKBName).setDesc(copy.settings.compressionThresholdKBDesc).addText(
       (text) => text.setPlaceholder("100").setValue(String(settings.compressionThresholdKB)).onChange(async (value) => {
         const parsed = Number.parseInt(value, 10);
         await this.updateSettings((draft) => {
@@ -6008,10 +6220,10 @@ var ImageManagerSettingTab = class extends import_obsidian21.PluginSettingTab {
     );
     const editorSection = this.createSection(
       containerEl,
-      "\u7F16\u8F91\u5668\u4E0E\u7C98\u8D34\u884C\u4E3A",
-      "\u63A7\u5236\u56FE\u7247\u94FE\u63A5\u63D2\u5165\u540E\u7684\u5149\u6807\u4F4D\u7F6E\uFF0C\u4EE5\u53CA\u6587\u4EF6\u53F3\u952E\u83DC\u5355\u4E2D\u7684\u56FE\u50CF\u64CD\u4F5C\u5165\u53E3\u3002"
+      copy.sections.editor.title,
+      copy.sections.editor.description
     );
-    new import_obsidian21.Setting(editorSection).setName("\u63A5\u7BA1\u7F16\u8F91\u5668\u56FE\u7247\u7C98\u8D34").setDesc("\u542F\u7528\u540E\uFF0C\u63D2\u4EF6\u4F1A\u62E6\u622A\u56FE\u7247\u7C98\u8D34\u6D41\u7A0B\uFF0C\u5E76\u4F18\u5148\u4F7F\u7528\u672C\u63D2\u4EF6\u7684\u4FDD\u5B58\u3001\u547D\u540D\u548C\u8F6C\u6362\u89C4\u5219\u3002").addToggle(
+    new import_obsidian21.Setting(editorSection).setName(copy.settings.enablePasteHandlerName).setDesc(copy.settings.enablePasteHandlerDesc).addToggle(
       (toggle) => toggle.setValue(settings.enablePasteHandler).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.enablePasteHandler = value;
@@ -6019,21 +6231,21 @@ var ImageManagerSettingTab = class extends import_obsidian21.PluginSettingTab {
         this.display();
       })
     );
-    new import_obsidian21.Setting(editorSection).setName("\u81EA\u52A8\u4E0B\u8F7D\u6587\u672C\u56FE\u7247\u6E90").setDesc("\u5F00\u542F\u540E\uFF0C\u7C98\u8D34\u7EAF\u6587\u672C\u7684\u56FE\u7247 URL\u3001`file://` \u56FE\u7247\u8DEF\u5F84\u6216 `data:image/...;base64,...` \u65F6\uFF0C\u4F1A\u81EA\u52A8\u4E0B\u8F7D\u5E76\u63D2\u5165\u56FE\u7247\u94FE\u63A5\u3002\u666E\u901A\u6587\u672C\u4E0D\u4F1A\u88AB\u63A5\u7BA1\u3002").addToggle(
+    new import_obsidian21.Setting(editorSection).setName(copy.settings.enableAutoDownloadImagesFromTextName).setDesc(copy.settings.enableAutoDownloadImagesFromTextDesc).addToggle(
       (toggle) => toggle.setValue(settings.enableAutoDownloadImagesFromText).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.enableAutoDownloadImagesFromText = value;
         });
       })
     );
-    new import_obsidian21.Setting(editorSection).setName("\u63D2\u5165\u56FE\u7247\u540E\u5149\u6807\u4F4D\u7F6E").setDesc("\u63A7\u5236\u56FE\u7247\u94FE\u63A5\u63D2\u5165\u540E\uFF0C\u5149\u6807\u505C\u7559\u5728\u94FE\u63A5\u524D\u65B9\u8FD8\u662F\u540E\u65B9\u3002").addDropdown(
-      (dropdown) => dropdown.addOption("front", "\u4FDD\u7559\u5728\u63D2\u5165\u5185\u5BB9\u524D").addOption("back", "\u79FB\u52A8\u5230\u63D2\u5165\u5185\u5BB9\u540E").setValue(settings.dropPasteCursorLocation).onChange(async (value) => {
+    new import_obsidian21.Setting(editorSection).setName(copy.settings.dropPasteCursorLocationName).setDesc(copy.settings.dropPasteCursorLocationDesc).addDropdown(
+      (dropdown) => dropdown.addOption("front", copy.options.dropPasteCursorLocation.front).addOption("back", copy.options.dropPasteCursorLocation.back).setValue(settings.dropPasteCursorLocation).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.dropPasteCursorLocation = value;
         });
       })
     );
-    new import_obsidian21.Setting(editorSection).setName("\u542F\u7528\u6587\u4EF6\u53F3\u952E\u83DC\u5355\u64CD\u4F5C").setDesc("\u5728\u6587\u4EF6\u7BA1\u7406\u5668\u4E2D\u53F3\u952E\u56FE\u7247\u65F6\uFF0C\u663E\u793A\u590D\u5236\u3001\u753B\u5ECA\u3001\u538B\u7F29\u3001\u8F6C\u6362\u3001\u88C1\u526A\u3001\u53BB\u6C34\u5370\u3001\u65CB\u8F6C\u548C\u7FFB\u8F6C\u7B49\u64CD\u4F5C\u3002").addToggle(
+    new import_obsidian21.Setting(editorSection).setName(copy.settings.enableContextMenuName).setDesc(copy.settings.enableContextMenuDesc).addToggle(
       (toggle) => toggle.setValue(settings.enableContextMenu).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.enableContextMenu = value;
@@ -6041,21 +6253,21 @@ var ImageManagerSettingTab = class extends import_obsidian21.PluginSettingTab {
         this.display();
       })
     );
-    new import_obsidian21.Setting(editorSection).setName("\u542F\u7528\u56FE\u7247\u9ED8\u8BA4\u5BF9\u9F50").setDesc("\u4E3A\u6E32\u67D3\u540E\u7684\u56FE\u7247\u7EDF\u4E00\u9644\u52A0\u9ED8\u8BA4\u5BF9\u9F50\u6837\u5F0F\uFF0C\u4E0D\u4FEE\u6539 Markdown \u6E90\u6587\u3002").addToggle(
+    new import_obsidian21.Setting(editorSection).setName(copy.settings.enableImageAlignName).setDesc(copy.settings.enableImageAlignDesc).addToggle(
       (toggle) => toggle.setValue(settings.enableImageAlign).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.enableImageAlign = value;
         });
       })
     );
-    new import_obsidian21.Setting(editorSection).setName("\u9ED8\u8BA4\u56FE\u7247\u5BF9\u9F50\u65B9\u5F0F").setDesc("\u4EC5\u5728\u542F\u7528\u56FE\u7247\u9ED8\u8BA4\u5BF9\u9F50\u65F6\u751F\u6548\u3002").addDropdown(
-      (dropdown) => dropdown.addOption("none", "\u4E0D\u5904\u7406").addOption("left", "\u5DE6\u5BF9\u9F50").addOption("center", "\u5C45\u4E2D").addOption("right", "\u53F3\u5BF9\u9F50").setValue(settings.imageAlignmentDefaultAlignment).onChange(async (value) => {
+    new import_obsidian21.Setting(editorSection).setName(copy.settings.imageAlignmentDefaultName).setDesc(copy.settings.imageAlignmentDefaultDesc).addDropdown(
+      (dropdown) => dropdown.addOption("none" /* NONE */, copy.options.imageAlignment.none).addOption("left" /* LEFT */, copy.options.imageAlignment.left).addOption("center" /* CENTER */, copy.options.imageAlignment.center).addOption("right" /* RIGHT */, copy.options.imageAlignment.right).setValue(settings.imageAlignmentDefaultAlignment).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.imageAlignmentDefaultAlignment = value;
         });
       })
     );
-    new import_obsidian21.Setting(editorSection).setName("\u7981\u7528 Obsidian \u56FE\u7247\u70B9\u51FB\u9009\u4E2D").setDesc("\u542F\u7528\u540E\uFF0C\u9884\u89C8\u6A21\u5F0F\u4E0B\u70B9\u51FB\u56FE\u7247\u65F6\u4F18\u5148\u963B\u6B62\u539F\u751F\u9009\u4E2D\u884C\u4E3A\u3002").addToggle(
+    new import_obsidian21.Setting(editorSection).setName(copy.settings.disableImageSelectionName).setDesc(copy.settings.disableImageSelectionDesc).addToggle(
       (toggle) => toggle.setValue(settings.disableObsidianImageSelectionOnClick).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.disableObsidianImageSelectionOnClick = value;
@@ -6064,25 +6276,25 @@ var ImageManagerSettingTab = class extends import_obsidian21.PluginSettingTab {
     );
     const gallerySection = this.createSection(
       containerEl,
-      "\u56FE\u7247\u753B\u5ECA",
-      "\u63A7\u5236\u5F53\u524D\u7B14\u8BB0\u6216\u5F53\u524D\u6587\u4EF6\u5939\u753B\u5ECA\u7684\u542F\u7528\u72B6\u6001\u3001\u9ED8\u8BA4\u5E03\u5C40\u548C\u6392\u5E8F\u89C4\u5219\u3002"
+      copy.sections.gallery.title,
+      copy.sections.gallery.description
     );
-    new import_obsidian21.Setting(gallerySection).setName("\u542F\u7528\u56FE\u7247\u753B\u5ECA").setDesc("\u63A7\u5236\u753B\u5ECA\u547D\u4EE4\u3001\u53F3\u952E\u201C\u5728\u753B\u5ECA\u4E2D\u6253\u5F00\u201D\u4EE5\u53CA\u9605\u8BFB\u89C6\u56FE\u53CC\u51FB\u56FE\u7247\u6253\u5F00\u753B\u5ECA\u662F\u5426\u53EF\u7528\u3002").addToggle(
+    new import_obsidian21.Setting(gallerySection).setName(copy.settings.enableGalleryName).setDesc(copy.settings.enableGalleryDesc).addToggle(
       (toggle) => toggle.setValue(settings.enableGallery).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.enableGallery = value;
         });
       })
     );
-    new import_obsidian21.Setting(gallerySection).setName("\u753B\u5ECA\u7F51\u683C\u5C3A\u5BF8").setDesc("\u51B3\u5B9A\u753B\u5ECA\u4E2D\u6BCF\u884C\u663E\u793A\u7684\u56FE\u7247\u6570\u91CF\u548C\u7F29\u7565\u56FE\u5C3A\u5BF8\u3002").addDropdown(
-      (dropdown) => dropdown.addOption("small" /* SMALL */, "\u5C0F").addOption("medium" /* MEDIUM */, "\u4E2D").addOption("large" /* LARGE */, "\u5927").setValue(settings.galleryGridSize).onChange(async (value) => {
+    new import_obsidian21.Setting(gallerySection).setName(copy.settings.galleryGridSizeName).setDesc(copy.settings.galleryGridSizeDesc).addDropdown(
+      (dropdown) => dropdown.addOption("small" /* SMALL */, copy.options.galleryGridSize.small).addOption("medium" /* MEDIUM */, copy.options.galleryGridSize.medium).addOption("large" /* LARGE */, copy.options.galleryGridSize.large).setValue(settings.galleryGridSize).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.galleryGridSize = value;
         });
       })
     );
-    new import_obsidian21.Setting(gallerySection).setName("\u753B\u5ECA\u9ED8\u8BA4\u6392\u5E8F").setDesc("\u6253\u5F00\u753B\u5ECA\u65F6\u9ED8\u8BA4\u4F7F\u7528\u7684\u6392\u5E8F\u89C4\u5219\u3002").addDropdown(
-      (dropdown) => dropdown.addOption("date" /* DATE */, "\u6700\u65B0\u4F18\u5148").addOption("name" /* NAME */, "\u6309\u540D\u79F0").addOption("size" /* SIZE */, "\u5927\u56FE\u4F18\u5148").setValue(settings.gallerySortBy).onChange(async (value) => {
+    new import_obsidian21.Setting(gallerySection).setName(copy.settings.gallerySortByName).setDesc(copy.settings.gallerySortByDesc).addDropdown(
+      (dropdown) => dropdown.addOption("date" /* DATE */, copy.options.gallerySortBy.date).addOption("name" /* NAME */, copy.options.gallerySortBy.name).addOption("size" /* SIZE */, copy.options.gallerySortBy.size).setValue(settings.gallerySortBy).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.gallerySortBy = value;
         });
@@ -6092,19 +6304,28 @@ var ImageManagerSettingTab = class extends import_obsidian21.PluginSettingTab {
     this.renderFeatureStatus(containerEl);
   }
   renderHeader(containerEl) {
+    const copy = this.getCopy();
     const hero = containerEl.createDiv({ cls: "image-manager-settings-hero" });
     const content = hero.createDiv({ cls: "image-manager-settings-hero__content" });
-    content.createEl("h2", { text: "Image Manager \u8BBE\u7F6E" });
+    content.createEl("h2", { text: copy.header.title });
     content.createEl("p", {
-      text: "\u7EDF\u4E00\u7BA1\u7406\u56FE\u7247\u7684\u4FDD\u5B58\u3001\u547D\u540D\u3001\u8F6C\u6362\u3001\u94FE\u63A5\u548C\u6D4F\u89C8\u884C\u4E3A\u3002\u672A\u63A5\u5165\u7684\u80FD\u529B\u4F1A\u5728\u201C\u529F\u80FD\u72B6\u6001\u201D\u4E2D\u7EDF\u4E00\u6807\u8BB0\u4E3A\u89C4\u5212\u4E2D\u3002"
+      text: copy.header.subtitle
     });
     const actionWrap = hero.createDiv({ cls: "image-manager-settings-hero__actions" });
+    new import_obsidian21.Setting(actionWrap).setName(copy.languageLabel).setDesc(copy.languageDescription).addDropdown(
+      (dropdown) => dropdown.addOption("zh-CN", copy.languageOptions["zh-CN"]).addOption("en", copy.languageOptions.en).setValue(this.plugin.getSettings().uiLanguage).onChange(async (value) => {
+        await this.updateSettings((draft) => {
+          draft.uiLanguage = value;
+        });
+        this.display();
+      })
+    );
     new import_obsidian21.Setting(actionWrap).addButton(
-      (button) => button.setButtonText("\u6062\u590D\u9ED8\u8BA4\u8BBE\u7F6E").setWarning().onClick(async () => {
+      (button) => button.setButtonText(copy.header.reset).setWarning().onClick(async () => {
         await this.updateSettings((draft) => {
           Object.assign(draft, DEFAULT_SETTINGS);
         });
-        new import_obsidian21.Notice("Image Manager \u8BBE\u7F6E\u5DF2\u6062\u590D\u4E3A\u9ED8\u8BA4\u503C");
+        new import_obsidian21.Notice(copy.header.resetNotice);
         this.display();
       })
     );
@@ -6128,7 +6349,7 @@ var ImageManagerSettingTab = class extends import_obsidian21.PluginSettingTab {
     for (const example of examples) {
       const button = list.createEl("button", { cls: "image-manager-settings-chip", text: example.label });
       button.type = "button";
-      button.title = `${example.value || "(\u7559\u7A7A)"}
+      button.title = `${example.value || this.getCopy().labels.outputFolderFallback}
 ${example.description}`;
       button.addEventListener("click", () => {
         onApply(example.value);
@@ -6136,6 +6357,7 @@ ${example.description}`;
     }
   }
   createPresetRow(containerEl, title, presets, onApply) {
+    const copy = this.getCopy();
     const wrap = containerEl.createDiv({ cls: "image-manager-settings-presets" });
     wrap.createEl("div", { cls: "image-manager-settings-examples__title", text: title });
     const list = wrap.createDiv({ cls: "image-manager-settings-presets__list" });
@@ -6143,11 +6365,13 @@ ${example.description}`;
       const card = list.createDiv({ cls: "image-manager-settings-preset" });
       card.createEl("strong", { text: preset.label });
       card.createEl("p", { text: preset.description });
-      card.createEl("code", { text: `\u547D\u540D\uFF1A${preset.renamePattern}` });
-      card.createEl("code", { text: `\u76EE\u5F55\uFF1A${preset.outputFolder || "(\u8DDF\u968F\u5F53\u524D\u7B14\u8BB0\u76EE\u5F55)"}` });
+      card.createEl("code", { text: `${copy.settings.renamePatternName}: ${preset.renamePattern}` });
+      card.createEl("code", {
+        text: `${copy.settings.outputFolderName}: ${preset.outputFolder || copy.labels.outputFolderFallback}`
+      });
       const applyButton = card.createEl("button", {
         cls: "image-manager-settings-preset__button",
-        text: "\u5E94\u7528\u6B64\u7EC4\u5408"
+        text: copy.buttons.applyPreset
       });
       applyButton.type = "button";
       applyButton.addEventListener("click", () => {
@@ -6156,46 +6380,56 @@ ${example.description}`;
     }
   }
   createVariableReference(containerEl) {
+    const copy = this.getCopy();
     const block = containerEl.createDiv({ cls: "image-manager-settings-variables" });
-    block.createEl("div", { cls: "image-manager-settings-examples__title", text: "\u53EF\u7528\u53D8\u91CF" });
+    block.createEl("div", { cls: "image-manager-settings-examples__title", text: copy.exampleTitles.variables });
     const list = block.createDiv({ cls: "image-manager-settings-variables__list" });
-    for (const variable of VARIABLE_DESCRIPTIONS) {
+    for (const variable of copy.variableDescriptions) {
       const item = list.createDiv({ cls: "image-manager-settings-variables__item" });
       item.createEl("code", { text: variable.token });
       item.createSpan({ text: variable.description });
     }
   }
   updateRenameFeedback(setting, previewEl, value) {
+    const copy = this.getCopy();
     const unresolved = this.variableResolver.validatePattern(value);
-    this.setSettingErrorMessage(setting, unresolved.length > 0 ? `\u672A\u8BC6\u522B\u7684\u53D8\u91CF\uFF1A${unresolved.join("\u3001")}` : null);
+    this.setSettingErrorMessage(
+      setting,
+      unresolved.length > 0 ? `${copy.labels.invalidVariables}${unresolved.join("\u3001")}` : null
+    );
     if (!this.plugin.getSettings().enableAutoRename) {
-      previewEl.setText(`${SAMPLE_FILE_NAME}.${this.plugin.getSettings().defaultFormat}`);
+      previewEl.setText(`${copy.samples.fileName}.${this.plugin.getSettings().defaultFormat}`);
       return;
     }
-    const sample = this.variableResolver.createContext(SAMPLE_NOTE_NAME, SAMPLE_FILE_NAME);
-    const resolved = this.variableResolver.resolve(value, sample) || SAMPLE_FILE_NAME;
+    const sample = this.variableResolver.createContext(copy.samples.noteName, copy.samples.fileName);
+    const resolved = this.variableResolver.resolve(value, sample) || copy.samples.fileName;
     const extension = this.plugin.getSettings().defaultFormat;
     previewEl.setText(`${resolved}.${extension}`);
   }
   updateOutputFolderFeedback(setting, previewEl, value) {
+    const copy = this.getCopy();
     const unresolved = this.variableResolver.validatePattern(value);
-    this.setSettingErrorMessage(setting, unresolved.length > 0 ? `\u672A\u8BC6\u522B\u7684\u53D8\u91CF\uFF1A${unresolved.join("\u3001")}` : null);
+    this.setSettingErrorMessage(
+      setting,
+      unresolved.length > 0 ? `${copy.labels.invalidVariables}${unresolved.join("\u3001")}` : null
+    );
     if (!value.trim()) {
-      previewEl.setText(getParentPath(SAMPLE_NOTE_PATH) || "(\u4ED3\u5E93\u6839\u76EE\u5F55)");
+      previewEl.setText(getParentPath(copy.samples.notePath) || copy.samples.vaultRoot);
       return;
     }
-    const sample = this.variableResolver.createContext(SAMPLE_NOTE_NAME, SAMPLE_FILE_NAME);
+    const sample = this.variableResolver.createContext(copy.samples.noteName, copy.samples.fileName);
     const resolved = this.variableResolver.resolvePath(value, sample);
-    const finalPath = resolveNoteScopedPath(resolved, SAMPLE_NOTE_PATH);
+    const finalPath = resolveNoteScopedPath(resolved, copy.samples.notePath);
     previewEl.setText(`${resolved} -> ${finalPath}`);
   }
   renderCompatibilitySection(containerEl, settings) {
+    const copy = this.getCopy();
     const section = this.createSection(
       containerEl,
-      "\u517C\u5BB9\u6027\u4E0E\u51B2\u7A81\u89C4\u907F",
-      "\u5904\u7406\u8DE8\u5E73\u53F0\u5DEE\u5F02\u3001Obsidian \u539F\u751F\u884C\u4E3A\u4EE5\u53CA\u5176\u4ED6\u9644\u4EF6/\u7C98\u8D34\u7C7B\u63D2\u4EF6\u53EF\u80FD\u5E26\u6765\u7684\u51B2\u7A81\u3002"
+      copy.sections.compatibility.title,
+      copy.sections.compatibility.description
     );
-    new import_obsidian21.Setting(section).setName("\u7B14\u8BB0\u6539\u540D\u6216\u79FB\u52A8\u65F6\uFF0C\u540C\u6B65\u53D7\u7BA1\u56FE\u7247\u76EE\u5F55").setDesc("\u4EC5\u5BF9\u53EF\u5B89\u5168\u8BC6\u522B\u7684\u53D7\u7BA1\u76EE\u5F55\u751F\u6548\u3002\u82E5\u4F60\u4F7F\u7528\u5176\u4ED6\u9644\u4EF6\u6574\u7406\u63D2\u4EF6\uFF0C\u5EFA\u8BAE\u5173\u95ED\u3002").addToggle(
+    new import_obsidian21.Setting(section).setName(copy.settings.enableNoteRenameSyncName).setDesc(copy.settings.enableNoteRenameSyncDesc).addToggle(
       (toggle) => toggle.setValue(settings.enableNoteRenameSync).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.enableNoteRenameSync = value;
@@ -6211,46 +6445,34 @@ ${example.description}`;
       top.createEl("strong", { text: card.title });
       top.createEl("span", {
         cls: `image-manager-settings-badge image-manager-settings-badge--${card.tone}`,
-        text: card.tone === "ok" ? "\u517C\u5BB9" : "\u6CE8\u610F"
+        text: card.tone === "ok" ? copy.labels.compatibilityOk : copy.labels.compatibilityWarning
       });
       cardEl.createEl("p", { text: card.description });
     }
   }
   renderFeatureStatus(containerEl) {
     var _a;
+    const copy = this.getCopy();
     const section = this.createSection(
       containerEl,
-      "\u529F\u80FD\u72B6\u6001",
-      "\u7528\u4E8E\u533A\u5206\u5F53\u524D\u7248\u672C\u5DF2\u7ECF\u53EF\u7528\u7684\u6A21\u5757\uFF0C\u4EE5\u53CA\u4ECD\u5904\u4E8E\u9884\u7559\u6216\u89C4\u5212\u9636\u6BB5\u7684\u80FD\u529B\u3002"
+      copy.sections.featureStatus.title,
+      copy.sections.featureStatus.description
     );
     const list = section.createDiv({ cls: "image-manager-settings-status" });
     for (const feature of this.plugin.listFeatures()) {
       const card = list.createDiv({ cls: "image-manager-settings-card" });
       const top = card.createDiv({ cls: "image-manager-settings-card__top" });
-      top.createEl("strong", { text: (_a = FEATURE_LABELS[feature.id]) != null ? _a : feature.name });
+      top.createEl("strong", { text: (_a = copy.featureLabels[feature.id]) != null ? _a : feature.name });
       top.createEl("span", {
         cls: `image-manager-settings-badge image-manager-settings-badge--${feature.state}`,
-        text: FEATURE_STATE_LABELS[feature.state]
+        text: copy.featureStates[feature.state]
       });
       card.createEl("p", { text: this.translateFeatureSummary(feature) });
     }
   }
   translateFeatureSummary(feature) {
     var _a;
-    const summaryMap = {
-      rename: "\u6839\u636E\u53D8\u91CF\u6A21\u677F\u4E3A\u56FE\u7247\u547D\u540D\uFF0C\u5E76\u5728\u7B14\u8BB0\u79FB\u52A8\u6216\u91CD\u547D\u540D\u65F6\u540C\u6B65\u53D7\u7BA1\u56FE\u7247\u76EE\u5F55\u3002",
-      compress: "\u63D0\u4F9B\u5355\u56FE\u4E0E\u6279\u91CF\u538B\u7F29\uFF0C\u5E76\u53EF\u63D0\u793A\u8282\u7701\u7684\u7A7A\u95F4\u5927\u5C0F\u3002",
-      convert: "\u652F\u6301\u5C06\u56FE\u7247\u8F6C\u6362\u4E3A\u9ED8\u8BA4\u683C\u5F0F\u6216\u6307\u5B9A\u683C\u5F0F\u3002",
-      preview: "\u63D0\u4F9B\u56FE\u7247\u9884\u89C8\u5165\u53E3\u548C\u76F8\u5173\u6D4F\u89C8\u80FD\u529B\u3002",
-      editor: "\u63D0\u4F9B\u65CB\u8F6C\u3001\u7FFB\u8F6C\u7B49\u8F7B\u91CF\u7F16\u8F91\u80FD\u529B\uFF1B\u66F4\u590D\u6742\u7684\u4EA4\u4E92\u5F0F\u88C1\u526A\u4E0E\u53BB\u6C34\u5370\u5165\u53E3\u653E\u5728\u53F3\u952E\u83DC\u5355\u4E2D\u3002",
-      gallery: "\u63D0\u4F9B\u5F53\u524D\u7B14\u8BB0\u548C\u5F53\u524D\u6587\u4EF6\u5939\u7684\u56FE\u7247\u753B\u5ECA\u89C6\u56FE\u3002",
-      batch: "\u652F\u6301\u6309\u7B14\u8BB0\u3001\u6587\u4EF6\u5939\u6216\u6574\u4E2A\u4ED3\u5E93\u6267\u884C\u6279\u91CF\u4EFB\u52A1\u3002",
-      resize: "\u652F\u6301\u5C06\u56FE\u7247\u7F29\u653E\u5230\u6307\u5B9A\u8FB9\u754C\u5C3A\u5BF8\u3002",
-      "drag-resize": "\u540E\u7EED\u4F1A\u8865\u4E0A\u7F16\u8F91\u5668\u5185\u76F4\u63A5\u62D6\u62FD\u8C03\u6574\u56FE\u7247\u663E\u793A\u5C3A\u5BF8\u7684\u4EA4\u4E92\u3002",
-      align: "\u652F\u6301\u4E3A\u6E32\u67D3\u540E\u7684\u56FE\u7247\u9644\u52A0\u9ED8\u8BA4\u5BF9\u9F50\u6837\u5F0F\uFF0C\u5E76\u914D\u5408\u9884\u89C8\u884C\u4E3A\u4E00\u8D77\u751F\u6548\u3002",
-      "context-menu": "\u4E3A\u6587\u4EF6\u7BA1\u7406\u5668\u4E2D\u7684\u56FE\u7247\u63D0\u4F9B\u590D\u5236\u3001\u538B\u7F29\u3001\u8F6C\u6362\u3001\u88C1\u526A\u3001\u53BB\u6C34\u5370\u548C\u753B\u5ECA\u7B49\u53F3\u952E\u5FEB\u6377\u64CD\u4F5C\u3002"
-    };
-    return (_a = summaryMap[feature.id]) != null ? _a : feature.summary;
+    return (_a = this.getCopy().featureSummaries[feature.id]) != null ? _a : feature.summary;
   }
   async updateSettings(mutator) {
     await this.plugin.updateSettings(mutator);
@@ -6262,71 +6484,80 @@ ${example.description}`;
     }
   }
   getCompatibilityCards(settings) {
+    const copy = this.getCopy();
     const supportedFormats = getSupportedCanvasOutputFormats().map((format) => format.toUpperCase());
     const attachmentFolder = getAttachmentFolderSetting(this.app);
     const debugModeEnabled = detectObsidianDebugMode(this.app);
     const pluginConflicts = detectPluginConflicts(this.app, settings);
     const cards = [
       {
-        title: "\u5F53\u524D\u5E73\u53F0",
+        title: copy.compatibility.platformTitle,
         tone: "ok",
-        description: `\u5F53\u524D\u8FD0\u884C\u73AF\u5883\uFF1A${describeCurrentPlatform()}\u3002\u53F3\u952E\u590D\u5236\u56FE\u7247\u5230\u526A\u8D34\u677F${canWriteImageToClipboard() ? "\u53EF\u7528" : "\u4E0D\u53EF\u7528"}\u3002`
+        description: copy.compatibility.platformDescription(
+          describeCurrentPlatform(),
+          canWriteImageToClipboard()
+        )
       },
       {
-        title: "\u8C03\u8BD5\u65E5\u5FD7\u6A21\u5F0F",
+        title: copy.compatibility.debugTitle,
         tone: debugModeEnabled ? "warning" : "ok",
-        description: debugModeEnabled ? "\u68C0\u6D4B\u5230 Obsidian \u8C03\u8BD5\u6A21\u5F0F\u5DF2\u5F00\u542F\u3002\u63D2\u4EF6\u4F1A\u8F93\u51FA\u8BE6\u7EC6\u8BCA\u65AD\u65E5\u5FD7\uFF0C\u4FBF\u4E8E\u5B9A\u4F4D\u95EE\u9898\u3002" : "Obsidian \u8C03\u8BD5\u6A21\u5F0F\u5F53\u524D\u5173\u95ED\u3002\u63D2\u4EF6\u4E0D\u4F1A\u542F\u7528\u989D\u5916\u8BE6\u7EC6\u65E5\u5FD7\uFF0C\u4E5F\u4E0D\u4F1A\u4E3A\u65E5\u5FD7\u505A\u8F6E\u8BE2\u6216\u5E38\u9A7B\u76D1\u542C\u3002"
+        description: debugModeEnabled ? copy.compatibility.debugEnabled : copy.compatibility.debugDisabled
       },
       {
-        title: "\u53EF\u7F16\u7801\u8F93\u51FA\u683C\u5F0F",
+        title: copy.compatibility.formatsTitle,
         tone: supportedFormats.length >= 2 ? "ok" : "warning",
-        description: supportedFormats.length > 0 ? `\u5F53\u524D\u73AF\u5883\u53EF\u7A33\u5B9A\u8F93\u51FA\uFF1A${supportedFormats.join("\u3001")}\u3002GIF\u3001HEIC\u3001TIFF \u7B49\u683C\u5F0F\u4E0D\u4FDD\u8BC1\u53EF\u76F4\u63A5\u91CD\u65B0\u7F16\u7801\u3002` : "\u5F53\u524D\u73AF\u5883\u672A\u68C0\u6D4B\u5230\u53EF\u7A33\u5B9A\u8F93\u51FA\u7684\u76EE\u6807\u683C\u5F0F\uFF0C\u5EFA\u8BAE\u53EA\u5173\u95ED\u81EA\u52A8\u8F6C\u6362\u5E76\u4FDD\u7559\u539F\u56FE\u3002"
+        description: supportedFormats.length > 0 ? copy.compatibility.formatsAvailable(supportedFormats) : copy.compatibility.formatsUnavailable
       }
     ];
     if (settings.enablePasteHandler) {
       cards.push({
-        title: "\u7C98\u8D34\u63A5\u7BA1\u51B2\u7A81",
+        title: copy.compatibility.pasteConflictTitle,
         tone: "warning",
-        description: "\u5DF2\u542F\u7528\u672C\u63D2\u4EF6\u7684\u7C98\u8D34\u63A5\u7BA1\u3002\u5B83\u4F1A\u4F18\u5148\u5904\u7406\u56FE\u7247\u7C98\u8D34\uFF0C\u53EF\u80FD\u8986\u76D6 Obsidian \u539F\u751F\u9644\u4EF6\u4FDD\u5B58\u89C4\u5219\uFF0C\u4E5F\u53EF\u80FD\u4E0E\u5176\u4ED6\u7C98\u8D34\u589E\u5F3A\u63D2\u4EF6\u91CD\u590D\u5904\u7406\u3002"
+        description: copy.compatibility.pasteConflictEnabled
       });
     } else {
       cards.push({
-        title: "\u7C98\u8D34\u63A5\u7BA1\u51B2\u7A81",
+        title: copy.compatibility.pasteConflictTitle,
         tone: "ok",
-        description: "\u5DF2\u5173\u95ED\u672C\u63D2\u4EF6\u7684\u7C98\u8D34\u63A5\u7BA1\u3002\u56FE\u7247\u7C98\u8D34\u5C06\u4EA4\u7ED9 Obsidian \u539F\u751F\u6D41\u7A0B\u6216\u5176\u4ED6\u63D2\u4EF6\u5904\u7406\u3002"
+        description: copy.compatibility.pasteConflictDisabled
       });
     }
     if (settings.enablePasteHandler && attachmentFolder) {
       cards.push({
-        title: "Obsidian \u539F\u751F\u9644\u4EF6\u76EE\u5F55",
+        title: copy.compatibility.nativeAttachmentTitle,
         tone: "warning",
-        description: `\u68C0\u6D4B\u5230 Obsidian \u539F\u751F\u9644\u4EF6\u76EE\u5F55\u8BBE\u7F6E\u4E3A\u201C${attachmentFolder}\u201D\u3002\u542F\u7528\u672C\u63D2\u4EF6\u7C98\u8D34\u63A5\u7BA1\u65F6\uFF0C\u5C06\u4F18\u5148\u4F7F\u7528\u672C\u63D2\u4EF6\u7684\u8F93\u51FA\u76EE\u5F55\u89C4\u5219\u3002`
+        description: copy.compatibility.nativeAttachmentDescription(attachmentFolder)
       });
     }
     for (const conflict of pluginConflicts) {
+      const featureLabel = copy.compatibility.conflictFeatureLabels[conflict.feature];
       cards.push({
-        title: `${conflict.featureLabel} \u4E0E\u63D2\u4EF6\u51B2\u7A81`,
+        title: copy.compatibility.pluginConflictTitle(featureLabel),
         tone: "warning",
-        description: `\u68C0\u6D4B\u5230\u5DF2\u542F\u7528\u63D2\u4EF6\u201C${conflict.pluginName}\u201D\uFF08${conflict.pluginId}\uFF09\u3002${conflict.description}`
+        description: copy.compatibility.pluginConflictDescription(
+          conflict.pluginName,
+          conflict.pluginId,
+          this.translatePluginConflictDescription(conflict.feature)
+        )
       });
     }
     if (settings.enableNoteRenameSync && !isRelocatableOutputFolderTemplate(settings.outputFolder)) {
       cards.push({
-        title: "\u7B14\u8BB0\u6539\u540D\u540C\u6B65\u8303\u56F4",
+        title: copy.compatibility.renameSyncTitle,
         tone: "warning",
-        description: "\u5F53\u524D\u8F93\u51FA\u76EE\u5F55\u89C4\u5219\u4E0D\u662F\u53EF\u5B89\u5168\u8FC1\u79FB\u7684\u53D7\u7BA1\u76EE\u5F55\u6A21\u677F\u3002\u4E3A\u907F\u514D\u8BEF\u642C\u79FB\u5916\u90E8\u9644\u4EF6\uFF0C\u63D2\u4EF6\u4F1A\u8DF3\u8FC7\u81EA\u52A8\u540C\u6B65\u56FE\u7247\u76EE\u5F55\u3002"
+        description: copy.compatibility.renameSyncUnsafe
       });
     } else if (settings.enableNoteRenameSync) {
       cards.push({
-        title: "\u7B14\u8BB0\u6539\u540D\u540C\u6B65\u8303\u56F4",
+        title: copy.compatibility.renameSyncTitle,
         tone: "ok",
-        description: "\u5F53\u524D\u8F93\u51FA\u76EE\u5F55\u89C4\u5219\u53EF\u5B89\u5168\u8BC6\u522B\u4E3A\u53D7\u7BA1\u76EE\u5F55\uFF0C\u7B14\u8BB0\u6539\u540D\u6216\u79FB\u52A8\u65F6\u4F1A\u540C\u6B65\u56FE\u7247\u76EE\u5F55\u3002"
+        description: copy.compatibility.renameSyncSafe
       });
     } else {
       cards.push({
-        title: "\u7B14\u8BB0\u6539\u540D\u540C\u6B65\u8303\u56F4",
+        title: copy.compatibility.renameSyncTitle,
         tone: "ok",
-        description: "\u5DF2\u5173\u95ED\u7B14\u8BB0\u6539\u540D\u540C\u6B65\uFF0C\u53EF\u907F\u514D\u4E0E\u9644\u4EF6\u6574\u7406\u6216\u94FE\u63A5\u91CD\u5199\u7C7B\u63D2\u4EF6\u4E92\u76F8\u5E72\u9884\u3002"
+        description: copy.compatibility.renameSyncDisabled
       });
     }
     return cards;
@@ -6365,11 +6596,21 @@ ${example.description}`;
   }
   updateRegexPatternFeedback(setting, value) {
     const invalid = validateRegexIgnorePattern(value);
-    this.setSettingErrorMessage(setting, invalid.length > 0 ? `\u65E0\u6548\u6B63\u5219\uFF1A${invalid.join("\u3001")}` : null);
+    this.setSettingErrorMessage(
+      setting,
+      invalid.length > 0 ? `${this.getCopy().labels.invalidRegex}${invalid.join("\u3001")}` : null
+    );
   }
   async applySettingValue(mutator) {
     await this.updateSettings(mutator);
     this.display();
+  }
+  getCopy() {
+    return getSettingTabCopy(this.plugin.getSettings().uiLanguage);
+  }
+  translatePluginConflictDescription(feature) {
+    const copy = this.getCopy();
+    return feature === "paste-handler" ? copy.compatibility.pasteConflictEnabled : copy.compatibility.renameSyncUnsafe;
   }
 };
 

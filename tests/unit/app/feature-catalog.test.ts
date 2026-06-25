@@ -8,9 +8,12 @@ describe('createBuiltInFeatures', () => {
 
     expect(ids).toContain('editor');
     expect(ids).toContain('resize');
+    expect(ids).toContain('watermark-removal');
     expect(ids).toContain('drag-resize');
 
     const dragResize = features.find((feature) => feature.id === 'drag-resize');
     expect(dragResize?.state).toBe('scaffolded');
+    const watermarkRemoval = features.find((feature) => feature.id === 'watermark-removal');
+    expect(watermarkRemoval?.state).toBe('scaffolded');
   });
 });

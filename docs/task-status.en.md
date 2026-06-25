@@ -4,8 +4,8 @@
 
 ## Release
 
-- `v3.0.0` brings interactive image operations, feature-consistency fixes, and a standalone marketing site into the formal release scope.
-- Package metadata, manifest metadata, release workflow, marketing site, and user-facing documentation are aligned for the 3.0.0 release.
+- `v3.1.0` brings bilingual settings, a reorganized planned-feature story, revised website copy, and explicit project philosophy into the formal release scope.
+- Package metadata, manifest metadata, release workflow, marketing site, and user-facing documentation are aligned for the 3.1.0 release.
 
 ## Completed
 
@@ -25,6 +25,7 @@
 - File context-menu actions with a dedicated enable / disable setting
 - Operation notifications with a dedicated enable / disable setting
 - Compression and conversion ignore-regex settings with inline validation and examples
+- Bilingual settings-page and feature-status copy, with Simplified Chinese as the default UI language
 - Default rendered-image alignment, plus an option to suppress Obsidian image selection on click
 - Auto-rename toggle that preserves original file names when disabled
 - Auto-download support for pasted image text sources, including image URLs, `file://` paths, and `data:image/...;base64,...`
@@ -34,7 +35,6 @@
 
 - Image editor: quick rotate / flip actions are delivered, but the interactive canvas editor UI is still pending
 - Resize: the preset resize command is delivered, but advanced presets and UI are still pending
-- Fabric-based editing pipeline: the dependency remains, but the current processing path still runs through a Canvas-first implementation
 
 ## Recent Integration Notes
 
@@ -46,6 +46,7 @@
 
 ## Deferred
 
+- Watermark removal / object repair remains planned only until quality and interaction are acceptable
 - OCR, search, and classification
 - Worker-based background processing
 - Interactive drag-to-resize inside the editor
