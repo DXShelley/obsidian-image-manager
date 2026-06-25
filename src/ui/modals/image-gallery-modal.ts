@@ -1,4 +1,4 @@
-import { Modal } from 'obsidian';
+import { Modal, Setting } from 'obsidian';
 import type { App } from 'obsidian';
 import type { UiCopy } from '@/i18n';
 import { GallerySortBy, type ImageInfo } from '@/types/index';
@@ -82,7 +82,7 @@ export class ImageGalleryModal extends Modal {
     this.selectedImagePath = this.initialSelectedImagePath;
     this.contentEl.empty();
     this.contentEl.addClass('image-manager-gallery');
-    this.contentEl.createEl('h2', { text: this.title });
+    new Setting(this.contentEl).setName(this.title).setHeading();
 
     const toolbar = this.contentEl.createDiv({ cls: 'image-manager-gallery-toolbar' });
     const search = toolbar.createEl('input', {
@@ -388,7 +388,7 @@ export class ImageGalleryModal extends Modal {
       return;
     }
 
-    this.lightboxImageEl.style.transform = `scale(${this.lightboxZoom})`;
+    this.lightboxImageEl.setCssStyles({ transform: `scale(${this.lightboxZoom})` });
     this.lightboxZoomResetButton.setText(`${Math.round(this.lightboxZoom * 100)}%`);
     this.lightboxZoomOutButton.disabled = this.lightboxZoom <= ImageGalleryModal.MIN_ZOOM;
     this.lightboxZoomInButton.disabled = this.lightboxZoom >= ImageGalleryModal.MAX_ZOOM;

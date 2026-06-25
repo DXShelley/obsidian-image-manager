@@ -33,6 +33,8 @@ class MockElement {
   }
 
   addEventListener(): void {}
+
+  setCssStyles(): void {}
 }
 
 export class TAbstractFile {
@@ -112,6 +114,32 @@ export const Platform = {
   isTablet: false
 };
 
+export const activeDocument =
+  typeof document === 'undefined'
+    ? ({
+        body: new MockElement(),
+        createElement: () => new MockElement()
+      } as unknown as Document)
+    : document;
+
+(globalThis as typeof globalThis & { activeDocument: Document }).activeDocument = activeDocument;
+
+export async function requestUrl(): Promise<{
+  status: number;
+  headers: Record<string, string>;
+  arrayBuffer: ArrayBuffer;
+  text: string;
+  json: unknown;
+}> {
+  return {
+    status: 200,
+    headers: {},
+    arrayBuffer: new ArrayBuffer(0),
+    text: '',
+    json: null
+  };
+}
+
 export class Setting {
   constructor(_containerEl: unknown) {}
 
@@ -131,14 +159,20 @@ export class Setting {
     return this;
   }
 
+  setHeading(): this {
+    return this;
+  }
+
   addButton(callback: (button: {
     setButtonText: (text: string) => unknown;
     setWarning: () => unknown;
+    setDestructive: () => unknown;
     onClick: (handler: () => unknown) => unknown;
   }) => unknown): this {
     const button = {
       setButtonText: () => button,
       setWarning: () => button,
+      setDestructive: () => button,
       onClick: () => button
     };
     callback(button);

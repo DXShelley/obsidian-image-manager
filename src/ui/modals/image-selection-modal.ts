@@ -1,4 +1,4 @@
-import { Modal, Notice } from 'obsidian';
+import { Modal, Notice, Setting } from 'obsidian';
 import type { App, TFile } from 'obsidian';
 import type { UiCopy } from '@/i18n';
 import type { ImageSelection } from '@/types/index';
@@ -38,7 +38,7 @@ export class ImageSelectionModal extends Modal {
   override onOpen(): void {
     this.contentEl.empty();
     this.contentEl.addClass('image-manager-selection-modal');
-    this.contentEl.createEl('h2', { text: this.options.title });
+    new Setting(this.contentEl).setName(this.options.title).setHeading();
     this.contentEl.createEl('p', {
       cls: 'image-manager-selection-modal__description',
       text: this.options.description
@@ -170,16 +170,18 @@ export class ImageSelectionModal extends Modal {
   private renderSelection(): void {
     const selection = this.currentSelection;
     if (!selection || selection.width <= 0 || selection.height <= 0) {
-      this.selectionEl.style.display = 'none';
+      this.selectionEl.setCssStyles({ display: 'none' });
       this.updateHint();
       return;
     }
 
-    this.selectionEl.style.display = 'block';
-    this.selectionEl.style.left = `${selection.x}px`;
-    this.selectionEl.style.top = `${selection.y}px`;
-    this.selectionEl.style.width = `${selection.width}px`;
-    this.selectionEl.style.height = `${selection.height}px`;
+    this.selectionEl.setCssStyles({
+      display: 'block',
+      left: `${selection.x}px`,
+      top: `${selection.y}px`,
+      width: `${selection.width}px`,
+      height: `${selection.height}px`
+    });
     this.updateHint(selection);
   }
 

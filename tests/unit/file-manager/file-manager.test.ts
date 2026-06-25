@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import * as obsidian from 'obsidian';
 import { TFile, TFolder } from 'obsidian';
 import { FileManager } from '@/services/file-manager';
 import { LinkFormatter } from '@/services/link-formatter';
@@ -47,6 +48,7 @@ const settings: ImageManagerSettings = {
 };
 
 afterEach(() => {
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
 
@@ -377,6 +379,16 @@ describe('FileManager.syncManagedImagesForNote', () => {
           file.path = targetPath;
           file.parent = null;
           objects.set(file.path, file);
+        }),
+        trashFile: vi.fn(async (target: TFolder | TFile) => {
+          objects.delete(target.path);
+          if (target instanceof TFolder) {
+            deletedFolders.push(target.path);
+          }
+          const parent = target.parent instanceof TFolder ? target.parent : null;
+          if (parent) {
+            parent.children = parent.children.filter((child) => child !== target);
+          }
         })
       }
     };
@@ -546,18 +558,17 @@ describe('FileManager.rewriteImageLinksInNote', () => {
       new VariableResolver(),
       new LinkFormatter(app as never)
     );
-    const fetchMock = vi.fn(async () => ({
-      ok: true,
-      headers: {
-        get: vi.fn(() => 'image/png')
-      },
-      arrayBuffer: vi.fn(async () => new Uint8Array([1, 2, 3]).buffer)
-    }));
-    vi.stubGlobal('fetch', fetchMock);
+    const requestUrlMock = vi.spyOn(obsidian, 'requestUrl').mockResolvedValue({
+      status: 200,
+      headers: { 'content-type': 'image/png' },
+      arrayBuffer: new Uint8Array([1, 2, 3]).buffer,
+      text: '',
+      json: null
+    });
 
     const result = await manager.importExternalImageLinksInNote(note as never);
 
-    expect(fetchMock).toHaveBeenCalledWith('https://example.com/photo.png');
+    expect(requestUrlMock).toHaveBeenCalledWith({ url: 'https://example.com/photo.png', throw: false });
     expect(app.vault.createBinary).toHaveBeenCalled();
     expect(result).toEqual({ replaced: 1, downloaded: 1 });
     expect(app.vault.modify).toHaveBeenCalledWith(note, '![Remote](photo.png)');
@@ -614,18 +625,17 @@ describe('FileManager.rewriteImageLinksInNote', () => {
       new VariableResolver(),
       new LinkFormatter(app as never)
     );
-    const fetchMock = vi.fn(async () => ({
-      ok: true,
-      headers: {
-        get: vi.fn(() => 'image/png')
-      },
-      arrayBuffer: vi.fn(async () => new Uint8Array([7, 8, 9]).buffer)
-    }));
-    vi.stubGlobal('fetch', fetchMock);
+    const requestUrlMock = vi.spyOn(obsidian, 'requestUrl').mockResolvedValue({
+      status: 200,
+      headers: { 'content-type': 'image/png' },
+      arrayBuffer: new Uint8Array([7, 8, 9]).buffer,
+      text: '',
+      json: null
+    });
 
     const result = await manager.importExternalImageLinksInNote(note as never);
 
-    expect(fetchMock).toHaveBeenCalledWith('https://cdn.example.com/render?id=42');
+    expect(requestUrlMock).toHaveBeenCalledWith({ url: 'https://cdn.example.com/render?id=42', throw: false });
     expect(app.vault.createBinary).toHaveBeenCalled();
     expect(result).toEqual({ replaced: 1, downloaded: 1 });
     expect(app.vault.modify).toHaveBeenCalledWith(note, '![Remote](render.png)');
@@ -683,19 +693,21 @@ describe('FileManager.rewriteImageLinksInNote', () => {
       new VariableResolver(),
       new LinkFormatter(app as never)
     );
-    const fetchMock = vi.fn(async (url: string) => ({
-      ok: true,
-      headers: {
-        get: vi.fn(() => 'image/png')
-      },
-      arrayBuffer: vi.fn(async () => new Uint8Array(url.includes('photo-b') ? [4, 5, 6] : [1, 2, 3]).buffer)
-    }));
-    vi.stubGlobal('fetch', fetchMock);
+    const requestUrlMock = vi.spyOn(obsidian, 'requestUrl').mockImplementation(async (request) => {
+      const url = typeof request === 'string' ? request : request.url;
+      return {
+        status: 200,
+        headers: { 'content-type': 'image/png' },
+        arrayBuffer: new Uint8Array(url.includes('photo-b') ? [4, 5, 6] : [1, 2, 3]).buffer,
+        text: '',
+        json: null
+      };
+    });
 
     const result = await manager.importExternalImageLinkInNoteBySource(note as never, 'https://example.com/photo-b.png');
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock).toHaveBeenCalledWith('https://example.com/photo-b.png');
+    expect(requestUrlMock).toHaveBeenCalledTimes(1);
+    expect(requestUrlMock).toHaveBeenCalledWith({ url: 'https://example.com/photo-b.png', throw: false });
     expect(result).toEqual({ replaced: 1, downloaded: 1 });
     expect(app.vault.modify).toHaveBeenCalledWith(
       note,
@@ -769,20 +781,19 @@ describe('FileManager.rewriteImageLinksInNote', () => {
       new VariableResolver(),
       new LinkFormatter(app as never)
     );
-    const fetchMock = vi.fn(async () => ({
-      ok: true,
-      headers: {
-        get: vi.fn(() => 'image/png')
-      },
-      arrayBuffer: vi.fn(async () => new Uint8Array([1, 2, 3]).buffer)
-    }));
-    vi.stubGlobal('fetch', fetchMock);
+    const requestUrlMock = vi.spyOn(obsidian, 'requestUrl').mockResolvedValue({
+      status: 200,
+      headers: { 'content-type': 'image/png' },
+      arrayBuffer: new Uint8Array([1, 2, 3]).buffer,
+      text: '',
+      json: null
+    });
 
     const result = await manager.importExternalImageLinkInNoteBySource(note as never, 'https://example.com/shared.png', {
       occurrence: 2
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(requestUrlMock).toHaveBeenCalledTimes(1);
     expect(result).toEqual({ replaced: 1, downloaded: 1 });
     expect(app.vault.modify).toHaveBeenCalledWith(
       note,
@@ -1036,6 +1047,23 @@ describe('FileManager.rewriteImageLinksInNote', () => {
       },
       metadataCache: {
         resolvedLinks: {}
+      },
+      fileManager: {
+        trashFile: vi.fn(async (target: TFile | TFolder) => {
+          if (target instanceof TFile) {
+            const parent = target.parent;
+            if (parent instanceof TFolder) {
+              parent.children = parent.children.filter((child) => child !== target);
+            }
+            return;
+          }
+
+          folders.delete(target.path);
+          const parent = target.parent;
+          if (parent instanceof TFolder) {
+            parent.children = parent.children.filter((child) => child !== target);
+          }
+        })
       }
     };
     const recoveryManager = {

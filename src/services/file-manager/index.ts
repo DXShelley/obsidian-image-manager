@@ -1,4 +1,4 @@
-import { MarkdownView, TFile, TFolder, type App, type WorkspaceLeaf } from 'obsidian';
+import { MarkdownView, requestUrl, TFile, TFolder, type App, type WorkspaceLeaf } from 'obsidian';
 import { LinkFormat, type ImageFormat, type ImageManagerSettings, type RenameMoveResult } from '@/types/index';
 import type { RecoveryManager } from '@/core/recovery/recovery-manager';
 import type { LinkFormatter } from '@/services/link-formatter';
@@ -119,12 +119,12 @@ export class FileManager {
   }
 
   async saveRemoteImage(url: string, noteFile: TFile, fileName?: string): Promise<TFile> {
-    const response = await fetch(url);
-    if (!response.ok) {
+    const response = await requestUrl({ url, throw: false });
+    if (response.status >= 400) {
       throw new Error(`Failed to download image: ${response.status}`);
     }
 
-    const buffer = await response.arrayBuffer();
+    const buffer = response.arrayBuffer;
     const inferredName = fileName ?? decodeURIComponent(url.split('/').pop() ?? `download-${Date.now()}.png`);
     return this.saveImage(buffer, inferredName, noteFile);
   }
@@ -804,7 +804,7 @@ export class FileManager {
       }
 
       await this.recoveryManager?.captureBinarySnapshot(image);
-      await this.app.vault.delete(image, true);
+      await this.app.fileManager.trashFile(image);
       deletedImages += 1;
     }
 
@@ -917,7 +917,7 @@ export class FileManager {
 
     const parent = folder.parent instanceof TFolder ? folder.parent : null;
     this.recoveryManager?.recordDeletedFolder(folder.path);
-    await this.app.vault.delete(folder, true);
+    await this.app.fileManager.trashFile(folder);
     const parentDeleted = parent ? await this.deleteFolderIfEmpty(parent, options) : 0;
     return 1 + parentDeleted;
   }

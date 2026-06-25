@@ -269,7 +269,6 @@ export class ImageManagerSettingTab extends PluginSettingTab {
       .addSlider((slider) =>
         slider
           .setLimits(1, 100, 1)
-          .setDynamicTooltip()
           .setValue(settings.defaultQuality)
           .onChange(async (value) => {
             await this.updateSettings((draft) => {
@@ -284,7 +283,6 @@ export class ImageManagerSettingTab extends PluginSettingTab {
       .addSlider((slider) =>
         slider
           .setLimits(1, 100, 1)
-          .setDynamicTooltip()
           .setValue(settings.compressionQuality)
           .onChange(async (value) => {
             await this.updateSettings((draft) => {
@@ -576,7 +574,7 @@ export class ImageManagerSettingTab extends PluginSettingTab {
       );
 
     new Setting(actionWrap).addButton((button) =>
-      button.setButtonText(copy.header.reset).setWarning().onClick(async () => {
+      button.setButtonText(copy.header.reset).setDestructive().onClick(async () => {
         await this.updateSettings((draft) => {
           Object.assign(draft, DEFAULT_SETTINGS);
         });
@@ -589,7 +587,7 @@ export class ImageManagerSettingTab extends PluginSettingTab {
   private createSection(containerEl: HTMLElement, title: string, description: string): HTMLElement {
     const section = containerEl.createDiv({ cls: 'image-manager-settings-section' });
     const header = section.createDiv({ cls: 'image-manager-settings-section__header' });
-    header.createEl('h3', { text: title });
+    new Setting(header).setName(title).setHeading();
     header.createEl('p', { text: description });
     return section;
   }

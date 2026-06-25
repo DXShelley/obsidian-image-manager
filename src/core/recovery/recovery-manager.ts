@@ -483,7 +483,7 @@ export class RecoveryManager {
 
       const abstract = this.app.vault.getAbstractFileByPath(entry.path);
       if (abstract instanceof TFile) {
-        await this.app.vault.delete(abstract, true);
+        await this.app.fileManager.trashFile(abstract);
       } else if (await this.app.vault.adapter.exists(entry.path)) {
         await this.app.vault.adapter.remove(entry.path);
       }
@@ -524,7 +524,7 @@ export class RecoveryManager {
     for (const file of [...state.files].reverse().filter((item) => !item.exists)) {
       const abstract = this.app.vault.getAbstractFileByPath(file.path);
       if (abstract instanceof TFile) {
-        await this.app.vault.delete(abstract, true);
+        await this.app.fileManager.trashFile(abstract);
       } else if (await this.app.vault.adapter.exists(file.path)) {
         await this.app.vault.adapter.remove(file.path);
       }

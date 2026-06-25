@@ -2,6 +2,7 @@ import { mkdtemp, readFile, rm, writeFile } from 'fs/promises';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { pathToFileURL } from 'url';
+import * as obsidian from 'obsidian';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { parseTextImageSources, resolveTextImageSource } from '@/utils/pasted-image-source';
 
@@ -95,6 +96,7 @@ describe('parseTextImageSources', () => {
 
 describe('resolveTextImageSource', () => {
   afterEach(() => {
+    vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });
 
@@ -133,14 +135,13 @@ describe('resolveTextImageSource', () => {
 
   it('downloads remote image urls after verifying content type', async () => {
     const payload = new Uint8Array([9, 8, 7, 6]);
-    const fetchMock = vi.fn(async () => ({
-      ok: true,
-      headers: {
-        get: vi.fn(() => 'image/webp')
-      },
-      arrayBuffer: vi.fn(async () => payload.buffer.slice(0))
-    }));
-    vi.stubGlobal('fetch', fetchMock);
+    const requestUrlMock = vi.spyOn(obsidian, 'requestUrl').mockResolvedValue({
+      status: 200,
+      headers: { 'content-type': 'image/webp' },
+      arrayBuffer: payload.buffer.slice(0) as ArrayBuffer,
+      text: '',
+      json: null
+    });
 
     const resolved = await resolveTextImageSource({
       kind: 'remote',
@@ -148,21 +149,20 @@ describe('resolveTextImageSource', () => {
       originalName: 'cover.webp'
     });
 
-    expect(fetchMock).toHaveBeenCalledWith('https://example.com/assets/cover.webp');
+    expect(requestUrlMock).toHaveBeenCalledWith({ url: 'https://example.com/assets/cover.webp', throw: false });
     expect(resolved.originalName).toBe('cover.webp');
     expect(Buffer.from(resolved.data)).toEqual(Buffer.from(payload));
   });
 
   it('infers an extension for extensionless remote image urls from response content type', async () => {
     const payload = new Uint8Array([1, 3, 5, 7]);
-    const fetchMock = vi.fn(async () => ({
-      ok: true,
-      headers: {
-        get: vi.fn(() => 'image/png')
-      },
-      arrayBuffer: vi.fn(async () => payload.buffer.slice(0))
-    }));
-    vi.stubGlobal('fetch', fetchMock);
+    const requestUrlMock = vi.spyOn(obsidian, 'requestUrl').mockResolvedValue({
+      status: 200,
+      headers: { 'content-type': 'image/png' },
+      arrayBuffer: payload.buffer.slice(0) as ArrayBuffer,
+      text: '',
+      json: null
+    });
 
     const resolved = await resolveTextImageSource({
       kind: 'remote',
@@ -170,21 +170,20 @@ describe('resolveTextImageSource', () => {
       originalName: 'render'
     });
 
-    expect(fetchMock).toHaveBeenCalledWith('https://cdn.example.com/render?id=42');
+    expect(requestUrlMock).toHaveBeenCalledWith({ url: 'https://cdn.example.com/render?id=42', throw: false });
     expect(resolved.originalName).toBe('render.png');
     expect(Buffer.from(resolved.data)).toEqual(Buffer.from(payload));
   });
 
   it('replaces non-image endpoint extensions with an inferred image extension from response content type', async () => {
     const payload = new Uint8Array([2, 4, 6, 8]);
-    const fetchMock = vi.fn(async () => ({
-      ok: true,
-      headers: {
-        get: vi.fn(() => 'image/png')
-      },
-      arrayBuffer: vi.fn(async () => payload.buffer.slice(0))
-    }));
-    vi.stubGlobal('fetch', fetchMock);
+    const requestUrlMock = vi.spyOn(obsidian, 'requestUrl').mockResolvedValue({
+      status: 200,
+      headers: { 'content-type': 'image/png' },
+      arrayBuffer: payload.buffer.slice(0) as ArrayBuffer,
+      text: '',
+      json: null
+    });
 
     const resolved = await resolveTextImageSource({
       kind: 'remote',
@@ -192,7 +191,7 @@ describe('resolveTextImageSource', () => {
       originalName: 'render.php'
     });
 
-    expect(fetchMock).toHaveBeenCalledWith('https://cdn.example.com/render.php?id=42');
+    expect(requestUrlMock).toHaveBeenCalledWith({ url: 'https://cdn.example.com/render.php?id=42', throw: false });
     expect(resolved.originalName).toBe('render.png');
     expect(Buffer.from(resolved.data)).toEqual(Buffer.from(payload));
   });

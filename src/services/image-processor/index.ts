@@ -91,7 +91,7 @@ export class ImageProcessor {
     this.assertOutputFormatSupported(this.extensionToFormat(file.extension));
     const source = await this.app.vault.readBinary(file);
     const image = await this.loadImage(source, file.extension);
-    const canvas = document.createElement('canvas');
+    const canvas = activeDocument.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (!ctx) {
       throw new Error('Canvas context is unavailable');
@@ -112,7 +112,7 @@ export class ImageProcessor {
     this.assertOutputFormatSupported(this.extensionToFormat(file.extension));
     const source = await this.app.vault.readBinary(file);
     const image = await this.loadImage(source, file.extension);
-    const canvas = document.createElement('canvas');
+    const canvas = activeDocument.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (!ctx) {
       throw new Error('Canvas context is unavailable');
@@ -143,7 +143,7 @@ export class ImageProcessor {
       throw new Error('Crop selection is empty');
     }
 
-    const canvas = document.createElement('canvas');
+    const canvas = activeDocument.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (!ctx) {
       throw new Error('Canvas context is unavailable');
@@ -168,7 +168,7 @@ export class ImageProcessor {
   private async process(file: TFile, options: ProcessOptions): Promise<ArrayBuffer> {
     const source = await this.app.vault.readBinary(file);
     const image = await this.loadImage(source, file.extension);
-    const canvas = document.createElement('canvas');
+    const canvas = activeDocument.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (!ctx) {
       throw new Error('Canvas context is unavailable');
@@ -214,7 +214,7 @@ export class ImageProcessor {
     return new Promise((resolve, reject) => {
       const blob = new Blob([source], { type: this.extensionToMime(extension) });
       const url = URL.createObjectURL(blob);
-      const image = new Image();
+      const image = activeDocument.createElement('img');
       image.onload = () => {
         URL.revokeObjectURL(url);
         resolve(image);

@@ -53,6 +53,9 @@ function createApp() {
         vaultFiles.delete(file.path);
         file.path = nextPath;
         vaultFiles.set(nextPath, file);
+      }),
+      trashFile: vi.fn(async (file: TFile) => {
+        vaultFiles.delete(file.path);
       })
     }
   };
@@ -143,7 +146,7 @@ describe('RecoveryManager', () => {
     );
     expect(fileManager.restoreBinaryFile).toHaveBeenCalledWith('assets/photo.png', expect.any(ArrayBuffer));
     expect(fileManager.restoreTextFile).toHaveBeenCalledWith('notes/demo.md', 'restored markdown');
-    expect(app.vault.delete).toHaveBeenCalledWith(expect.objectContaining({ path: 'assets/new-image.png' }), true);
+    expect(app.fileManager.trashFile).toHaveBeenCalledWith(expect.objectContaining({ path: 'assets/new-image.png' }));
     expect(textFiles.get('notes/demo.md')).toBe('restored markdown');
   });
 
@@ -289,6 +292,6 @@ describe('RecoveryManager', () => {
 
     expect(restored?.status).toBe('committed');
     expect(fileManager.restoreBinaryFile).toHaveBeenCalledWith('assets/photo.webp', expect.any(ArrayBuffer));
-    expect(app.vault.delete).toHaveBeenCalledWith(expect.objectContaining({ path: 'assets/photo.png' }), true);
+    expect(app.fileManager.trashFile).toHaveBeenCalledWith(expect.objectContaining({ path: 'assets/photo.png' }));
   });
 });

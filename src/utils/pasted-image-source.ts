@@ -1,4 +1,5 @@
 import { readFile } from 'fs/promises';
+import { requestUrl } from 'obsidian';
 import { basename, extname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -128,18 +129,18 @@ function parseDataImageSource(value: string): TextImageSource | null {
 }
 
 async function resolveRemoteImageSource(source: TextImageSource): Promise<ResolvedTextImageSource> {
-  const response = await fetch(source.value);
-  if (!response.ok) {
+  const response = await requestUrl({ url: source.value, throw: false });
+  if (response.status >= 400) {
     throw new Error(`Failed to download image: ${response.status}`);
   }
 
-  const mimeType = (response.headers.get('content-type') ?? '').toLowerCase();
+  const mimeType = findHeaderValue(response.headers, 'content-type').toLowerCase();
   if (!mimeType.startsWith('image/')) {
     throw new Error(`Remote URL is not an image: ${mimeType || 'unknown content-type'}`);
   }
 
   return {
-    data: await response.arrayBuffer(),
+    data: response.arrayBuffer,
     originalName: ensureFileNameExtension(source.originalName, mimeType)
   };
 }
@@ -220,5 +221,17 @@ function decodeBase64ToArrayBuffer(value: string): ArrayBuffer {
 }
 
 function toArrayBuffer(buffer: Uint8Array): ArrayBuffer {
-  return buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength) as ArrayBuffer;
+  const arrayBuffer = new ArrayBuffer(buffer.byteLength);
+  new Uint8Array(arrayBuffer).set(buffer);
+  return arrayBuffer;
+}
+
+function findHeaderValue(headers: Readonly<Record<string, string>>, targetName: string): string {
+  const target = targetName.toLowerCase();
+  for (const [name, value] of Object.entries(headers)) {
+    if (name.toLowerCase() === target) {
+      return value;
+    }
+  }
+  return '';
 }
