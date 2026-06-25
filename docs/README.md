@@ -35,5 +35,9 @@
 ## 致谢与参考
 
 - [Obsidian](https://obsidian.md/)：插件宿主与 API 来源。
+- [piexifjs](https://github.com/hMatoba/piexifjs)：JPEG EXIF 处理相关运行时依赖。
+- [TypeScript](https://www.typescriptlang.org/)、[esbuild](https://esbuild.github.io/)、[ESLint](https://eslint.org/)、[typescript-eslint](https://typescript-eslint.io/)、[Vitest](https://vitest.dev/)、[@vitest/coverage-v8](https://vitest.dev/guide/coverage.html)、[happy-dom](https://github.com/capricorn86/happy-dom)、[@faker-js/faker](https://fakerjs.dev/)、[type-coverage](https://github.com/plantain-00/type-coverage)：开发、构建、检查、测试与覆盖率工具链。
+- [React](https://react.dev/)、[React DOM](https://react.dev/reference/react-dom)、[Vite](https://vite.dev/) 与 [pnpm](https://pnpm.io/)：GitHub Pages 展示站点技术栈。
 - [Custom Attachment Location](https://github.com/mnaoumov/obsidian-custom-attachment-location)：附件目录规则与清理行为的重要参考项目。
+- [obsidian-image-converter](https://github.com/xRyul/obsidian-image-converter)：图片处理交互边界、命令组织和能力取舍的重要参考项目。
 - 若文档中提到“模仿”或“参考”某插件，表示行为语义借鉴，不表示实现或配置完全一致。

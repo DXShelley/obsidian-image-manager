@@ -2,9 +2,9 @@
 
 # Note Image Manager
 
-`Note Image Manager` is a desktop-only image-management plugin for Obsidian. `v4.0.1` focuses on centralized bilingual UX, safer external-image import, layered AVIF compatibility, compression de-duplication history, and recovery-first image workflows.
+`Note Image Manager` is a desktop-only image-management plugin for Obsidian. `v4.0.2` focuses on centralized bilingual UX, safer external-image import, layered AVIF compatibility, compression de-duplication history, and recovery-first image workflows.
 
-Desktop-only image workflow for Obsidian with managed import, conversion, compression, lightweight editing, and recovery-first batch operations.
+Import, rename, convert, compress, edit, and recover note images safely.
 
 ## Philosophy
 
@@ -87,16 +87,19 @@ Desktop-only image workflow for Obsidian with managed import, conversion, compre
 ## Acknowledgements and References
 
 - [Obsidian](https://obsidian.md/): provides the plugin runtime, editor surface, and vault model that this project builds on.
+- [piexifjs](https://github.com/hMatoba/piexifjs): supports JPEG EXIF-related image handling.
+- [TypeScript](https://www.typescriptlang.org/), [esbuild](https://esbuild.github.io/), [ESLint](https://eslint.org/), [typescript-eslint](https://typescript-eslint.io/), [Vitest](https://vitest.dev/), [@vitest/coverage-v8](https://vitest.dev/guide/coverage.html), [happy-dom](https://github.com/capricorn86/happy-dom), [@faker-js/faker](https://fakerjs.dev/), and [type-coverage](https://github.com/plantain-00/type-coverage): support type checking, bundling, linting, unit testing, test-data generation, and coverage gates.
+- [React](https://react.dev/), [React DOM](https://react.dev/reference/react-dom), [Vite](https://vite.dev/), and [pnpm](https://pnpm.io/): power the GitHub Pages website development, build, and dependency workflow.
 - [Custom Attachment Location](https://github.com/mnaoumov/obsidian-custom-attachment-location): several attachment-folder template and cleanup behaviors in this plugin were designed with reference to parts of its UX semantics.
 - [obsidian-image-converter](https://github.com/xRyul/obsidian-image-converter): this project also learned from its product thinking around image-processing boundaries, command organization, and practical scope.
-- These references document inspiration and behavioral intent, not a promise of full compatibility.
+- These frameworks, tools, components, and open-source projects are used for runtime behavior, development, testing, the website, or behavioral reference. Mentioning a reference project is not a promise of full compatibility.
 
 ## Release
 
-- Version: `4.0.1`
+- Version: `4.0.2`
 - Minimum Obsidian version: `0.15.0`
 - First listing: submit the repository through `community.obsidian.md` and wait for review.
-- Updates after approval: create a Git tag and GitHub Release that exactly matches `manifest.json.version`, for example `4.0.1`, without a `v` prefix.
+- Updates after approval: create a Git tag and GitHub Release that exactly matches `manifest.json.version`, for example `4.0.2`, without a `v` prefix.
 - Release artifacts: `manifest.json`, `main.js`, `styles.css`, `note-image-manager-<version>.zip`
 - Keep the GitHub repository description and homepage aligned with this README so the community directory, repo, and Pages site do not drift.
 

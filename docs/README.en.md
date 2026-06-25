@@ -35,5 +35,9 @@ This directory uses a bilingual layout:
 ## Acknowledgements and References
 
 - [Obsidian](https://obsidian.md/): the host application and plugin API provider.
+- [piexifjs](https://github.com/hMatoba/piexifjs): runtime dependency for JPEG EXIF-related handling.
+- [TypeScript](https://www.typescriptlang.org/), [esbuild](https://esbuild.github.io/), [ESLint](https://eslint.org/), [typescript-eslint](https://typescript-eslint.io/), [Vitest](https://vitest.dev/), [@vitest/coverage-v8](https://vitest.dev/guide/coverage.html), [happy-dom](https://github.com/capricorn86/happy-dom), [@faker-js/faker](https://fakerjs.dev/), and [type-coverage](https://github.com/plantain-00/type-coverage): development, build, linting, testing, and coverage tooling.
+- [React](https://react.dev/), [React DOM](https://react.dev/reference/react-dom), [Vite](https://vite.dev/), and [pnpm](https://pnpm.io/): technology stack for the GitHub Pages website.
 - [Custom Attachment Location](https://github.com/mnaoumov/obsidian-custom-attachment-location): a key reference for attachment-folder rules and cleanup semantics.
+- [obsidian-image-converter](https://github.com/xRyul/obsidian-image-converter): a key reference for image-processing interaction boundaries, command organization, and scope decisions.
 - When the docs say a behavior is "modeled after" or "inspired by" another plugin, that describes intent rather than exact implementation parity.
