@@ -1,7 +1,7 @@
 {
   "id": "note-image-manager",
   "name": "Note Image Manager",
-  "version": "4.0.3",
+  "version": "4.0.4",
   "minAppVersion": "1.13.1",
   "description": "Import, rename, convert, compress, edit, and recover note images safely.",
   "author": "DXShelley",

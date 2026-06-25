@@ -34,6 +34,11 @@ class MockElement {
 
   addEventListener(): void {}
 
+  setText(value: string): this {
+    this.textContent = value;
+    return this;
+  }
+
   setCssStyles(): void {}
 }
 
@@ -99,8 +104,13 @@ export class Plugin {
 
 export class PluginSettingTab {
   protected readonly containerEl = new MockElement();
+  protected readonly app: unknown;
+  protected readonly plugin: unknown;
 
-  constructor(_app: unknown, _plugin: unknown) {}
+  constructor(app: unknown, plugin: unknown) {
+    this.app = app;
+    this.plugin = plugin;
+  }
 }
 
 export const Platform = {
@@ -141,6 +151,8 @@ export async function requestUrl(): Promise<{
 }
 
 export class Setting {
+  settingEl = new MockElement();
+
   constructor(_containerEl: unknown) {}
 
   setName(): this {
@@ -194,6 +206,22 @@ export class Setting {
   }
 
   addText(callback: (text: {
+    inputEl: MockElement;
+    setPlaceholder: (value: string) => unknown;
+    setValue: (value: string) => unknown;
+    onChange: (handler: (value: string) => unknown) => unknown;
+  }) => unknown): this {
+    const text = {
+      inputEl: new MockElement(),
+      setPlaceholder: () => text,
+      setValue: () => text,
+      onChange: () => text
+    };
+    callback(text);
+    return this;
+  }
+
+  addTextArea(callback: (text: {
     inputEl: MockElement;
     setPlaceholder: (value: string) => unknown;
     setValue: (value: string) => unknown;
