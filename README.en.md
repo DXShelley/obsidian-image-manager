@@ -9,7 +9,7 @@
 
 `Note Image Manager` is an image-management plugin for Obsidian. It keeps image import, naming, conversion, compression, lightweight editing, gallery browsing, and recovery in one controlled workflow.
 
-Current version: `4.0.4`<br>
+Current version: `4.0.5`<br>
 Minimum Obsidian version: `1.13.1`<br>
 Release target: desktop plugin, with `isDesktopOnly` set to `true` in `manifest.json`
 
@@ -37,6 +37,12 @@ After marketplace approval, install it from **Settings -> Community plugins** by
 2. Download `manifest.json`, `main.js`, and `styles.css` for the target version, or download `note-image-manager.zip`.
 3. Place the files in your vault under `.obsidian/plugins/note-image-manager/`.
 4. Enable **Note Image Manager** in **Settings -> Community plugins**.
+
+## Support The Project
+
+If `Note Image Manager` saves you time managing images, you can support ongoing maintenance through WeChat Pay or Alipay:
+
+[Support with WeChat Pay / Alipay](https://dxshelley.github.io/obsidian-image-manager/#support)
 
 ## Documentation
 

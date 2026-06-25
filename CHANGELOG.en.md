@@ -2,6 +2,12 @@
 
 # Changelog
 
+## 4.0.5
+
+- Added `fundingUrl` to the plugin `manifest.json`, pointing to the project support page so Obsidian can expose a support entry.
+- Added a website support section with WeChat Pay, WeChat reward code, and Alipay QR codes, plus matching README and GitHub Funding configuration.
+- Replaced the support-page QR assets with square PNG versions so they render cleanly in the website cards.
+
 ## 4.0.4
 
 - Fixed settings-page rendering on older Obsidian builds where `ButtonComponent.setDestructive()` is unavailable; the reset button now falls back to `setWarning()` or the `mod-warning` class.

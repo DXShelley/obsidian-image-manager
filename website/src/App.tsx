@@ -15,6 +15,21 @@ function App(): JSX.Element {
     }
   }, [locale, siteConfig.meta.description, siteConfig.meta.title]);
 
+  useEffect(() => {
+    const targetId = window.location.hash.slice(1);
+    if (!targetId) {
+      return undefined;
+    }
+
+    const animationFrame = window.requestAnimationFrame(() => {
+      document.getElementById(targetId)?.scrollIntoView();
+    });
+
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+    };
+  }, [locale]);
+
   return (
     <div className="page-shell">
       <div className="ambient ambient-left" aria-hidden="true" />
@@ -208,6 +223,28 @@ function App(): JSX.Element {
               <pre>
                 <code>{siteConfig.install.snippet.join('\n')}</code>
               </pre>
+            </div>
+          </div>
+        </section>
+
+        <section className="section support-section" id="support">
+          <div className="support-panel reveal">
+            <div className="support-copy">
+              <p className="eyebrow">{siteConfig.sections.support.eyebrow}</p>
+              <h2>{siteConfig.support.title}</h2>
+              <p>{siteConfig.support.body}</p>
+            </div>
+
+            <div className="support-grid" aria-label={siteConfig.sections.support.eyebrow}>
+              {siteConfig.support.methods.map((item, index) => (
+                <article className={`support-card reveal reveal-delay-${(index % 3) + 1}`} key={item.title}>
+                  <div className="support-image-frame">
+                    <img src={item.image} alt={item.alt} loading="lazy" />
+                  </div>
+                  <h3>{item.title}</h3>
+                  <p>{item.description}</p>
+                </article>
+              ))}
             </div>
           </div>
         </section>

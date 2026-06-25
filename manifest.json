@@ -1,9 +1,10 @@
 {
   "id": "note-image-manager",
   "name": "Note Image Manager",
-  "version": "4.0.4",
+  "version": "4.0.5",
   "minAppVersion": "1.13.1",
   "description": "Import, rename, convert, compress, edit, and recover note images safely.",
   "author": "DXShelley",
+  "fundingUrl": "https://dxshelley.github.io/obsidian-image-manager/#support",
   "isDesktopOnly": true
 }

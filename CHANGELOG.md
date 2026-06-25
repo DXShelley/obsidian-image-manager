@@ -2,6 +2,12 @@
 
 # 更新日志
 
+## 4.0.5
+
+- 在插件 `manifest.json` 中新增 `fundingUrl`，指向项目支持页面，让 Obsidian 社区目录可展示支持入口。
+- 新增网站“支持项目”区域，展示微信支付、微信赞赏码和支付宝二维码，并同步 README 与 GitHub Funding 配置。
+- 将支持页面二维码替换为正方形 PNG 版本，便于在网站卡片中完整展示。
+
 ## 4.0.4
 
 - 修复旧版 Obsidian 中 `ButtonComponent.setDestructive()` 不存在时设置页渲染中断的问题，重置按钮会自动回退到 `setWarning()` 或 `mod-warning` 样式。

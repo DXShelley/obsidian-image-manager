@@ -9,7 +9,7 @@
 
 `Note Image Manager` 是一个面向 Obsidian 的图片管理插件，用于把笔记图片的导入、命名、转换、压缩、轻量编辑、画廊浏览和恢复回退收敛到一条可控流程。
 
-当前版本：`4.0.4`<br>
+当前版本：`4.0.5`<br>
 最低 Obsidian 版本：`1.13.1`<br>
 发布形态：桌面端插件，`manifest.json` 中 `isDesktopOnly` 为 `true`
 
@@ -37,6 +37,12 @@
 2. 下载对应版本的 `manifest.json`、`main.js`、`styles.css`，或下载 `note-image-manager.zip`。
 3. 将文件放入你的 vault：`.obsidian/plugins/note-image-manager/`。
 4. 在 **Settings -> Community plugins** 中启用 **Note Image Manager**。
+
+## 支持项目
+
+如果 `Note Image Manager` 节省了你的图片整理时间，可以通过微信或支付宝支持项目维护：
+
+[微信 / 支付宝支持项目](https://dxshelley.github.io/obsidian-image-manager/#support)
 
 ## 文档入口
 

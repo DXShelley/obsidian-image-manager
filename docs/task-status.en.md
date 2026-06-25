@@ -4,8 +4,8 @@
 
 ## Release
 
-- `v4.0.4` carries the previous release-review fixes and adds settings-page button API compatibility so older Obsidian builds do not stop rendering the settings page.
-- Package metadata, manifest metadata, release workflow, marketing site, and user-facing documentation are aligned for the 4.0.4 release.
+- `v4.0.5` builds on the previous release and adds the plugin support entry, with `manifest.json` now carrying a `fundingUrl` that points to the project support page.
+- Package metadata, manifest metadata, release workflow, marketing site, and user-facing documentation are aligned for the 4.0.5 release.
 
 ## Completed
 
