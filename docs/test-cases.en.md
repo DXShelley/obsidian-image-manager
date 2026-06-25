@@ -4,7 +4,7 @@
 
 ## Scope
 
-This document covers the currently delivered and partially delivered feature set of `obsidian-image-manager`.
+This document covers the currently delivered and partially delivered feature set of `note-image-manager`.
 
 Status mapping:
 
@@ -18,7 +18,7 @@ Status mapping:
 
 - Obsidian desktop
 - A test vault with community plugins enabled
-- Plugin build artifacts copied into `.obsidian/plugins/obsidian-image-manager/`
+- Plugin build artifacts copied into `.obsidian/plugins/note-image-manager/`
 - The current plugin version loaded and enabled
 
 ### Recommended Test Data
@@ -520,20 +520,19 @@ Status mapping:
   - The current note contains both `![A](assets/%E6%89%AF%E7%9A%AE/test.png)` and `![B](assets/扯皮/test.png)` style Chinese image paths
   - Both links resolve to actual image files inside the vault
 - Steps:
-  1. Run `Single file: update image links and directory`.
+  1. Run `【单文件】更新图片链接与目录`.
 - Expected:
   - Both links are processed with no partial misses
   - The final link style matches `markdownPathEncodingStrategy`
   - Images still render correctly
 
-#### TC-LINK-008 Auto-download External Images During Link And Directory Update
+#### TC-LINK-008 Current-note Command Imports External Images To Local
 
 - Status: `Implemented`
 - Preconditions:
-  - `enableAutoDownloadImagesFromText = true`
   - The current note contains `https://...png`, `file://...png`, and `data:image/png;base64,...` image links
 - Steps:
-  1. Run `Single file: update image links and directory`.
+  1. Run `【单文件】下载外部图片到本地`.
 - Expected:
   - External images are downloaded into the configured output folder
   - External Markdown links are replaced with vault-local image links
@@ -1139,6 +1138,21 @@ Status mapping:
   - Rendered image elements include `data-image-manager-path`
   - The note does not show one format correctly while the other stays blank
 
+#### TC-PREVIEW-003 Reading-view Context Menu Imports Only The Selected External Image
+
+- Status: `Implemented`
+- Preconditions:
+  - The current note contains at least 2 external images
+  - `enableContextMenu = true`
+- Steps:
+  1. Open the note in reading view
+  2. Right-click one rendered external image
+  3. Run `下载该外部图片到本地`
+- Expected:
+  - Only the selected external image is downloaded
+  - Only the matching image link in the current note is rewritten to a local link
+  - Other external image links remain unchanged
+
 ### 16. File Manager Service Edge Cases
 
 #### TC-FM-001 Supported Image Type Detection
@@ -1229,5 +1243,5 @@ Status mapping:
 - The settings page still renders on Obsidian builds without `Setting.setErrorMessage`.
 - Markdown preview rerenders after image rewrite operations.
 - Link updates, conversion, and preview remain consistent when a single note mixes encoded Chinese paths and readable Chinese paths.
-- `Update image links and directory` also downloads `URL`, `file://`, and `data:image/...;base64,...` sources when auto-download is enabled.
+- `Download external images to local` imports `URL`, `file://`, and `data:image/...;base64,...` sources and rewrites them as local links.
 - Clicking a gallery thumbnail does not open a blank lightbox preview.

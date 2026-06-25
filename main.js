@@ -341,6 +341,28 @@ function formatBatchCompressionNotice(options) {
   const direction = afterBytes <= beforeBytes ? "reduction" : "increase";
   return `Batch compression finished: ${fileCount} image(s), ${formatBytes(beforeBytes)} -> ${formatBytes(afterBytes)} (${ratio.toFixed(1)}% ${direction})`;
 }
+function formatBatchExternalImageImportNotice(options) {
+  const { items, importedLinks, downloadedImages, failedCount } = options;
+  if (items.length === 0) {
+    if (failedCount > 0) {
+      return `External image import finished: 0 file(s), ${failedCount} failed`;
+    }
+    return "No external image links found";
+  }
+  const previews = items.slice(0, 3).map((item) => `${item.notePath} (${item.replaced} link${item.replaced === 1 ? "" : "s"})`);
+  if (items.length > 3) {
+    previews.push(`+${items.length - 3} more`);
+  }
+  const extras = [];
+  if (downloadedImages > 0) {
+    extras.push(`downloaded ${downloadedImages} image(s)`);
+  }
+  if (failedCount > 0) {
+    extras.push(`${failedCount} failed`);
+  }
+  const suffix = extras.length > 0 ? `; ${extras.join(", ")}` : "";
+  return `External image import finished: ${items.length} file(s), ${importedLinks} link(s) updated: ${previews.join(", ")}${suffix}`;
+}
 function formatBatchConversionNotice(options) {
   return `Batch conversion finished: ${options.imageCount} image(s) -> ${options.targetFormat}`;
 }
@@ -466,8 +488,32 @@ var BatchFeature = class {
         });
       }
     });
+    const noteImportCommand = {
+      commandId: "a2-import-current-note-external-images",
+      commandName: "\u4E0B\u8F7D\u5916\u90E8\u56FE\u7247\u5230\u672C\u5730"
+    };
+    context.plugin.addCommand({
+      id: noteImportCommand.commandId,
+      name: noteImportCommand.commandName,
+      callback: () => {
+        void executeLoggedCommand(context, noteImportCommand, async () => {
+          await context.services.recovery.runTransaction(
+            {
+              label: "\u4E0B\u8F7D\u5F53\u524D\u7B14\u8BB0\u5916\u90E8\u56FE\u7247",
+              trigger: "batch",
+              scope: "single-note"
+            },
+            async () => {
+              await this.withActiveNoteFile(context, noteImportCommand, async (file) => {
+                await this.runExternalImageImportBatch(context, "current-note" /* CURRENT_NOTE */, file);
+              });
+            }
+          );
+        });
+      }
+    });
     const noteCleanupCommand = {
-      commandId: "a4-delete-current-note-extra-images",
+      commandId: "a5-delete-current-note-extra-images",
       commandName: "\u5220\u9664\u591A\u4F59\u56FE\u7247\u6587\u4EF6"
     };
     context.plugin.addCommand({
@@ -529,8 +575,40 @@ var BatchFeature = class {
         });
       }
     });
+    const folderImportCommand = {
+      commandId: "b2-import-current-folder-external-images",
+      commandName: "\u4E0B\u8F7D\u5916\u90E8\u56FE\u7247\u5230\u672C\u5730"
+    };
+    context.plugin.addCommand({
+      id: folderImportCommand.commandId,
+      name: folderImportCommand.commandName,
+      callback: () => {
+        void executeLoggedCommand(context, folderImportCommand, async () => {
+          var _a;
+          const folder = (_a = context.app.workspace.getActiveFile()) == null ? void 0 : _a.parent;
+          if (!folder) {
+            logSkippedCommand(context, {
+              ...folderImportCommand,
+              reason: "No active folder"
+            });
+            showOperationNotice(context.services.settings.getSettings(), "No active folder");
+            return;
+          }
+          await context.services.recovery.runTransaction(
+            {
+              label: `\u4E0B\u8F7D\u6587\u4EF6\u5939\u5916\u90E8\u56FE\u7247 ${folder.path || "vault root"}`,
+              trigger: "batch",
+              scope: "folder"
+            },
+            async () => {
+              await this.runExternalImageImportBatch(context, "folder" /* FOLDER */, folder);
+            }
+          );
+        });
+      }
+    });
     const folderCleanupCommand = {
-      commandId: "b4-delete-current-folder-extra-images",
+      commandId: "b5-delete-current-folder-extra-images",
       commandName: "\u5220\u9664\u591A\u4F59\u56FE\u7247\u6587\u4EF6"
     };
     context.plugin.addCommand({
@@ -586,8 +664,33 @@ var BatchFeature = class {
         });
       }
     });
+    const vaultImportCommand = {
+      commandId: "c2-import-vault-external-images",
+      commandName: "\u4E0B\u8F7D\u5916\u90E8\u56FE\u7247\u5230\u672C\u5730"
+    };
+    context.plugin.addCommand({
+      id: vaultImportCommand.commandId,
+      name: vaultImportCommand.commandName,
+      callback: () => {
+        void executeLoggedCommand(context, vaultImportCommand, async () => {
+          if (!await confirmVaultScopeOperation(context.app, "\u6574\u5E93\u5916\u90E8\u56FE\u7247\u4E0B\u8F7D")) {
+            return;
+          }
+          await context.services.recovery.runTransaction(
+            {
+              label: "\u4E0B\u8F7D\u6574\u4E2A\u4ED3\u5E93\u5916\u90E8\u56FE\u7247",
+              trigger: "batch",
+              scope: "vault"
+            },
+            async () => {
+              await this.runExternalImageImportBatch(context, "vault" /* VAULT */);
+            }
+          );
+        });
+      }
+    });
     const vaultCleanupCommand = {
-      commandId: "c4-delete-vault-extra-images",
+      commandId: "c5-delete-vault-extra-images",
       commandName: "\u5220\u9664\u591A\u4F59\u56FE\u7247\u6587\u4EF6"
     };
     context.plugin.addCommand({
@@ -702,6 +805,74 @@ var BatchFeature = class {
       new import_obsidian4.Notice(error instanceof Error ? error.message : "Batch link rewrite failed");
     }
   }
+  async runExternalImageImportBatch(context, scope, source) {
+    context.services.logger.refreshMode("batch-import-external-images");
+    if (this.hasActiveBatch(context)) {
+      showOperationNotice(context.services.settings.getSettings(), "An image batch job is already active");
+      return;
+    }
+    try {
+      const notes = this.resolveNotes(context, scope, source);
+      context.services.logger.debug("Starting external image import batch", {
+        scope,
+        sourcePath: source == null ? void 0 : source.path,
+        noteCount: notes.length
+      });
+      let importedLinks = 0;
+      let downloadedImages = 0;
+      const summaries = [];
+      const report = await context.services.batchProcessor.run({
+        id: `${scope}-import-external-images-${Date.now()}`,
+        scope,
+        operation: "import-external-images" /* IMPORT_EXTERNAL_IMAGES */,
+        tasks: notes.map((note) => ({
+          id: note.path,
+          label: note.path,
+          run: async () => {
+            const result = await context.services.fileManager.importExternalImageLinksInNote(note);
+            if (result.replaced > 0 || result.downloaded > 0) {
+              importedLinks += result.replaced;
+              downloadedImages += result.downloaded;
+              summaries.push({
+                notePath: note.path,
+                replaced: result.replaced,
+                downloaded: result.downloaded
+              });
+            }
+          }
+        }))
+      });
+      context.services.logger.debug("Completed external image import batch", {
+        scope,
+        sourcePath: source == null ? void 0 : source.path,
+        completed: report.completed,
+        failed: report.failed,
+        skipped: report.skipped,
+        status: report.status,
+        importedLinks,
+        downloadedImages
+      });
+      showOperationNotice(
+        context.services.settings.getSettings(),
+        formatBatchExternalImageImportNotice({
+          items: summaries.map((item) => ({
+            notePath: item.notePath,
+            replaced: item.replaced
+          })),
+          importedLinks,
+          downloadedImages,
+          failedCount: report.failed
+        })
+      );
+    } catch (error) {
+      console.error("Image Manager batch external image import failed", error);
+      context.services.logger.error("Batch external image import failed", error, {
+        scope,
+        sourcePath: source == null ? void 0 : source.path
+      });
+      new import_obsidian4.Notice(error instanceof Error ? error.message : "Batch external image import failed");
+    }
+  }
   async runOrphanCleanupBatch(context, scope, source) {
     var _a, _b, _c, _d;
     context.services.logger.refreshMode("batch-delete-extra-images");
@@ -772,6 +943,19 @@ var BatchFeature = class {
   hasActiveBatch(context) {
     const report = context.services.batchProcessor.getReport();
     return (report == null ? void 0 : report.status) === "running" /* RUNNING */ || (report == null ? void 0 : report.status) === "paused" /* PAUSED */;
+  }
+  async withActiveNoteFile(context, command, callback) {
+    const view = context.app.workspace.getActiveViewOfType(import_obsidian4.MarkdownView);
+    const file = view == null ? void 0 : view.file;
+    if (!(file instanceof import_obsidian4.TFile) || file.extension.toLowerCase() !== "md") {
+      logSkippedCommand(context, {
+        ...command,
+        reason: "No active note file"
+      });
+      showOperationNotice(context.services.settings.getSettings(), "Open a note file first");
+      return;
+    }
+    await callback(file);
   }
 };
 
@@ -952,7 +1136,7 @@ var CompressFeature = class {
   }
   async register(context) {
     const activeCommand = {
-      commandId: "a3-compress-active-image",
+      commandId: "a4-compress-active-image",
       commandName: "\u3010\u5355\u6587\u4EF6\u3011\u538B\u7F29\u56FE\u7247"
     };
     context.plugin.addCommand({
@@ -976,7 +1160,7 @@ var CompressFeature = class {
       }
     });
     const folderCommand = {
-      commandId: "b3-compress-current-folder-images",
+      commandId: "b4-compress-current-folder-images",
       commandName: "\u3010\u5355\u6587\u4EF6\u5939\u3011\u538B\u7F29\u56FE\u7247"
     };
     context.plugin.addCommand({
@@ -1008,7 +1192,7 @@ var CompressFeature = class {
       }
     });
     const vaultCommand = {
-      commandId: "c3-compress-vault-images",
+      commandId: "c4-compress-vault-images",
       commandName: "\u3010\u6574\u5E93\u3011\u538B\u7F29\u56FE\u7247"
     };
     context.plugin.addCommand({
@@ -2281,7 +2465,7 @@ var ConvertFeature = class {
   }
   async register(context) {
     const activeCommand = {
-      commandId: "a2-convert-active-image-to-default-format",
+      commandId: "a3-convert-active-image-to-default-format",
       commandName: "\u8F6C\u6362\u56FE\u7247\u4E3A\u9ED8\u8BA4\u683C\u5F0F"
     };
     context.plugin.addCommand({
@@ -2305,7 +2489,7 @@ var ConvertFeature = class {
       }
     });
     const folderCommand = {
-      commandId: "b2-convert-current-folder-images-to-default-format",
+      commandId: "b3-convert-current-folder-images-to-default-format",
       commandName: "\u8F6C\u6362\u56FE\u7247\u4E3A\u9ED8\u8BA4\u683C\u5F0F"
     };
     context.plugin.addCommand({
@@ -2337,7 +2521,7 @@ var ConvertFeature = class {
       }
     });
     const vaultCommand = {
-      commandId: "c2-convert-vault-images-to-default-format",
+      commandId: "c3-convert-vault-images-to-default-format",
       commandName: "\u8F6C\u6362\u56FE\u7247\u4E3A\u9ED8\u8BA4\u683C\u5F0F"
     };
     context.plugin.addCommand({
@@ -2682,6 +2866,161 @@ function decodeLinkPathSafely(path) {
   }
 }
 
+// src/utils/pasted-image-source.ts
+var import_promises = require("fs/promises");
+var import_path = require("path");
+var import_url = require("url");
+var IMAGE_FILE_EXTENSION_REGEX = /\.(png|jpe?g|gif|webp|bmp|svg|tiff?|heic)$/i;
+var DATA_IMAGE_URL_REGEX = /^data:(image\/[a-z0-9.+-]+);base64,([a-z0-9+/=\s]+)$/i;
+function parseTextImageSources(text) {
+  const candidates = text.split(/\r?\n/).map((line) => line.trim()).filter((line) => line.length > 0);
+  if (candidates.length === 0) {
+    return [];
+  }
+  const sources = candidates.map((line) => parseSingleTextImageSource(line));
+  if (sources.some((source) => source === null)) {
+    return [];
+  }
+  return sources.filter((source) => source !== null);
+}
+async function resolveTextImageSource(source) {
+  switch (source.kind) {
+    case "remote":
+      return resolveRemoteImageSource(source);
+    case "file":
+      return resolveFileImageSource(source);
+    case "data":
+      return resolveDataImageSource(source);
+  }
+}
+function parseSingleTextImageSource(value) {
+  const dataSource = parseDataImageSource(value);
+  if (dataSource !== null) {
+    return dataSource;
+  }
+  if (/^file:\/\//i.test(value)) {
+    try {
+      const filePath = (0, import_url.fileURLToPath)(value);
+      const name = (0, import_path.basename)(filePath);
+      if (!IMAGE_FILE_EXTENSION_REGEX.test(name)) {
+        return null;
+      }
+      return {
+        kind: "file",
+        value,
+        originalName: name
+      };
+    } catch (e) {
+      return null;
+    }
+  }
+  if (/^https?:\/\//i.test(value)) {
+    try {
+      const url = new URL(value);
+      const name = decodeURIComponent((0, import_path.basename)(url.pathname));
+      if (!name || !IMAGE_FILE_EXTENSION_REGEX.test(name)) {
+        return null;
+      }
+      return {
+        kind: "remote",
+        value,
+        originalName: name
+      };
+    } catch (e) {
+      return null;
+    }
+  }
+  return null;
+}
+function parseDataImageSource(value) {
+  var _a;
+  const matched = value.match(DATA_IMAGE_URL_REGEX);
+  if (!matched) {
+    return null;
+  }
+  const mimeType = (_a = matched[1]) == null ? void 0 : _a.toLowerCase();
+  if (!mimeType) {
+    return null;
+  }
+  const extension = mimeTypeToExtension(mimeType);
+  return {
+    kind: "data",
+    value,
+    originalName: `pasted-image.${extension}`,
+    mimeType
+  };
+}
+async function resolveRemoteImageSource(source) {
+  var _a;
+  const response = await fetch(source.value);
+  if (!response.ok) {
+    throw new Error(`Failed to download image: ${response.status}`);
+  }
+  const mimeType = ((_a = response.headers.get("content-type")) != null ? _a : "").toLowerCase();
+  if (!mimeType.startsWith("image/")) {
+    throw new Error(`Remote URL is not an image: ${mimeType || "unknown content-type"}`);
+  }
+  return {
+    data: await response.arrayBuffer(),
+    originalName: ensureFileNameExtension(source.originalName, mimeType)
+  };
+}
+async function resolveFileImageSource(source) {
+  const buffer = await (0, import_promises.readFile)((0, import_url.fileURLToPath)(source.value));
+  return {
+    data: toArrayBuffer(buffer),
+    originalName: source.originalName
+  };
+}
+async function resolveDataImageSource(source) {
+  var _a;
+  const matched = source.value.match(DATA_IMAGE_URL_REGEX);
+  if (!matched) {
+    throw new Error("Invalid base64 image data URL");
+  }
+  return {
+    data: decodeBase64ToArrayBuffer((_a = matched[2]) != null ? _a : ""),
+    originalName: source.originalName
+  };
+}
+function ensureFileNameExtension(fileName, mimeType) {
+  if ((0, import_path.extname)(fileName)) {
+    return fileName;
+  }
+  return `${fileName}.${mimeTypeToExtension(mimeType)}`;
+}
+function mimeTypeToExtension(mimeType) {
+  switch (mimeType.toLowerCase()) {
+    case "image/jpeg":
+      return "jpg";
+    case "image/png":
+      return "png";
+    case "image/webp":
+      return "webp";
+    case "image/gif":
+      return "gif";
+    case "image/bmp":
+      return "bmp";
+    case "image/svg+xml":
+      return "svg";
+    case "image/tif":
+    case "image/tiff":
+      return "tiff";
+    case "image/heic":
+      return "heic";
+    default:
+      return "png";
+  }
+}
+function decodeBase64ToArrayBuffer(value) {
+  const sanitized = value.replace(/\s+/g, "");
+  const decoded = Buffer.from(sanitized, "base64");
+  return toArrayBuffer(decoded);
+}
+function toArrayBuffer(buffer) {
+  return buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+}
+
 // src/features/preview/preview-feature.ts
 var PreviewFeature = class {
   constructor() {
@@ -2695,8 +3034,10 @@ var PreviewFeature = class {
       for (const image of element.querySelectorAll("img")) {
         image.addClass("image-manager-managed");
         this.applyPreviewSettings(context, image);
+        const sourceNote = this.resolveSourceNote(context, markdownContext);
         const target = this.resolveLinkedImageFile(context, markdownContext, image);
         if (!(target instanceof import_obsidian14.TFile) || !context.services.fileManager.isImageFile(target)) {
+          this.registerExternalImageContextMenu(context, element, markdownContext, image, sourceNote);
           continue;
         }
         image.setAttribute("src", this.buildFreshResourcePath(context, target));
@@ -2708,9 +3049,65 @@ var PreviewFeature = class {
           }
           event.preventDefault();
           event.stopPropagation();
-          void openSingleImageGallery(context, target, this.resolveSourceNote(context, markdownContext));
+          void openSingleImageGallery(context, target, sourceNote);
         });
       }
+    });
+  }
+  registerExternalImageContextMenu(context, sectionElement, markdownContext, image, sourceNote) {
+    const externalSource = this.getImportableExternalImageSource(image);
+    if (!externalSource || !sourceNote) {
+      return;
+    }
+    image.addEventListener("contextmenu", (event) => {
+      if (!context.services.settings.getSettings().enableContextMenu) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      const menu = new import_obsidian14.Menu();
+      menu.addItem((item) => {
+        item.setTitle("\u4E0B\u8F7D\u8BE5\u5916\u90E8\u56FE\u7247\u5230\u672C\u5730").setIcon("download").onClick(() => {
+          context.services.logger.refreshMode("preview-import-external-image");
+          void context.services.recovery.runTransaction(
+            {
+              label: `\u53F3\u952E\u4E0B\u8F7D\u5916\u90E8\u56FE\u7247 ${sourceNote.basename}`,
+              trigger: "context-menu",
+              scope: "single-note"
+            },
+            async () => {
+              var _a;
+              const sectionInfo = (_a = markdownContext.getSectionInfo) == null ? void 0 : _a.call(markdownContext, image);
+              const occurrence = this.getExternalImageOccurrenceInSection(sectionElement, image, externalSource);
+              const location = sectionInfo || occurrence > 1 ? {
+                lineStart: sectionInfo == null ? void 0 : sectionInfo.lineStart,
+                lineEnd: sectionInfo == null ? void 0 : sectionInfo.lineEnd,
+                occurrence
+              } : void 0;
+              const result = location ? await context.services.fileManager.importExternalImageLinkInNoteBySource(
+                sourceNote,
+                externalSource,
+                location
+              ) : await context.services.fileManager.importExternalImageLinkInNoteBySource(
+                sourceNote,
+                externalSource
+              );
+              if (result.replaced === 0 && result.downloaded === 0) {
+                showOperationNotice(
+                  context.services.settings.getSettings(),
+                  "No matching external image link found in the note"
+                );
+                return;
+              }
+              showOperationNotice(
+                context.services.settings.getSettings(),
+                `External image import finished: ${result.replaced} link(s) updated, downloaded ${result.downloaded} image(s)`
+              );
+            }
+          );
+        });
+      });
+      menu.showAtMouseEvent(event);
     });
   }
   resolveLinkedImageFile(context, markdownContext, image) {
@@ -2761,6 +3158,28 @@ var PreviewFeature = class {
   resolveSourceNote(context, markdownContext) {
     const abstract = context.app.vault.getAbstractFileByPath(markdownContext.sourcePath);
     return abstract instanceof import_obsidian14.TFile && abstract.extension.toLowerCase() === "md" ? abstract : null;
+  }
+  getImportableExternalImageSource(image) {
+    var _a;
+    const rawSource = (_a = image.getAttribute("src")) == null ? void 0 : _a.trim();
+    if (!rawSource) {
+      return null;
+    }
+    const sources = parseTextImageSources(rawSource);
+    const [source] = sources;
+    return sources.length === 1 && source ? source.value : null;
+  }
+  getExternalImageOccurrenceInSection(sectionElement, targetImage, externalSource) {
+    let occurrence = 0;
+    for (const image of sectionElement.querySelectorAll("img")) {
+      if (this.getImportableExternalImageSource(image) === externalSource) {
+        occurrence += 1;
+      }
+      if (image === targetImage) {
+        return Math.max(occurrence, 1);
+      }
+    }
+    return 1;
   }
 };
 
@@ -3861,163 +4280,6 @@ var RecoveryManager = class {
 
 // src/services/file-manager/index.ts
 var import_obsidian20 = require("obsidian");
-
-// src/utils/pasted-image-source.ts
-var import_promises = require("fs/promises");
-var import_path = require("path");
-var import_url = require("url");
-var IMAGE_FILE_EXTENSION_REGEX = /\.(png|jpe?g|gif|webp|bmp|svg|tiff?|heic)$/i;
-var DATA_IMAGE_URL_REGEX = /^data:(image\/[a-z0-9.+-]+);base64,([a-z0-9+/=\s]+)$/i;
-function parseTextImageSources(text) {
-  const candidates = text.split(/\r?\n/).map((line) => line.trim()).filter((line) => line.length > 0);
-  if (candidates.length === 0) {
-    return [];
-  }
-  const sources = candidates.map((line) => parseSingleTextImageSource(line));
-  if (sources.some((source) => source === null)) {
-    return [];
-  }
-  return sources.filter((source) => source !== null);
-}
-async function resolveTextImageSource(source) {
-  switch (source.kind) {
-    case "remote":
-      return resolveRemoteImageSource(source);
-    case "file":
-      return resolveFileImageSource(source);
-    case "data":
-      return resolveDataImageSource(source);
-  }
-}
-function parseSingleTextImageSource(value) {
-  const dataSource = parseDataImageSource(value);
-  if (dataSource !== null) {
-    return dataSource;
-  }
-  if (/^file:\/\//i.test(value)) {
-    try {
-      const filePath = (0, import_url.fileURLToPath)(value);
-      const name = (0, import_path.basename)(filePath);
-      if (!IMAGE_FILE_EXTENSION_REGEX.test(name)) {
-        return null;
-      }
-      return {
-        kind: "file",
-        value,
-        originalName: name
-      };
-    } catch (e) {
-      return null;
-    }
-  }
-  if (/^https?:\/\//i.test(value)) {
-    try {
-      const url = new URL(value);
-      const name = decodeURIComponent((0, import_path.basename)(url.pathname));
-      if (!name || !IMAGE_FILE_EXTENSION_REGEX.test(name)) {
-        return null;
-      }
-      return {
-        kind: "remote",
-        value,
-        originalName: name
-      };
-    } catch (e) {
-      return null;
-    }
-  }
-  return null;
-}
-function parseDataImageSource(value) {
-  var _a;
-  const matched = value.match(DATA_IMAGE_URL_REGEX);
-  if (!matched) {
-    return null;
-  }
-  const mimeType = (_a = matched[1]) == null ? void 0 : _a.toLowerCase();
-  if (!mimeType) {
-    return null;
-  }
-  const extension = mimeTypeToExtension(mimeType);
-  return {
-    kind: "data",
-    value,
-    originalName: `pasted-image.${extension}`,
-    mimeType
-  };
-}
-async function resolveRemoteImageSource(source) {
-  var _a;
-  const response = await fetch(source.value);
-  if (!response.ok) {
-    throw new Error(`Failed to download image: ${response.status}`);
-  }
-  const mimeType = ((_a = response.headers.get("content-type")) != null ? _a : "").toLowerCase();
-  if (!mimeType.startsWith("image/")) {
-    throw new Error(`Remote URL is not an image: ${mimeType || "unknown content-type"}`);
-  }
-  return {
-    data: await response.arrayBuffer(),
-    originalName: ensureFileNameExtension(source.originalName, mimeType)
-  };
-}
-async function resolveFileImageSource(source) {
-  const buffer = await (0, import_promises.readFile)((0, import_url.fileURLToPath)(source.value));
-  return {
-    data: toArrayBuffer(buffer),
-    originalName: source.originalName
-  };
-}
-async function resolveDataImageSource(source) {
-  var _a;
-  const matched = source.value.match(DATA_IMAGE_URL_REGEX);
-  if (!matched) {
-    throw new Error("Invalid base64 image data URL");
-  }
-  return {
-    data: decodeBase64ToArrayBuffer((_a = matched[2]) != null ? _a : ""),
-    originalName: source.originalName
-  };
-}
-function ensureFileNameExtension(fileName, mimeType) {
-  if ((0, import_path.extname)(fileName)) {
-    return fileName;
-  }
-  return `${fileName}.${mimeTypeToExtension(mimeType)}`;
-}
-function mimeTypeToExtension(mimeType) {
-  switch (mimeType.toLowerCase()) {
-    case "image/jpeg":
-      return "jpg";
-    case "image/png":
-      return "png";
-    case "image/webp":
-      return "webp";
-    case "image/gif":
-      return "gif";
-    case "image/bmp":
-      return "bmp";
-    case "image/svg+xml":
-      return "svg";
-    case "image/tif":
-    case "image/tiff":
-      return "tiff";
-    case "image/heic":
-      return "heic";
-    default:
-      return "png";
-  }
-}
-function decodeBase64ToArrayBuffer(value) {
-  const sanitized = value.replace(/\s+/g, "");
-  const decoded = Buffer.from(sanitized, "base64");
-  return toArrayBuffer(decoded);
-}
-function toArrayBuffer(buffer) {
-  return buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
-}
-
-// src/services/file-manager/index.ts
 var IMAGE_EXTENSIONS = /* @__PURE__ */ new Set(["png", "jpg", "jpeg", "gif", "webp", "bmp", "svg", "tif", "tiff", "heic"]);
 var FileManager = class {
   constructor(app, getSettings, variableResolver, linkFormatter) {
@@ -4179,8 +4441,7 @@ var FileManager = class {
     var _a, _b, _c;
     await ((_a = this.recoveryManager) == null ? void 0 : _a.captureTextSnapshot(noteFile.path));
     const content = await this.app.vault.read(noteFile);
-    const imported = this.getSettings().enableAutoDownloadImagesFromText ? await this.downloadAndRewriteExternalImageLinks(content, noteFile) : { content, replaced: 0, downloaded: 0 };
-    const normalized = this.rewriteLinksForCurrentSettings(imported.content, noteFile, noteFile.path);
+    const normalized = this.rewriteLinksForCurrentSettings(content, noteFile, noteFile.path);
     const movePlans = await this.createManagedPlacementPlan(noteFile, allowedNotePaths);
     const movedResult = this.rewriteLinksForMoves(normalized.content, noteFile, noteFile.path, movePlans, {
       preserveOriginalFormat: false
@@ -4201,11 +4462,57 @@ var FileManager = class {
     }
     const cleanupResult = this.getSettings().deleteOrphanImages ? await this.deleteOrphanImagesForNote(noteFile, allowedNotePaths) : { deletedImages: 0, deletedFolders: 0, relocatedImages: 0, preservedImages: 0 };
     return {
-      replaced: imported.replaced + normalized.replaced + movedResult.replaced,
-      downloaded: imported.downloaded,
+      replaced: normalized.replaced + movedResult.replaced,
+      downloaded: 0,
       moved: movePlans.filter((move) => move.oldPath !== move.newPath).length,
       deleted: cleanupResult.deletedImages,
       foldersDeleted: cleanupResult.deletedFolders
+    };
+  }
+  async importExternalImageLinksInNote(noteFile) {
+    var _a;
+    await ((_a = this.recoveryManager) == null ? void 0 : _a.captureTextSnapshot(noteFile.path));
+    const content = await this.app.vault.read(noteFile);
+    const imported = await this.importExternalImageLinks(content, noteFile);
+    if (imported.content !== content) {
+      await this.app.vault.modify(noteFile, imported.content);
+    }
+    return {
+      replaced: imported.replaced,
+      downloaded: imported.downloaded
+    };
+  }
+  async importExternalImageLinkInNoteBySource(noteFile, sourceTarget, location = {}) {
+    var _a, _b;
+    await ((_a = this.recoveryManager) == null ? void 0 : _a.captureTextSnapshot(noteFile.path));
+    const content = await this.app.vault.read(noteFile);
+    const normalizedTarget = this.normalizeExternalImageSourceValue(sourceTarget);
+    if (!normalizedTarget) {
+      return {
+        replaced: 0,
+        downloaded: 0
+      };
+    }
+    const sectionRange = this.getLineRangeOffsets(content, location.lineStart, location.lineEnd);
+    const targetOccurrence = (_b = location.occurrence) != null ? _b : 1;
+    let matchedCount = 0;
+    const imported = await this.importExternalImageLinks(content, noteFile, ({ source, index }) => {
+      const normalizedSource = this.normalizeExternalImageSourceValue(source.value);
+      if (normalizedSource !== normalizedTarget) {
+        return false;
+      }
+      if (sectionRange && (index < sectionRange.startOffset || index > sectionRange.endOffset)) {
+        return false;
+      }
+      matchedCount += 1;
+      return matchedCount === targetOccurrence;
+    });
+    if (imported.content !== content) {
+      await this.app.vault.modify(noteFile, imported.content);
+    }
+    return {
+      replaced: imported.replaced,
+      downloaded: imported.downloaded
     };
   }
   generateFileName(originalName, noteFile, extensionOverride) {
@@ -4312,7 +4619,7 @@ var FileManager = class {
       await this.app.vault.modify(noteFile, updated);
     }
   }
-  async downloadAndRewriteExternalImageLinks(content, noteFile) {
+  async importExternalImageLinks(content, noteFile, filter) {
     var _a, _b;
     const imageLinkRegex = /!\[\[[^\]]+\]\]|!\[[^\]]*]\(((?:<[^>]+>|[^)])+)\)/g;
     const replacements = [];
@@ -4330,6 +4637,15 @@ var FileManager = class {
       const rawTarget = (_b = (_a = parsed == null ? void 0 : parsed.rawPath) != null ? _a : parsed == null ? void 0 : parsed.path) != null ? _b : "";
       const source = this.parseExternalImageSource(rawTarget);
       if (!parsed || !source) {
+        continue;
+      }
+      if (filter && !filter({
+        fullMatch,
+        index,
+        parsed,
+        rawTarget,
+        source
+      })) {
         continue;
       }
       try {
@@ -4677,6 +4993,47 @@ var FileManager = class {
   parseExternalImageSource(rawTarget) {
     const sources = parseTextImageSources(rawTarget);
     return sources.length === 1 ? sources[0] : null;
+  }
+  normalizeExternalImageSourceValue(value) {
+    const source = this.parseExternalImageSource(value);
+    if (!source) {
+      return null;
+    }
+    switch (source.kind) {
+      case "remote":
+      case "file":
+        try {
+          return new URL(source.value).toString();
+        } catch (e) {
+          return source.value.trim();
+        }
+      case "data":
+        return source.value.replace(/\s+/g, "");
+      default:
+        return source.value.trim();
+    }
+  }
+  getLineRangeOffsets(content, lineStart, lineEnd) {
+    if (lineStart === void 0 || lineEnd === void 0) {
+      return null;
+    }
+    const lineOffsets = [0];
+    for (let index = 0; index < content.length; index += 1) {
+      if (content[index] === "\n") {
+        lineOffsets.push(index + 1);
+      }
+    }
+    const normalizedLineStart = Math.max(0, lineStart);
+    const normalizedLineEnd = Math.max(normalizedLineStart, lineEnd);
+    const startOffset = lineOffsets[normalizedLineStart];
+    if (startOffset === void 0) {
+      return null;
+    }
+    const nextLineOffset = lineOffsets[normalizedLineEnd + 1];
+    return {
+      startOffset,
+      endOffset: nextLineOffset !== void 0 ? Math.max(startOffset, nextLineOffset - 1) : content.length
+    };
   }
   resolveLinkedImageFile(parsed, sourcePath) {
     if (!parsed) {
@@ -5341,11 +5698,11 @@ var VariableResolver = class {
 function createPluginServices(app, settingsManager) {
   const eventBus = new EventBus();
   const logger = new DebugLogger(app);
-  const compressionTracker = new CompressionTracker(app, "obsidian-image-manager");
+  const compressionTracker = new CompressionTracker(app, "note-image-manager");
   const variableResolver = new VariableResolver();
   const linkFormatter = new LinkFormatter(app);
   const fileManager = new FileManager(app, () => settingsManager.getSettings(), variableResolver, linkFormatter);
-  const recovery = new RecoveryManager(app, "obsidian-image-manager", fileManager);
+  const recovery = new RecoveryManager(app, "note-image-manager", fileManager);
   fileManager.setRecoveryManager(recovery);
   return {
     settings: settingsManager,

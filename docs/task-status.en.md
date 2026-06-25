@@ -4,8 +4,8 @@
 
 ## Release
 
-- `v3.1.0` brings bilingual settings, a reorganized planned-feature story, revised website copy, and explicit project philosophy into the formal release scope.
-- Package metadata, manifest metadata, release workflow, marketing site, and user-facing documentation are aligned for the 3.1.0 release.
+- `v3.1.1` adds the final README / Release / Pages alignment before first community submission, closes the single-image external import entry, and moves the release path to exact version tags without a `v` prefix.
+- Package metadata, manifest metadata, release workflow, marketing site, and user-facing documentation are aligned for the 3.1.1 release.
 
 ## Completed
 
@@ -29,6 +29,8 @@
 - Default rendered-image alignment, plus an option to suppress Obsidian image selection on click
 - Auto-rename toggle that preserves original file names when disabled
 - Auto-download support for pasted image text sources, including image URLs, `file://` paths, and `data:image/...;base64,...`
+- Command-palette external-image import for current note, current folder, and whole-vault scopes
+- Reading-view right-click import that pulls in only the selected external image
 - Persisted recovery transactions for image rewrites, path moves, note-link rewrites, and paste / import flows
 
 ## Partially Completed

@@ -21,11 +21,11 @@ import type {
 export function createPluginServices(app: App, settingsManager: SettingsManager): ImageManagerServices {
   const eventBus = new EventBus<ImageManagerEventMap>();
   const logger = new DebugLogger(app);
-  const compressionTracker = new CompressionTracker(app, 'obsidian-image-manager');
+  const compressionTracker = new CompressionTracker(app, 'note-image-manager');
   const variableResolver = new VariableResolver();
   const linkFormatter = new LinkFormatter(app);
   const fileManager = new FileManager(app, () => settingsManager.getSettings(), variableResolver, linkFormatter);
-  const recovery = new RecoveryManager(app, 'obsidian-image-manager', fileManager);
+  const recovery = new RecoveryManager(app, 'note-image-manager', fileManager);
   fileManager.setRecoveryManager(recovery);
 
   return {

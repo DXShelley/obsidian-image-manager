@@ -16,8 +16,9 @@ This directory uses a bilingual layout:
 4. [Variable Reference](variables.en.md)
 5. [Test Cases](test-cases.en.md)
 6. [Task Status](task-status.en.md)
-7. [TypeScript Guide](typescript-guide.en.md)
-8. [Archived User Prompts](user-prompts.en.md)
+7. [Release Checklist](release-checklist.en.md)
+8. [TypeScript Guide](typescript-guide.en.md)
+9. [Archived User Prompts](user-prompts.en.md)
 
 ## Document Descriptions
 
@@ -27,6 +28,7 @@ This directory uses a bilingual layout:
 - [Variable Reference](variables.en.md): supported variables for naming and path templates.
 - [Test Cases](test-cases.en.md): validation matrix, execution rules, and regression checklist for the current release.
 - [Task Status](task-status.en.md): completed, partial, and deferred items for the current version.
+- [Release Checklist](release-checklist.en.md): final checks for first submission through `community.obsidian.md` and later GitHub Releases.
 - [TypeScript Guide](typescript-guide.en.md): type-check commands and type conventions.
 - [Archived User Prompts](user-prompts.en.md): preserved user prompts from the visible project session.
 

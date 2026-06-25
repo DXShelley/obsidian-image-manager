@@ -15,7 +15,7 @@ import {
   resolveNoteScopedPath
 } from '@/utils/image-manager';
 import { getParsedLinkResolutionCandidates } from '@/utils/link-resolution';
-import { parseTextImageSources, resolveTextImageSource } from '@/utils/pasted-image-source';
+import { parseTextImageSources, resolveTextImageSource, type TextImageSource } from '@/utils/pasted-image-source';
 
 const IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg', 'tif', 'tiff', 'heic']);
 
@@ -41,6 +41,17 @@ interface NoteImageNormalizationResult {
   downloaded: number;
   deleted: number;
   foldersDeleted: number;
+}
+
+interface NoteExternalImageImportResult {
+  replaced: number;
+  downloaded: number;
+}
+
+interface ExternalImageImportLocation {
+  readonly lineStart?: number;
+  readonly lineEnd?: number;
+  readonly occurrence?: number;
 }
 
 interface ResolvedLinkedImageFile {
@@ -243,10 +254,7 @@ export class FileManager {
   ): Promise<NoteImageNormalizationResult> {
     await this.recoveryManager?.captureTextSnapshot(noteFile.path);
     const content = await this.app.vault.read(noteFile);
-    const imported = this.getSettings().enableAutoDownloadImagesFromText
-      ? await this.downloadAndRewriteExternalImageLinks(content, noteFile)
-      : { content, replaced: 0, downloaded: 0 };
-    const normalized = this.rewriteLinksForCurrentSettings(imported.content, noteFile, noteFile.path);
+    const normalized = this.rewriteLinksForCurrentSettings(content, noteFile, noteFile.path);
     const movePlans = await this.createManagedPlacementPlan(noteFile, allowedNotePaths);
     const movedResult = this.rewriteLinksForMoves(normalized.content, noteFile, noteFile.path, movePlans, {
       preserveOriginalFormat: false
@@ -274,11 +282,68 @@ export class FileManager {
       : { deletedImages: 0, deletedFolders: 0, relocatedImages: 0, preservedImages: 0 };
 
     return {
-      replaced: imported.replaced + normalized.replaced + movedResult.replaced,
-      downloaded: imported.downloaded,
+      replaced: normalized.replaced + movedResult.replaced,
+      downloaded: 0,
       moved: movePlans.filter((move) => move.oldPath !== move.newPath).length,
       deleted: cleanupResult.deletedImages,
       foldersDeleted: cleanupResult.deletedFolders
+    };
+  }
+
+  async importExternalImageLinksInNote(noteFile: TFile): Promise<NoteExternalImageImportResult> {
+    await this.recoveryManager?.captureTextSnapshot(noteFile.path);
+    const content = await this.app.vault.read(noteFile);
+    const imported = await this.importExternalImageLinks(content, noteFile);
+
+    if (imported.content !== content) {
+      await this.app.vault.modify(noteFile, imported.content);
+    }
+
+    return {
+      replaced: imported.replaced,
+      downloaded: imported.downloaded
+    };
+  }
+
+  async importExternalImageLinkInNoteBySource(
+    noteFile: TFile,
+    sourceTarget: string,
+    location: ExternalImageImportLocation = {}
+  ): Promise<NoteExternalImageImportResult> {
+    await this.recoveryManager?.captureTextSnapshot(noteFile.path);
+    const content = await this.app.vault.read(noteFile);
+    const normalizedTarget = this.normalizeExternalImageSourceValue(sourceTarget);
+    if (!normalizedTarget) {
+      return {
+        replaced: 0,
+        downloaded: 0
+      };
+    }
+
+    const sectionRange = this.getLineRangeOffsets(content, location.lineStart, location.lineEnd);
+    const targetOccurrence = location.occurrence ?? 1;
+    let matchedCount = 0;
+    const imported = await this.importExternalImageLinks(content, noteFile, ({ source, index }) => {
+      const normalizedSource = this.normalizeExternalImageSourceValue(source.value);
+      if (normalizedSource !== normalizedTarget) {
+        return false;
+      }
+
+      if (sectionRange && (index < sectionRange.startOffset || index > sectionRange.endOffset)) {
+        return false;
+      }
+
+      matchedCount += 1;
+      return matchedCount === targetOccurrence;
+    });
+
+    if (imported.content !== content) {
+      await this.app.vault.modify(noteFile, imported.content);
+    }
+
+    return {
+      replaced: imported.replaced,
+      downloaded: imported.downloaded
     };
   }
 
@@ -408,9 +473,16 @@ export class FileManager {
     }
   }
 
-  private async downloadAndRewriteExternalImageLinks(
+  private async importExternalImageLinks(
     content: string,
-    noteFile: TFile
+    noteFile: TFile,
+    filter?: (candidate: {
+      readonly fullMatch: string;
+      readonly index: number;
+      readonly parsed: ReturnType<LinkFormatter['parseLink']>;
+      readonly rawTarget: string;
+      readonly source: TextImageSource;
+    }) => boolean
   ): Promise<{
     content: string;
     replaced: number;
@@ -438,6 +510,18 @@ export class FileManager {
       const rawTarget = parsed?.rawPath ?? parsed?.path ?? '';
       const source = this.parseExternalImageSource(rawTarget);
       if (!parsed || !source) {
+        continue;
+      }
+      if (
+        filter &&
+        !filter({
+          fullMatch,
+          index,
+          parsed,
+          rawTarget,
+          source
+        })
+      ) {
         continue;
       }
 
@@ -872,6 +956,57 @@ export class FileManager {
   private parseExternalImageSource(rawTarget: string) {
     const sources = parseTextImageSources(rawTarget);
     return sources.length === 1 ? sources[0] : null;
+  }
+
+  private normalizeExternalImageSourceValue(value: string): string | null {
+    const source = this.parseExternalImageSource(value);
+    if (!source) {
+      return null;
+    }
+
+    switch (source.kind) {
+      case 'remote':
+      case 'file':
+        try {
+          return new URL(source.value).toString();
+        } catch {
+          return source.value.trim();
+        }
+      case 'data':
+        return source.value.replace(/\s+/g, '');
+      default:
+        return source.value.trim();
+    }
+  }
+
+  private getLineRangeOffsets(
+    content: string,
+    lineStart?: number,
+    lineEnd?: number
+  ): { startOffset: number; endOffset: number } | null {
+    if (lineStart === undefined || lineEnd === undefined) {
+      return null;
+    }
+
+    const lineOffsets = [0];
+    for (let index = 0; index < content.length; index += 1) {
+      if (content[index] === '\n') {
+        lineOffsets.push(index + 1);
+      }
+    }
+
+    const normalizedLineStart = Math.max(0, lineStart);
+    const normalizedLineEnd = Math.max(normalizedLineStart, lineEnd);
+    const startOffset = lineOffsets[normalizedLineStart];
+    if (startOffset === undefined) {
+      return null;
+    }
+
+    const nextLineOffset = lineOffsets[normalizedLineEnd + 1];
+    return {
+      startOffset,
+      endOffset: nextLineOffset !== undefined ? Math.max(startOffset, nextLineOffset - 1) : content.length
+    };
   }
 
   private resolveLinkedImageFile(parsed: ReturnType<LinkFormatter['parseLink']>, sourcePath: string): ResolvedLinkedImageFile | null {

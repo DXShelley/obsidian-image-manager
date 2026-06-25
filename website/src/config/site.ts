@@ -78,7 +78,7 @@ interface SiteConfig {
   };
 }
 
-const VERSION = 'v3.1.0';
+const VERSION = 'v3.1.1';
 
 const SITE_CONFIGS: Readonly<Record<SiteLocale, SiteConfig>> = {
   'zh-CN': {
@@ -145,12 +145,12 @@ const SITE_CONFIGS: Readonly<Record<SiteLocale, SiteConfig>> = {
       },
       {
         title: '批量处理先有边界再谈效率',
-        description: '压缩、转换、链接更新和清理都能作用于当前笔记、当前文件夹或整个仓库。',
+        description: '外部图片导入、压缩、转换、链接更新和清理都能作用于当前笔记、当前文件夹或整个仓库。',
         meta: 'Scoped Batch Jobs'
       },
       {
-        title: '轻量编辑直接落到图片文件',
-        description: '复制、压缩、转换、旋转、翻转和裁剪，都能从文件右键菜单直接触发。',
+        title: '轻量编辑与单图导入双入口',
+        description: '文件右键菜单负责本地图片编辑；阅读视图右键外部图片时，只导入当前这一张。',
         meta: 'Context Menu Editing'
       },
       {
@@ -173,7 +173,7 @@ const SITE_CONFIGS: Readonly<Record<SiteLocale, SiteConfig>> = {
       {
         step: '03',
         title: '批量处理',
-        description: '在笔记、文件夹或整库范围执行压缩、转换、迁移与清理。'
+        description: '在笔记、文件夹或整库范围执行外部图片导入、压缩、转换、迁移与清理。'
       },
       {
         step: '04',
@@ -185,6 +185,11 @@ const SITE_CONFIGS: Readonly<Record<SiteLocale, SiteConfig>> = {
       {
         title: '增强画廊',
         description: '支持当前图片、当前笔记和当前文件夹画廊，并在阅读视图中双击图片直接打开。',
+        status: 'implemented'
+      },
+      {
+        title: '外部图片导入',
+        description: '支持把 URL、file:// 与 data URL 图片导入本地，并在阅读视图中右键单张外部图片精确落盘。',
         status: 'implemented'
       },
       {
@@ -232,7 +237,7 @@ const SITE_CONFIGS: Readonly<Record<SiteLocale, SiteConfig>> = {
       {
         eyebrow: 'Batch',
         title: '面向整个仓库的动作，也要自带刹车。',
-        body: '整库命令前置风险确认，批量任务支持暂停、恢复与取消，减少误触后的心理负担。'
+        body: '整库命令前置风险确认，批量任务支持暂停、恢复与取消，外部图片导入也会按范围单独执行。'
       },
       {
         eyebrow: 'Reliability',
@@ -248,7 +253,7 @@ const SITE_CONFIGS: Readonly<Record<SiteLocale, SiteConfig>> = {
     install: {
       title: '从仓库到插件目录，路径很短。',
       snippet: ['npm install', 'npm run validate', 'npm run build'],
-      note: '构建完成后，将 `manifest.json`、`main.js` 和 `styles.css` 复制到 Obsidian 插件目录即可。'
+      note: '社区市场审核通过后可直接从 Community Plugins 安装；在此之前可将 `manifest.json`、`main.js` 和 `styles.css` 手动复制到插件目录。'
     }
   },
   en: {
@@ -315,12 +320,12 @@ const SITE_CONFIGS: Readonly<Record<SiteLocale, SiteConfig>> = {
       },
       {
         title: 'Batch jobs with explicit boundaries',
-        description: 'Compress, convert, relink, and clean up within the current note, folder, or whole vault.',
+        description: 'Import external images, compress, convert, relink, and clean up within the current note, folder, or whole vault.',
         meta: 'Scoped Batch Jobs'
       },
       {
-        title: 'Lightweight edits directly on files',
-        description: 'Copy, compress, convert, rotate, flip, and crop image files straight from the file context menu.',
+        title: 'Dual entry points for edits and import',
+        description: 'Use the file menu for local image edits, and right-click rendered external images in reading view to import only the selected source.',
         meta: 'Context Menu Editing'
       },
       {
@@ -343,7 +348,7 @@ const SITE_CONFIGS: Readonly<Record<SiteLocale, SiteConfig>> = {
       {
         step: '03',
         title: 'Run batch tasks',
-        description: 'Compress, convert, relocate, and clean images within a note, folder, or the entire vault.'
+        description: 'Import external images, compress, convert, relocate, and clean images within a note, folder, or the entire vault.'
       },
       {
         step: '04',
@@ -355,6 +360,11 @@ const SITE_CONFIGS: Readonly<Record<SiteLocale, SiteConfig>> = {
       {
         title: 'Expanded gallery',
         description: 'Open galleries for the current image, note, or folder, including reading-view double-click entry.',
+        status: 'implemented'
+      },
+      {
+        title: 'External image import',
+        description: 'Import URL, file://, and data URL images into the vault, including precise single-image import from the reading-view context menu.',
         status: 'implemented'
       },
       {
@@ -402,7 +412,7 @@ const SITE_CONFIGS: Readonly<Record<SiteLocale, SiteConfig>> = {
       {
         eyebrow: 'Batch',
         title: 'Vault-wide actions need brakes.',
-        body: 'Whole-vault commands ask for risk confirmation first, and batch jobs can pause, resume, or cancel.'
+        body: 'Whole-vault commands ask for risk confirmation first, and external-image import still runs as its own scoped operation.'
       },
       {
         eyebrow: 'Reliability',
@@ -418,7 +428,7 @@ const SITE_CONFIGS: Readonly<Record<SiteLocale, SiteConfig>> = {
     install: {
       title: 'The path from repo to plugin folder is short.',
       snippet: ['npm install', 'npm run validate', 'npm run build'],
-      note: 'After building, copy `manifest.json`, `main.js`, and `styles.css` into the Obsidian plugin directory.'
+      note: 'Install from Community Plugins after review approval, or manually copy `manifest.json`, `main.js`, and `styles.css` into the plugin directory before then.'
     }
   }
 };

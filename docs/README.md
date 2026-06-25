@@ -16,8 +16,9 @@
 4. [变量参考](variables.md)
 5. [测试用例](test-cases.md)
 6. [任务状态](task-status.md)
-7. [TypeScript 指南](typescript-guide.md)
-8. [用户提问归档](user-prompts.md)
+7. [发布前清单](release-checklist.md)
+8. [TypeScript 指南](typescript-guide.md)
+9. [用户提问归档](user-prompts.md)
 
 ## 文档说明
 
@@ -27,6 +28,7 @@
 - [变量参考](variables.md)：命名模板与路径模板可用变量。
 - [测试用例](test-cases.md)：当前版本的测试矩阵、验证规则与回归清单。
 - [任务状态](task-status.md)：当前版本已完成、部分完成与延期项。
+- [发布前清单](release-checklist.md)：面向 `community.obsidian.md` 首次提交与后续 GitHub Release 的收口清单。
 - [TypeScript 指南](typescript-guide.md)：类型检查命令与类型约定。
 - [用户提问归档](user-prompts.md)：当前可见项目会话中用户提问内容的保留文档。
 

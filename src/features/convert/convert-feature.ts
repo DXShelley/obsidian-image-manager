@@ -17,7 +17,7 @@ export class ConvertFeature implements ImageManagerFeature {
 
   async register(context: ImageManagerFeatureContext): Promise<void> {
     const activeCommand = {
-      commandId: 'a2-convert-active-image-to-default-format',
+      commandId: 'a3-convert-active-image-to-default-format',
       commandName: '转换图片为默认格式'
     } as const;
     context.plugin.addCommand({
@@ -42,7 +42,7 @@ export class ConvertFeature implements ImageManagerFeature {
     });
 
     const folderCommand = {
-      commandId: 'b2-convert-current-folder-images-to-default-format',
+      commandId: 'b3-convert-current-folder-images-to-default-format',
       commandName: '转换图片为默认格式'
     } as const;
     context.plugin.addCommand({
@@ -75,7 +75,7 @@ export class ConvertFeature implements ImageManagerFeature {
     });
 
     const vaultCommand = {
-      commandId: 'c2-convert-vault-images-to-default-format',
+      commandId: 'c3-convert-vault-images-to-default-format',
       commandName: '转换图片为默认格式'
     } as const;
     context.plugin.addCommand({

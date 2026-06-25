@@ -22,6 +22,18 @@ export interface BatchCompressionNoticeOptions {
   readonly showSpaceSaved: boolean;
 }
 
+export interface BatchExternalImageImportNoticeItem {
+  readonly notePath: string;
+  readonly replaced: number;
+}
+
+export interface BatchExternalImageImportNoticeOptions {
+  readonly items: readonly BatchExternalImageImportNoticeItem[];
+  readonly importedLinks: number;
+  readonly downloadedImages: number;
+  readonly failedCount: number;
+}
+
 export interface BatchConversionNoticeOptions {
   readonly imageCount: number;
   readonly targetFormat: string;
@@ -92,6 +104,34 @@ export function formatBatchCompressionNotice(options: BatchCompressionNoticeOpti
   const ratio = beforeBytes > 0 ? (Math.abs(beforeBytes - afterBytes) / beforeBytes) * 100 : 0;
   const direction = afterBytes <= beforeBytes ? 'reduction' : 'increase';
   return `Batch compression finished: ${fileCount} image(s), ${formatBytes(beforeBytes)} -> ${formatBytes(afterBytes)} (${ratio.toFixed(1)}% ${direction})`;
+}
+
+export function formatBatchExternalImageImportNotice(options: BatchExternalImageImportNoticeOptions): string {
+  const { items, importedLinks, downloadedImages, failedCount } = options;
+  if (items.length === 0) {
+    if (failedCount > 0) {
+      return `External image import finished: 0 file(s), ${failedCount} failed`;
+    }
+    return 'No external image links found';
+  }
+
+  const previews = items
+    .slice(0, 3)
+    .map((item) => `${item.notePath} (${item.replaced} link${item.replaced === 1 ? '' : 's'})`);
+  if (items.length > 3) {
+    previews.push(`+${items.length - 3} more`);
+  }
+
+  const extras: string[] = [];
+  if (downloadedImages > 0) {
+    extras.push(`downloaded ${downloadedImages} image(s)`);
+  }
+  if (failedCount > 0) {
+    extras.push(`${failedCount} failed`);
+  }
+
+  const suffix = extras.length > 0 ? `; ${extras.join(', ')}` : '';
+  return `External image import finished: ${items.length} file(s), ${importedLinks} link(s) updated: ${previews.join(', ')}${suffix}`;
 }
 
 export function formatBatchConversionNotice(options: BatchConversionNoticeOptions): string {

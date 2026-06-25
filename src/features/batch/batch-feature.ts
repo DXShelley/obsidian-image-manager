@@ -2,7 +2,11 @@ import { MarkdownView, Notice, TFile, TFolder } from 'obsidian';
 import type { ImageManagerFeature, ImageManagerFeatureContext } from '@/types/index';
 import { BatchExecutionStatus, BatchOperation, BatchScope } from '@/types/index';
 import { executeLoggedCommand, logSkippedCommand } from '@/utils/command-logging';
-import { formatBatchLinkRewriteNotice, formatBatchOrphanCleanupNotice } from '@/utils/batch-operation-feedback';
+import {
+  formatBatchExternalImageImportNotice,
+  formatBatchLinkRewriteNotice,
+  formatBatchOrphanCleanupNotice
+} from '@/utils/batch-operation-feedback';
 import { showOperationNotice } from '@/utils/operation-feedback';
 import { confirmVaultScopeOperation } from '@/utils/vault-operation';
 
@@ -13,6 +17,12 @@ interface LinkRewriteSummaryItem {
   readonly downloaded: number;
   readonly deleted: number;
   readonly foldersDeleted: number;
+}
+
+interface ExternalImageImportSummaryItem {
+  readonly notePath: string;
+  readonly replaced: number;
+  readonly downloaded: number;
 }
 
 export class BatchFeature implements ImageManagerFeature {
@@ -55,8 +65,33 @@ export class BatchFeature implements ImageManagerFeature {
       }
     });
 
+    const noteImportCommand = {
+      commandId: 'a2-import-current-note-external-images',
+      commandName: '下载外部图片到本地'
+    } as const;
+    context.plugin.addCommand({
+      id: noteImportCommand.commandId,
+      name: noteImportCommand.commandName,
+      callback: () => {
+        void executeLoggedCommand(context, noteImportCommand, async () => {
+          await context.services.recovery.runTransaction(
+            {
+              label: '下载当前笔记外部图片',
+              trigger: 'batch',
+              scope: 'single-note'
+            },
+            async () => {
+              await this.withActiveNoteFile(context, noteImportCommand, async (file) => {
+                await this.runExternalImageImportBatch(context, BatchScope.CURRENT_NOTE, file);
+              });
+            }
+          );
+        });
+      }
+    });
+
     const noteCleanupCommand = {
-      commandId: 'a4-delete-current-note-extra-images',
+      commandId: 'a5-delete-current-note-extra-images',
       commandName: '删除多余图片文件'
     } as const;
     context.plugin.addCommand({
@@ -121,8 +156,41 @@ export class BatchFeature implements ImageManagerFeature {
       }
     });
 
+    const folderImportCommand = {
+      commandId: 'b2-import-current-folder-external-images',
+      commandName: '下载外部图片到本地'
+    } as const;
+    context.plugin.addCommand({
+      id: folderImportCommand.commandId,
+      name: folderImportCommand.commandName,
+      callback: () => {
+        void executeLoggedCommand(context, folderImportCommand, async () => {
+          const folder = context.app.workspace.getActiveFile()?.parent;
+          if (!folder) {
+            logSkippedCommand(context, {
+              ...folderImportCommand,
+              reason: 'No active folder'
+            });
+            showOperationNotice(context.services.settings.getSettings(), 'No active folder');
+            return;
+          }
+
+          await context.services.recovery.runTransaction(
+            {
+              label: `下载文件夹外部图片 ${folder.path || 'vault root'}`,
+              trigger: 'batch',
+              scope: 'folder'
+            },
+            async () => {
+              await this.runExternalImageImportBatch(context, BatchScope.FOLDER, folder);
+            }
+          );
+        });
+      }
+    });
+
     const folderCleanupCommand = {
-      commandId: 'b4-delete-current-folder-extra-images',
+      commandId: 'b5-delete-current-folder-extra-images',
       commandName: '删除多余图片文件'
     } as const;
     context.plugin.addCommand({
@@ -181,8 +249,35 @@ export class BatchFeature implements ImageManagerFeature {
       }
     });
 
+    const vaultImportCommand = {
+      commandId: 'c2-import-vault-external-images',
+      commandName: '下载外部图片到本地'
+    } as const;
+    context.plugin.addCommand({
+      id: vaultImportCommand.commandId,
+      name: vaultImportCommand.commandName,
+      callback: () => {
+        void executeLoggedCommand(context, vaultImportCommand, async () => {
+          if (!(await confirmVaultScopeOperation(context.app, '整库外部图片下载'))) {
+            return;
+          }
+
+          await context.services.recovery.runTransaction(
+            {
+              label: '下载整个仓库外部图片',
+              trigger: 'batch',
+              scope: 'vault'
+            },
+            async () => {
+              await this.runExternalImageImportBatch(context, BatchScope.VAULT);
+            }
+          );
+        });
+      }
+    });
+
     const vaultCleanupCommand = {
-      commandId: 'c4-delete-vault-extra-images',
+      commandId: 'c5-delete-vault-extra-images',
       commandName: '删除多余图片文件'
     } as const;
     context.plugin.addCommand({
@@ -309,6 +404,81 @@ export class BatchFeature implements ImageManagerFeature {
     }
   }
 
+  private async runExternalImageImportBatch(
+    context: ImageManagerFeatureContext,
+    scope: BatchScope,
+    source?: TFile | TFolder
+  ): Promise<void> {
+    context.services.logger.refreshMode('batch-import-external-images');
+    if (this.hasActiveBatch(context)) {
+      showOperationNotice(context.services.settings.getSettings(), 'An image batch job is already active');
+      return;
+    }
+
+    try {
+      const notes = this.resolveNotes(context, scope, source);
+      context.services.logger.debug('Starting external image import batch', {
+        scope,
+        sourcePath: source?.path,
+        noteCount: notes.length
+      });
+      let importedLinks = 0;
+      let downloadedImages = 0;
+      const summaries: ExternalImageImportSummaryItem[] = [];
+      const report = await context.services.batchProcessor.run({
+        id: `${scope}-import-external-images-${Date.now()}`,
+        scope,
+        operation: BatchOperation.IMPORT_EXTERNAL_IMAGES,
+        tasks: notes.map((note) => ({
+          id: note.path,
+          label: note.path,
+          run: async () => {
+            const result = await context.services.fileManager.importExternalImageLinksInNote(note);
+            if (result.replaced > 0 || result.downloaded > 0) {
+              importedLinks += result.replaced;
+              downloadedImages += result.downloaded;
+              summaries.push({
+                notePath: note.path,
+                replaced: result.replaced,
+                downloaded: result.downloaded
+              });
+            }
+          }
+        }))
+      });
+
+      context.services.logger.debug('Completed external image import batch', {
+        scope,
+        sourcePath: source?.path,
+        completed: report.completed,
+        failed: report.failed,
+        skipped: report.skipped,
+        status: report.status,
+        importedLinks,
+        downloadedImages
+      });
+      showOperationNotice(
+        context.services.settings.getSettings(),
+        formatBatchExternalImageImportNotice({
+          items: summaries.map((item) => ({
+            notePath: item.notePath,
+            replaced: item.replaced
+          })),
+          importedLinks,
+          downloadedImages,
+          failedCount: report.failed
+        })
+      );
+    } catch (error) {
+      console.error('Image Manager batch external image import failed', error);
+      context.services.logger.error('Batch external image import failed', error, {
+        scope,
+        sourcePath: source?.path
+      });
+      new Notice(error instanceof Error ? error.message : 'Batch external image import failed');
+    }
+  }
+
   private async runOrphanCleanupBatch(
     context: ImageManagerFeatureContext,
     scope: BatchScope,
@@ -395,5 +565,27 @@ export class BatchFeature implements ImageManagerFeature {
   private hasActiveBatch(context: ImageManagerFeatureContext): boolean {
     const report = context.services.batchProcessor.getReport();
     return report?.status === BatchExecutionStatus.RUNNING || report?.status === BatchExecutionStatus.PAUSED;
+  }
+
+  private async withActiveNoteFile(
+    context: ImageManagerFeatureContext,
+    command: {
+      commandId: string;
+      commandName: string;
+    },
+    callback: (file: TFile) => Promise<void>
+  ): Promise<void> {
+    const view = context.app.workspace.getActiveViewOfType(MarkdownView);
+    const file = view?.file;
+    if (!(file instanceof TFile) || file.extension.toLowerCase() !== 'md') {
+      logSkippedCommand(context, {
+        ...command,
+        reason: 'No active note file'
+      });
+      showOperationNotice(context.services.settings.getSettings(), 'Open a note file first');
+      return;
+    }
+
+    await callback(file);
   }
 }
