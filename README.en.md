@@ -2,116 +2,67 @@
 
 # Note Image Manager
 
-`Note Image Manager` is a desktop-only image-management plugin for Obsidian. `v4.0.3` focuses on centralized bilingual UX, safer external-image import, layered AVIF compatibility, compression de-duplication history, and recovery-first image workflows.
+[![CI](https://github.com/DXShelley/obsidian-image-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/DXShelley/obsidian-image-manager/actions/workflows/ci.yml)
+[![Release](https://github.com/DXShelley/obsidian-image-manager/actions/workflows/release.yml/badge.svg)](https://github.com/DXShelley/obsidian-image-manager/actions/workflows/release.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Obsidian](https://img.shields.io/badge/Obsidian-desktop%20only-7c3aed.svg)](manifest.json)
 
-Import, rename, convert, compress, edit, and recover note images safely.
+`Note Image Manager` is a desktop-only image-management plugin for Obsidian. It keeps image import, naming, conversion, compression, lightweight editing, gallery browsing, and recovery in one controlled workflow.
 
-## Philosophy
+Current version: `4.0.3`  
+Minimum Obsidian version: `1.13.1`  
+Release target: desktop plugin, with `isDesktopOnly` set to `true` in `manifest.json`
 
-- Solve the image problems that appear frequently in real Obsidian use, and solve them well enough to stay out of the way.
-- Keep the experience pleasant, but do not drag the project into maintenance entropy through over-design.
-- Ship features only when their quality is acceptable; keep the rest explicitly marked as planned.
+## Highlights
 
-## Project Overview
-
-- `src/app`: plugin runtime composition, built-in feature catalog, and startup wiring.
-- `src/core`: settings management, event bus, and feature registry.
-- `src/features`: rename, compress, convert, preview, editor, gallery, batch, resize, align, and context menu modules.
-- `src/services`: image processing, file management, variable resolution, and link formatting services.
-- `src/types`: settings, images, batch jobs, runtime contracts, and shared result types.
-- `src/ui`: settings-tab and modal components.
-- `src/utils`: platform, path, and lightweight validation helpers.
-
-## Current Capabilities
-
-- Automatically save images pasted into notes to a configurable folder.
-- Support note-scoped folder rules such as `./assets/${noteFileName}`.
-- Convert pasted images to the configured default format.
-- Generate file names with variables such as `{noteName}`, `{fileName}`, `{date}`, `{time}`, and `{random}`.
-- Insert image links as either Obsidian Wiki links or standard Markdown links.
-- Import note image sources from `URL`, `file://`, and `data:image/...;base64,...` into the managed local folder, including extensionless or dynamic image endpoints when an explicit import flow can verify the response `content-type`.
-- Batch-convert all images referenced by the current note.
-- Run link-update, format-conversion, compression, and orphan-image cleanup commands against the current file, current folder, or entire vault.
-- Sort scoped commands by the `a1-a5`, `b1-b5`, and `c1-c5` `id` order, while displaying `【单文件】`, `【单文件夹】`, and `【整库】` as command-name suffixes in the command palette.
-- Prompt for confirmation before any vault-wide command runs.
-- Make current-note conversion and compression commands process every image referenced by the active Markdown note instead of only the active image file.
-- Pause, resume, or cancel active batch jobs.
-- Use image context-menu actions for copy, compress, convert, rotate, horizontal or vertical flip, and drag-to-crop.
-- Open current-image, note-level, or folder-level galleries with filtering, sorting, grid/list toggles, and reading-view double-click entry points.
-- Right-click a rendered external image in reading view and import only that selected image source instead of expanding to the whole note.
-- Sync managed image folders when notes are renamed or moved, with optional image file renaming.
-- During orphan cleanup, relocate images that still have a single external note referrer into that note's managed folder instead of deleting them.
-- Handle name collisions safely with ordered suffixes such as `-01` and `-02` when time-based naming is used.
-- When format conversion would collapse different source formats into the same name, such as `aaa.png` and `aaa.jpg` to `webp`, generate unique names like `aaa.webp` and `aaa-1.webp`.
-- Support encoded, readable-wrapped, and automatic Markdown path presentation strategies so Chinese, spaces, parentheses, and already-encoded paths can coexist.
-- Include `AVIF` in image detection, external-image import, and conversion input flows, while requiring conversion to `PNG`, `JPEG`, or `WebP` before in-place compress / rotate / flip / crop / resize operations.
-- Persist compression history for the current file version to avoid recompressing already-processed or non-beneficial outputs.
-- Persist recovery transactions for image and Markdown changes, and support undo / redo for recent Note Image Manager operations.
-- Switch the settings page and feature-status panel between Simplified Chinese and English, with Chinese as the default.
-
-## Limitations And Disclosure
-
-- The current release target is desktop only, and `manifest.json` is explicitly marked with `isDesktopOnly: true`.
-- The plugin does not collect telemetry, does not include ads, and does not silently upload vault content.
-- When features such as auto-downloading text image sources are enabled, the plugin may access the network to download remote images only in response to user actions.
-- The plugin can read local image files referenced by `file://` and import them into the vault. This behavior is desktop-only and only runs when the user explicitly pastes such sources.
-- Formats such as `GIF`, `SVG`, `TIFF`, `HEIC`, and `AVIF` should be treated as layered compatibility: recognized, importable, or convertible does not guarantee that every in-place edit or compression path is stable for that format.
-- The plugin stores compression history and recovery snapshots under `.obsidian/plugins/note-image-manager/` so it can avoid duplicate compression and support undo / redo.
-- Vault-wide conversion, compression, and orphan-image cleanup commands always require confirmation first, and managed image or Markdown changes are covered by recovery transactions.
-
-## Planned Capabilities
-
-- Drag-to-resize image display inside the editor
-- Watermark removal / object repair, only after quality and interaction reach a practical bar
-- OCR, search, and categorization
-- Worker-based background processing
-
-## Documentation
-
-- [Docs Index](docs/README.en.md)
-- [User Guide](docs/user-guide.en.md)
-- [Architecture](docs/architecture.en.md)
-- [API Reference](docs/api-reference.en.md)
-- [Variable Reference](docs/variables.en.md)
-- [Test Cases](docs/test-cases.en.md)
-- [Task Status](docs/task-status.en.md)
-- [TypeScript Guide](docs/typescript-guide.en.md)
-- [Changelog](CHANGELOG.en.md)
+- Automatically handles pasted images, stores them in a configurable folder, and generates file names from variable templates.
+- Supports note-scoped managed folders such as `./assets/${noteFileName}`.
+- Imports image sources from `URL`, `file://`, and `data:image/...;base64,...` into the local vault and rewrites them as local image links.
+- Runs external-image import, format conversion, compression, link cleanup, and orphan-image cleanup against the current note, current folder, or whole vault.
+- Supports Obsidian Wiki links and standard Markdown links, with encoded, readable-wrapped, and automatic path-output strategies.
+- Adds image context-menu actions for copy, compress, convert, rotate, flip, and drag-to-crop.
+- Provides current-image, note-level, and folder-level galleries with filtering, sorting, and grid / list views.
+- Persists recovery transactions for image and Markdown changes, with undo / redo support for recent Note Image Manager operations.
+- Supports Simplified Chinese and English in the settings page and feature-status panel, with Chinese as the default.
 
 ## Installation
 
-- After marketplace approval: open **Settings -> Community plugins**, search for `Note Image Manager`, and install it there.
-- Before the first review is approved, or for manual installs: download `manifest.json`, `main.js`, and `styles.css` from a GitHub Release and copy them into `.obsidian/plugins/note-image-manager/`.
-- This plugin is intentionally desktop-only for the current release line.
+### Community Marketplace
 
-## Acknowledgements and References
+After marketplace approval, install it from **Settings -> Community plugins** by searching for `Note Image Manager`.
 
-- [Obsidian](https://obsidian.md/): provides the plugin runtime, editor surface, and vault model that this project builds on.
-- [piexifjs](https://github.com/hMatoba/piexifjs): supports JPEG EXIF-related image handling.
-- [TypeScript](https://www.typescriptlang.org/), [esbuild](https://esbuild.github.io/), [ESLint](https://eslint.org/), [typescript-eslint](https://typescript-eslint.io/), [Vitest](https://vitest.dev/), [@vitest/coverage-v8](https://vitest.dev/guide/coverage.html), [happy-dom](https://github.com/capricorn86/happy-dom), [@faker-js/faker](https://fakerjs.dev/), and [type-coverage](https://github.com/plantain-00/type-coverage): support type checking, bundling, linting, unit testing, test-data generation, and coverage gates.
-- [React](https://react.dev/), [React DOM](https://react.dev/reference/react-dom), [Vite](https://vite.dev/), and [pnpm](https://pnpm.io/): power the GitHub Pages website development, build, and dependency workflow.
-- [Custom Attachment Location](https://github.com/mnaoumov/obsidian-custom-attachment-location): several attachment-folder template and cleanup behaviors in this plugin were designed with reference to parts of its UX semantics.
-- [obsidian-image-converter](https://github.com/xRyul/obsidian-image-converter): this project also learned from its product thinking around image-processing boundaries, command organization, and practical scope.
-- These frameworks, tools, components, and open-source projects are used for runtime behavior, development, testing, the website, or behavioral reference. Mentioning a reference project is not a promise of full compatibility.
+### Manual Install
 
-## Release
+1. Open [Releases](https://github.com/DXShelley/obsidian-image-manager/releases).
+2. Download `manifest.json`, `main.js`, and `styles.css` for the target version, or download `note-image-manager-<version>.zip`.
+3. Place the files in your vault under `.obsidian/plugins/note-image-manager/`.
+4. Enable **Note Image Manager** in **Settings -> Community plugins**.
 
-- Version: `4.0.3`
-- Minimum Obsidian version: `1.13.1`
-- First listing: submit the repository through `community.obsidian.md` and wait for review.
-- Updates after approval: create a Git tag and GitHub Release that exactly matches `manifest.json.version`, for example `4.0.3`, without a `v` prefix.
-- Release artifacts: `manifest.json`, `main.js`, `styles.css`, `note-image-manager-<version>.zip`
-- Keep the GitHub repository description and homepage aligned with this README so the community directory, repo, and Pages site do not drift.
+## Documentation
 
-## Recovery
+| Goal | Document |
+| --- | --- |
+| Browse the full documentation set | [Docs Index](docs/README.en.md) |
+| Learn commands, settings, galleries, and recovery | [User Guide](docs/user-guide.en.md) |
+| Configure naming and folder variables | [Variable Reference](docs/variables.en.md) |
+| Understand layering, runtime flow, and module boundaries | [Architecture](docs/architecture.en.md) |
+| Review core service and batch API summaries | [API Reference](docs/api-reference.en.md) |
+| Run manual validation and regression checks | [Test Cases](docs/test-cases.en.md) |
+| Prepare community submission and GitHub Releases | [Release Checklist](docs/release-checklist.en.md) |
+| Read version history | [Changelog](CHANGELOG.en.md) |
 
-- Recovery snapshots are stored under `.obsidian/plugins/note-image-manager/recovery/`.
-- `.gitignore` ignores `.obsidian/plugins/note-image-manager/recovery/` by default so local recovery snapshots are not committed.
-- History retention is capped to the newest `10` transactions and transactions older than `24` hours are pruned.
-- Use `恢复：撤销上一步图片管理修改` to roll back the latest Note Image Manager transaction.
-- Use `恢复：重做上一步图片管理修改` to reapply the latest undone transaction.
+## Disclosure And Limits
+
+- The plugin does not collect telemetry, does not include ads, and does not silently upload vault content.
+- Remote images are downloaded only when the relevant external-image import flow is enabled or explicitly triggered by the user.
+- `file://` local-image import is desktop-only and runs only when the user explicitly pastes or imports such sources.
+- Formats such as `GIF`, `SVG`, `TIFF`, `HEIC`, and `AVIF` use layered compatibility: they may be recognized, imported, or accepted as conversion input, but that does not guarantee every in-place edit or compression path is stable.
+- Compression history and recovery snapshots are stored under `.obsidian/plugins/note-image-manager/` so the plugin can avoid duplicate compression and support undo / redo.
+- Vault-wide conversion, compression, and orphan-image cleanup commands require confirmation before running.
 
 ## Development
+
+Node.js `22` is recommended to match the CI and Release workflows.
 
 ```bash
 npm install
@@ -119,20 +70,39 @@ npm run validate
 npm run build
 ```
 
-## Manual Verification
+Common commands:
 
-1. Copy `manifest.json`, `main.js`, and `styles.css` into `.obsidian/plugins/note-image-manager/`.
-2. Enable **Note Image Manager** in **Settings -> Community plugins** and reload after each rebuild.
-3. Open **Settings -> Note Image Manager** and confirm the settings page renders without console errors, including save-path and file-name previews.
-4. Switch `界面语言 / Interface Language` at the top of the settings page and confirm that section titles, field descriptions, and feature status update immediately.
-5. Paste an image into a note and verify that the save path, generated name, link format, and cursor placement follow your settings.
-6. Rotate or flip an image referenced by a Markdown note and verify that both the file and the rendered preview refresh.
-7. Right-click an image file in the file explorer and verify the plugin context-menu actions.
-8. Right-click a rendered external image in reading view and verify `下载该外部图片` imports only the selected image source.
-9. If Obsidian still shows old behavior after a rebuild, recopy `manifest.json`, `main.js`, and `styles.css` into the plugin directory and reload the plugin.
-10. Run the batch compression commands and confirm pause, resume, and cancel behave as expected.
-11. Open the note and folder galleries and verify filtering, sorting, and grid/list toggles.
-12. Run the current-file conversion command from a Markdown note and verify each referenced image is converted only once.
-13. Run any vault-wide command and verify that a risk confirmation appears first.
-14. Perform several image edits and verify that undo and redo can move back and forth across recent operations.
-15. Paste a `file://` path or remote image URL on desktop and confirm the import behavior matches the disclosure section in this README.
+- `npm run dev`: development build.
+- `npm run type-check`: TypeScript type check.
+- `npm run lint`: ESLint check.
+- `npm run test`: Vitest unit tests.
+- `npm run validate`: type check, lint, and tests.
+
+See [Contributing](CONTRIBUTING.en.md) for the contribution workflow.
+
+## Repository Layout
+
+```text
+src/app        plugin runtime wiring and feature catalog
+src/core       settings, events, registry, recovery, and compression history
+src/features   rename, compress, convert, preview, editor, gallery, batch, and related modules
+src/services   image processing, file management, variable resolution, and link formatting
+src/ui         settings tab and modals
+src/utils      platform, path, link, validation, and Obsidian compatibility helpers
+docs           user, development, testing, and release documentation
+website        GitHub Pages website
+tests          Vitest unit tests
+```
+
+## Release
+
+- Keep `manifest.json.version`, `package.json.version`, `versions.json`, and the website version copy aligned.
+- The Git tag must exactly match `manifest.json.version`, for example `4.0.3`, without a `v` prefix.
+- GitHub Release assets should include `manifest.json`, `main.js`, `styles.css`, and `note-image-manager-<version>.zip`.
+- See the [Release Checklist](docs/release-checklist.en.md) for the full checklist.
+
+## Acknowledgements
+
+This project is built on the [Obsidian](https://obsidian.md/) plugin API and is developed with [TypeScript](https://www.typescriptlang.org/), [esbuild](https://esbuild.github.io/), [ESLint](https://eslint.org/), and [Vitest](https://vitest.dev/).
+
+Image handling and product boundaries were informed by parts of [piexifjs](https://github.com/hMatoba/piexifjs), [Custom Attachment Location](https://github.com/mnaoumov/obsidian-custom-attachment-location), and [obsidian-image-converter](https://github.com/xRyul/obsidian-image-converter). Mentioning a reference project is not a promise of full compatibility.

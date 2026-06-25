@@ -1,36 +1,54 @@
-[中文](README.md) | [English](README.en.md)
+[中文](README.md) | [English](README.en.md) | [返回项目首页](../README.md)
 
 # 文档索引
 
-此目录采用中英文双版本组织：
+本目录保存 `Note Image Manager` 的用户、开发、测试和发布文档。中文文档使用基础文件名，英文镜像使用 `.en.md` 后缀；更新文档时应同步维护两个版本，避免 README、Pages 首页和社区目录说明出现口径漂移。
 
-- 中文文档默认使用原文件名，例如 `user-guide.md`。
-- 英文镜像使用 `.en.md` 后缀，例如 `user-guide.en.md`。
-- 新增或更新文档时，应同步维护两个版本，避免内容漂移。
+## 用户文档
 
-## 使用顺序
+| 文档 | 内容 |
+| --- | --- |
+| [用户指南](user-guide.md) | 命令、右键菜单、画廊、设置页、兼容性策略和恢复机制。 |
+| [变量参考](variables.md) | `renamePattern` 与 `outputFolder` 支持的命名变量和路径变量。 |
+| [更新日志](../CHANGELOG.md) | 各版本新增能力、行为变更和审核相关修正。 |
 
-1. [用户指南](user-guide.md)
-2. [架构说明](architecture.md)
-3. [API 参考](api-reference.md)
-4. [变量参考](variables.md)
-5. [测试用例](test-cases.md)
-6. [任务状态](task-status.md)
-7. [发布前清单](release-checklist.md)
-8. [TypeScript 指南](typescript-guide.md)
-9. [用户提问归档](user-prompts.md)
+## 开发文档
 
-## 文档说明
+| 文档 | 内容 |
+| --- | --- |
+| [架构说明](architecture.md) | 代码分层、运行流程、已交付模块和延后扩展点。 |
+| [API 参考](api-reference.md) | 核心服务、恢复管理、图片处理、链接格式化和批处理接口摘要。 |
+| [TypeScript 指南](typescript-guide.md) | 类型检查命令、类型覆盖率和项目类型约定。 |
+| [贡献指南](../CONTRIBUTING.md) | 开发环境、分支约定、验证命令、文档同步和 PR 建议。 |
 
-- [用户指南](user-guide.md)：面向最终用户的命令、设置和恢复说明。
-- [架构说明](architecture.md)：代码分层、运行流程与当前模块边界。
-- [API 参考](api-reference.md)：核心服务与批处理能力的对外接口摘要。
-- [变量参考](variables.md)：命名模板与路径模板可用变量。
-- [测试用例](test-cases.md)：当前版本的测试矩阵、验证规则与回归清单。
-- [任务状态](task-status.md)：当前版本已完成、部分完成与延期项。
-- [发布前清单](release-checklist.md)：面向 `community.obsidian.md` 首次提交与后续 GitHub Release 的收口清单。
-- [TypeScript 指南](typescript-guide.md)：类型检查命令与类型约定。
-- [用户提问归档](user-prompts.md)：当前可见项目会话中用户提问内容的保留文档。
+## 测试与发布
+
+| 文档 | 内容 |
+| --- | --- |
+| [测试用例](test-cases.md) | 手工验证矩阵、测试环境、回归范围和延期用例。 |
+| [发布前清单](release-checklist.md) | `community.obsidian.md` 首次提交、GitHub Release 附件、版本号和审核风险检查。 |
+| [任务状态](task-status.md) | 当前版本已完成、部分完成、近期集成说明和延后项。 |
+
+## 项目记录
+
+| 文档 | 内容 |
+| --- | --- |
+| [用户提问归档](user-prompts.md) | 当前可见项目会话中的用户提问归档，仅用于保留上下文。 |
+
+## 建议阅读路径
+
+1. 普通用户：先读 [用户指南](user-guide.md)，再按需查看 [变量参考](variables.md) 和 [更新日志](../CHANGELOG.md)。
+2. 插件开发或维护：先读 [贡献指南](../CONTRIBUTING.md) 和 [架构说明](architecture.md)，再读 [API 参考](api-reference.md) 和 [TypeScript 指南](typescript-guide.md)。
+3. 发版或提交审核：先执行 [测试用例](test-cases.md) 中的回归检查，再按 [发布前清单](release-checklist.md) 收口。
+
+## 文档维护规则
+
+- README 只保留项目入口、安装方式、核心能力、披露限制和关键文档链接；细节说明放入 `docs/`。
+- 用户可见行为优先写入 [用户指南](user-guide.md)，不要只写在更新日志或任务状态中。
+- 配置模板、命名变量和路径变量统一写入 [变量参考](variables.md)。
+- 发布、审核、附件和 tag 规则统一写入 [发布前清单](release-checklist.md)。
+- 测试步骤、验收标准和回归矩阵统一写入 [测试用例](test-cases.md)。
+- 新增中文文档时同步新增 `.en.md` 英文镜像；删除或改名文档时同步更新本索引和根目录 README。
 
 ## 致谢与参考
 

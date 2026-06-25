@@ -1,38 +1,56 @@
-[中文](README.md) | [English](README.en.md)
+[中文](README.md) | [English](README.en.md) | [Back to project home](../README.en.md)
 
 # Docs Index
 
-This directory uses a bilingual layout:
+This directory contains user, development, testing, and release documentation for `Note Image Manager`. Chinese docs use the base file name, while English mirrors use the `.en.md` suffix. Keep both versions updated together so the README, Pages site, and community-directory copy do not drift.
 
-- Chinese docs use the base file name, such as `user-guide.md`.
-- English mirrors use the `.en.md` suffix, such as `user-guide.en.md`.
-- When a document is added or updated, both language versions should be maintained together to avoid drift.
+## User Docs
 
-## Recommended Reading Order
+| Document | Contents |
+| --- | --- |
+| [User Guide](user-guide.en.md) | Commands, context menus, galleries, settings, compatibility strategy, and recovery. |
+| [Variable Reference](variables.en.md) | Naming and path variables supported by `renamePattern` and `outputFolder`. |
+| [Changelog](../CHANGELOG.en.md) | Versioned feature additions, behavior changes, and review-related fixes. |
 
-1. [User Guide](user-guide.en.md)
-2. [Architecture](architecture.en.md)
-3. [API Reference](api-reference.en.md)
-4. [Variable Reference](variables.en.md)
-5. [Test Cases](test-cases.en.md)
-6. [Task Status](task-status.en.md)
-7. [Release Checklist](release-checklist.en.md)
-8. [TypeScript Guide](typescript-guide.en.md)
-9. [Archived User Prompts](user-prompts.en.md)
+## Development Docs
 
-## Document Descriptions
+| Document | Contents |
+| --- | --- |
+| [Architecture](architecture.en.md) | Layering, runtime flow, delivered modules, and deferred extension points. |
+| [API Reference](api-reference.en.md) | Summaries for core services, recovery management, image processing, link formatting, and batch processing. |
+| [TypeScript Guide](typescript-guide.en.md) | Type-check commands, type coverage, and project typing conventions. |
+| [Contributing](../CONTRIBUTING.en.md) | Development environment, branch conventions, verification commands, documentation sync, and PR notes. |
 
-- [User Guide](user-guide.en.md): end-user commands, settings behavior, and recovery guidance.
-- [Architecture](architecture.en.md): layering, runtime flow, and current module boundaries.
-- [API Reference](api-reference.en.md): public-facing summaries of core services and batch capabilities.
-- [Variable Reference](variables.en.md): supported variables for naming and path templates.
-- [Test Cases](test-cases.en.md): validation matrix, execution rules, and regression checklist for the current release.
-- [Task Status](task-status.en.md): completed, partial, and deferred items for the current version.
-- [Release Checklist](release-checklist.en.md): final checks for first submission through `community.obsidian.md` and later GitHub Releases.
-- [TypeScript Guide](typescript-guide.en.md): type-check commands and type conventions.
-- [Archived User Prompts](user-prompts.en.md): preserved user prompts from the visible project session.
+## Testing And Release
 
-## Acknowledgements and References
+| Document | Contents |
+| --- | --- |
+| [Test Cases](test-cases.en.md) | Manual validation matrix, test environment, regression scope, and deferred cases. |
+| [Release Checklist](release-checklist.en.md) | First submission through `community.obsidian.md`, GitHub Release assets, versioning, and common review risks. |
+| [Task Status](task-status.en.md) | Completed items, partial work, recent integration notes, and deferred work for the current version. |
+
+## Project Records
+
+| Document | Contents |
+| --- | --- |
+| [Archived User Prompts](user-prompts.en.md) | Archived user prompts from the visible project session, kept only as project context. |
+
+## Recommended Reading Paths
+
+1. Regular users: start with the [User Guide](user-guide.en.md), then open the [Variable Reference](variables.en.md) and [Changelog](../CHANGELOG.en.md) as needed.
+2. Plugin developers or maintainers: start with [Contributing](../CONTRIBUTING.en.md) and [Architecture](architecture.en.md), then read the [API Reference](api-reference.en.md) and [TypeScript Guide](typescript-guide.en.md).
+3. Release or review work: run the regression checks in [Test Cases](test-cases.en.md), then close out the [Release Checklist](release-checklist.en.md).
+
+## Documentation Rules
+
+- Keep the root README focused on the project entry point, installation, highlights, disclosures, limits, and key documentation links; move detailed behavior into `docs/`.
+- Put user-visible behavior in the [User Guide](user-guide.en.md), not only in the changelog or task-status notes.
+- Keep configuration templates, naming variables, and path variables in the [Variable Reference](variables.en.md).
+- Keep release, review, artifact, and tag rules in the [Release Checklist](release-checklist.en.md).
+- Keep test steps, acceptance criteria, and regression matrices in [Test Cases](test-cases.en.md).
+- When adding a Chinese document, add the `.en.md` mirror as well; when deleting or renaming docs, update this index and the root README together.
+
+## Acknowledgements And References
 
 - [Obsidian](https://obsidian.md/): the host application and plugin API provider.
 - [piexifjs](https://github.com/hMatoba/piexifjs): runtime dependency for JPEG EXIF-related handling.
