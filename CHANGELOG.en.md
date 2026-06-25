@@ -2,9 +2,11 @@
 
 # Changelog
 
-## 4.0.2
+## 4.0.3
 
 - Updated the `manifest.json` description to remove the redundant `Obsidian` wording flagged by plugin review.
+- Raised `minAppVersion` to `1.13.1` so the manifest matches the Obsidian API version used by the codebase.
+- Addressed community-plugin review feedback by replacing direct style assignment, native heading elements, `fetch`, permanent deletes, global `document` usage, and deprecated setting-control APIs, while respecting `event.defaultPrevented` before handling paste events.
 - Expanded README and docs-index acknowledgements for open-source dependencies, frameworks, tooling, and reference projects.
 
 ## 4.0.1

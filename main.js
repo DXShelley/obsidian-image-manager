@@ -29,7 +29,7 @@ __export(main_exports, {
   default: () => ImageManagerPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian20 = require("obsidian");
+var import_obsidian21 = require("obsidian");
 
 // src/features/align/align-feature.ts
 var AlignFeature = class {
@@ -1422,7 +1422,7 @@ var RiskConfirmModal = class extends import_obsidian3.Modal {
   }
   onOpen() {
     this.contentEl.empty();
-    this.contentEl.createEl("h2", { text: this.options.title });
+    new import_obsidian3.Setting(this.contentEl).setName(this.options.title).setHeading();
     this.contentEl.createEl("p", { text: this.options.message });
     const actions = this.contentEl.createDiv({ cls: "image-manager-risk-confirm-actions" });
     const cancelButton = actions.createEl("button", {
@@ -2501,7 +2501,7 @@ var _ImageGalleryModal = class _ImageGalleryModal extends import_obsidian6.Modal
     this.selectedImagePath = this.initialSelectedImagePath;
     this.contentEl.empty();
     this.contentEl.addClass("image-manager-gallery");
-    this.contentEl.createEl("h2", { text: this.title });
+    new import_obsidian6.Setting(this.contentEl).setName(this.title).setHeading();
     const toolbar = this.contentEl.createDiv({ cls: "image-manager-gallery-toolbar" });
     const search = toolbar.createEl("input", {
       cls: "image-manager-gallery-search",
@@ -2771,7 +2771,7 @@ var _ImageGalleryModal = class _ImageGalleryModal extends import_obsidian6.Modal
     if (!this.lightboxImageEl || !this.lightboxZoomResetButton || !this.lightboxZoomOutButton || !this.lightboxZoomInButton) {
       return;
     }
-    this.lightboxImageEl.style.transform = `scale(${this.lightboxZoom})`;
+    this.lightboxImageEl.setCssStyles({ transform: `scale(${this.lightboxZoom})` });
     this.lightboxZoomResetButton.setText(`${Math.round(this.lightboxZoom * 100)}%`);
     this.lightboxZoomOutButton.disabled = this.lightboxZoom <= _ImageGalleryModal.MIN_ZOOM;
     this.lightboxZoomInButton.disabled = this.lightboxZoom >= _ImageGalleryModal.MAX_ZOOM;
@@ -2880,7 +2880,7 @@ function detectObsidianDebugMode(app) {
       return true;
     }
   }
-  if (typeof document !== "undefined" && /(debug|developer)/i.test((_f = (_e = document.body) == null ? void 0 : _e.className) != null ? _f : "")) {
+  if (/(debug|developer)/i.test((_f = (_e = activeDocument.body) == null ? void 0 : _e.className) != null ? _f : "")) {
     return true;
   }
   return false;
@@ -2911,10 +2911,7 @@ function describeCurrentPlatform(language = "zh-CN") {
   return platforms.desktopMode;
 }
 function detectCanvasOutputSupport(format) {
-  if (typeof document === "undefined") {
-    return false;
-  }
-  const canvas = document.createElement("canvas");
+  const canvas = activeDocument.createElement("canvas");
   if (typeof canvas.toDataURL !== "function") {
     return false;
   }
@@ -3191,7 +3188,7 @@ var ImageSelectionModal = class extends import_obsidian9.Modal {
   onOpen() {
     this.contentEl.empty();
     this.contentEl.addClass("image-manager-selection-modal");
-    this.contentEl.createEl("h2", { text: this.options.title });
+    new import_obsidian9.Setting(this.contentEl).setName(this.options.title).setHeading();
     this.contentEl.createEl("p", {
       cls: "image-manager-selection-modal__description",
       text: this.options.description
@@ -3307,15 +3304,17 @@ var ImageSelectionModal = class extends import_obsidian9.Modal {
   renderSelection() {
     const selection = this.currentSelection;
     if (!selection || selection.width <= 0 || selection.height <= 0) {
-      this.selectionEl.style.display = "none";
+      this.selectionEl.setCssStyles({ display: "none" });
       this.updateHint();
       return;
     }
-    this.selectionEl.style.display = "block";
-    this.selectionEl.style.left = `${selection.x}px`;
-    this.selectionEl.style.top = `${selection.y}px`;
-    this.selectionEl.style.width = `${selection.width}px`;
-    this.selectionEl.style.height = `${selection.height}px`;
+    this.selectionEl.setCssStyles({
+      display: "block",
+      left: `${selection.x}px`,
+      top: `${selection.y}px`,
+      width: `${selection.width}px`,
+      height: `${selection.height}px`
+    });
     this.updateHint(selection);
   }
   updateHint(selection) {
@@ -3963,7 +3962,7 @@ var GalleryFeature = class {
 };
 
 // src/features/preview/preview-feature.ts
-var import_obsidian13 = require("obsidian");
+var import_obsidian14 = require("obsidian");
 
 // src/utils/link-resolution.ts
 function getParsedLinkResolutionCandidates(parsed) {
@@ -4000,6 +3999,7 @@ function decodeLinkPathSafely(path) {
 
 // src/utils/pasted-image-source.ts
 var import_promises = require("fs/promises");
+var import_obsidian13 = require("obsidian");
 var import_path = require("path");
 var import_url = require("url");
 var IMAGE_FILE_EXTENSION_REGEX = /\.(png|jpe?g|gif|webp|bmp|svg|tiff?|heic|avif)$/i;
@@ -4093,17 +4093,16 @@ function parseDataImageSource(value) {
   };
 }
 async function resolveRemoteImageSource(source) {
-  var _a;
-  const response = await fetch(source.value);
-  if (!response.ok) {
+  const response = await (0, import_obsidian13.requestUrl)({ url: source.value, throw: false });
+  if (response.status >= 400) {
     throw new Error(`Failed to download image: ${response.status}`);
   }
-  const mimeType = ((_a = response.headers.get("content-type")) != null ? _a : "").toLowerCase();
+  const mimeType = findHeaderValue(response.headers, "content-type").toLowerCase();
   if (!mimeType.startsWith("image/")) {
     throw new Error(`Remote URL is not an image: ${mimeType || "unknown content-type"}`);
   }
   return {
-    data: await response.arrayBuffer(),
+    data: response.arrayBuffer,
     originalName: ensureFileNameExtension(source.originalName, mimeType)
   };
 }
@@ -4174,7 +4173,18 @@ function decodeBase64ToArrayBuffer(value) {
   return toArrayBuffer(decoded);
 }
 function toArrayBuffer(buffer) {
-  return buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+  const arrayBuffer = new ArrayBuffer(buffer.byteLength);
+  new Uint8Array(arrayBuffer).set(buffer);
+  return arrayBuffer;
+}
+function findHeaderValue(headers, targetName) {
+  const target = targetName.toLowerCase();
+  for (const [name, value] of Object.entries(headers)) {
+    if (name.toLowerCase() === target) {
+      return value;
+    }
+  }
+  return "";
 }
 
 // src/features/preview/preview-feature.ts
@@ -4192,7 +4202,7 @@ var PreviewFeature = class {
         this.applyPreviewSettings(context, image);
         const sourceNote = this.resolveSourceNote(context, markdownContext);
         const target = this.resolveLinkedImageFile(context, markdownContext, image);
-        if (!(target instanceof import_obsidian13.TFile) || !context.services.fileManager.isImageFile(target)) {
+        if (!(target instanceof import_obsidian14.TFile) || !context.services.fileManager.isImageFile(target)) {
           this.registerExternalImageContextMenu(context, element, markdownContext, image, sourceNote);
           continue;
         }
@@ -4224,7 +4234,7 @@ var PreviewFeature = class {
       }
       event.preventDefault();
       event.stopPropagation();
-      const menu = new import_obsidian13.Menu();
+      const menu = new import_obsidian14.Menu();
       const ui = getUiCopy(context.services.settings.getSettings().uiLanguage);
       menu.addItem((item) => {
         item.setTitle(ui.contextMenu.downloadExternalImage).setIcon("download").onClick(() => {
@@ -4274,7 +4284,7 @@ var PreviewFeature = class {
     }
     for (const candidate of getRawLinkResolutionCandidates(rawTarget)) {
       const target = context.app.metadataCache.getFirstLinkpathDest(candidate, markdownContext.sourcePath);
-      if (target instanceof import_obsidian13.TFile) {
+      if (target instanceof import_obsidian14.TFile) {
         return target;
       }
     }
@@ -4313,7 +4323,7 @@ var PreviewFeature = class {
   }
   resolveSourceNote(context, markdownContext) {
     const abstract = context.app.vault.getAbstractFileByPath(markdownContext.sourcePath);
-    return abstract instanceof import_obsidian13.TFile && abstract.extension.toLowerCase() === "md" ? abstract : null;
+    return abstract instanceof import_obsidian14.TFile && abstract.extension.toLowerCase() === "md" ? abstract : null;
   }
   getImportableExternalImageSource(image) {
     var _a;
@@ -4342,7 +4352,7 @@ var PreviewFeature = class {
 };
 
 // src/features/recovery/recovery-feature.ts
-var import_obsidian14 = require("obsidian");
+var import_obsidian15 = require("obsidian");
 var RecoveryFeature = class {
   constructor() {
     __publicField(this, "id", "recovery");
@@ -4379,7 +4389,7 @@ var RecoveryFeature = class {
     } catch (error) {
       console.error("Note Image Manager failed to undo the last transaction", error);
       context.services.logger.error("Recovery undo failed", error);
-      new import_obsidian14.Notice(error instanceof Error ? error.message : getNoticeCopy(context.services.settings.getSettings().uiLanguage).undoFailed);
+      new import_obsidian15.Notice(error instanceof Error ? error.message : getNoticeCopy(context.services.settings.getSettings().uiLanguage).undoFailed);
     }
   }
   async redoLastTransaction(context) {
@@ -4395,13 +4405,13 @@ var RecoveryFeature = class {
     } catch (error) {
       console.error("Note Image Manager failed to redo the last transaction", error);
       context.services.logger.error("Recovery redo failed", error);
-      new import_obsidian14.Notice(error instanceof Error ? error.message : getNoticeCopy(context.services.settings.getSettings().uiLanguage).redoFailed);
+      new import_obsidian15.Notice(error instanceof Error ? error.message : getNoticeCopy(context.services.settings.getSettings().uiLanguage).redoFailed);
     }
   }
 };
 
 // src/features/rename/rename-feature.ts
-var import_obsidian15 = require("obsidian");
+var import_obsidian16 = require("obsidian");
 var RenameFeature = class {
   constructor() {
     __publicField(this, "id", "rename");
@@ -4412,7 +4422,7 @@ var RenameFeature = class {
   async register(context) {
     context.plugin.registerEvent(
       context.app.vault.on("rename", (file, oldPath) => {
-        if (!(file instanceof import_obsidian15.TFile) || file.extension !== "md") {
+        if (!(file instanceof import_obsidian16.TFile) || file.extension !== "md") {
           return;
         }
         void this.syncManagedImagesForNote(context, file, oldPath);
@@ -4458,7 +4468,7 @@ var RenameFeature = class {
         notePath: noteFile.path,
         oldPath
       });
-      new import_obsidian15.Notice(getNoticeCopy(context.services.settings.getSettings().uiLanguage).failedToSyncManagedImages);
+      new import_obsidian16.Notice(getNoticeCopy(context.services.settings.getSettings().uiLanguage).failedToSyncManagedImages);
     }
   }
 };
@@ -4492,7 +4502,7 @@ function createBuiltInFeatures() {
 }
 
 // src/core/compression/compression-tracker.ts
-var import_obsidian16 = require("obsidian");
+var import_obsidian17 = require("obsidian");
 var HISTORY_FILE_NAME = "compression-history.json";
 var CompressionTracker = class {
   constructor(app, pluginId) {
@@ -4501,8 +4511,8 @@ var CompressionTracker = class {
     __publicField(this, "historyPath");
     __publicField(this, "records", /* @__PURE__ */ new Map());
     __publicField(this, "initialized", false);
-    this.rootPath = (0, import_obsidian16.normalizePath)(`${this.app.vault.configDir}/plugins/${pluginId}`);
-    this.historyPath = (0, import_obsidian16.normalizePath)(`${this.rootPath}/${HISTORY_FILE_NAME}`);
+    this.rootPath = (0, import_obsidian17.normalizePath)(`${this.app.vault.configDir}/plugins/${pluginId}`);
+    this.historyPath = (0, import_obsidian17.normalizePath)(`${this.rootPath}/${HISTORY_FILE_NAME}`);
   }
   async initialize() {
     await this.ensureDirectory(this.rootPath);
@@ -4512,7 +4522,7 @@ var CompressionTracker = class {
   }
   async getCurrentStatus(file) {
     await this.ensureInitialized();
-    const path = (0, import_obsidian16.normalizePath)(file.path);
+    const path = (0, import_obsidian17.normalizePath)(file.path);
     const record = this.records.get(path);
     if (!record) {
       return null;
@@ -4532,8 +4542,8 @@ var CompressionTracker = class {
   }
   async mark(path, size, mtime, status) {
     await this.ensureInitialized();
-    this.records.set((0, import_obsidian16.normalizePath)(path), {
-      path: (0, import_obsidian16.normalizePath)(path),
+    this.records.set((0, import_obsidian17.normalizePath)(path), {
+      path: (0, import_obsidian17.normalizePath)(path),
       size,
       mtime,
       status,
@@ -4577,7 +4587,7 @@ var CompressionTracker = class {
     let changed = false;
     for (const [path] of this.records) {
       const existing = this.app.vault.getAbstractFileByPath(path);
-      if (existing instanceof import_obsidian16.TFile) {
+      if (existing instanceof import_obsidian17.TFile) {
         continue;
       }
       this.records.delete(path);
@@ -4588,7 +4598,7 @@ var CompressionTracker = class {
     }
   }
   async ensureDirectory(path) {
-    const normalizedPath = (0, import_obsidian16.normalizePath)(path);
+    const normalizedPath = (0, import_obsidian17.normalizePath)(path);
     if (!normalizedPath || await this.app.vault.adapter.exists(normalizedPath)) {
       return;
     }
@@ -4717,7 +4727,7 @@ var FeatureRegistry = class {
 };
 
 // src/core/recovery/recovery-manager.ts
-var import_obsidian17 = require("obsidian");
+var import_obsidian18 = require("obsidian");
 var HISTORY_FILE_NAME2 = "history.json";
 var MAX_RECOVERY_TRANSACTIONS = 10;
 var MAX_RECOVERY_AGE_MS = 24 * 60 * 60 * 1e3;
@@ -4736,9 +4746,9 @@ var RecoveryManager = class {
     __publicField(this, "createdPaths", /* @__PURE__ */ new Set());
     __publicField(this, "createdFolderPaths", /* @__PURE__ */ new Set());
     __publicField(this, "initialized", false);
-    this.rootPath = (0, import_obsidian17.normalizePath)(`${this.app.vault.configDir}/plugins/${pluginId}/recovery`);
-    this.historyPath = (0, import_obsidian17.normalizePath)(`${this.rootPath}/${HISTORY_FILE_NAME2}`);
-    this.snapshotsPath = (0, import_obsidian17.normalizePath)(`${this.rootPath}/snapshots`);
+    this.rootPath = (0, import_obsidian18.normalizePath)(`${this.app.vault.configDir}/plugins/${pluginId}/recovery`);
+    this.historyPath = (0, import_obsidian18.normalizePath)(`${this.rootPath}/${HISTORY_FILE_NAME2}`);
+    this.snapshotsPath = (0, import_obsidian18.normalizePath)(`${this.rootPath}/snapshots`);
   }
   async initialize() {
     await this.ensureDirectory(this.rootPath);
@@ -4794,7 +4804,7 @@ var RecoveryManager = class {
     if (!transaction) {
       return;
     }
-    const normalizedPath = (0, import_obsidian17.normalizePath)(file.path);
+    const normalizedPath = (0, import_obsidian18.normalizePath)(file.path);
     if (this.capturedBinaryPaths.has(normalizedPath)) {
       return;
     }
@@ -4812,7 +4822,7 @@ var RecoveryManager = class {
     if (!transaction) {
       return;
     }
-    const normalizedPath = (0, import_obsidian17.normalizePath)(path);
+    const normalizedPath = (0, import_obsidian18.normalizePath)(path);
     if (this.capturedTextPaths.has(normalizedPath)) {
       return;
     }
@@ -4830,7 +4840,7 @@ var RecoveryManager = class {
     if (!transaction) {
       return;
     }
-    const normalizedPath = (0, import_obsidian17.normalizePath)(path);
+    const normalizedPath = (0, import_obsidian18.normalizePath)(path);
     if (this.createdPaths.has(normalizedPath)) {
       return;
     }
@@ -4842,8 +4852,8 @@ var RecoveryManager = class {
   }
   recordRename(fromPath, toPath) {
     const transaction = this.activeTransaction;
-    const normalizedFrom = (0, import_obsidian17.normalizePath)(fromPath);
-    const normalizedTo = (0, import_obsidian17.normalizePath)(toPath);
+    const normalizedFrom = (0, import_obsidian18.normalizePath)(fromPath);
+    const normalizedTo = (0, import_obsidian18.normalizePath)(toPath);
     if (!transaction || normalizedFrom === normalizedTo) {
       return;
     }
@@ -4860,7 +4870,7 @@ var RecoveryManager = class {
     }
     transaction.entries.push({
       kind: "deleted-folder",
-      path: (0, import_obsidian17.normalizePath)(path)
+      path: (0, import_obsidian18.normalizePath)(path)
     });
   }
   recordCreatedFolder(path) {
@@ -4868,7 +4878,7 @@ var RecoveryManager = class {
     if (!transaction) {
       return;
     }
-    const normalizedPath = (0, import_obsidian17.normalizePath)(path);
+    const normalizedPath = (0, import_obsidian18.normalizePath)(path);
     if (this.createdFolderPaths.has(normalizedPath)) {
       return;
     }
@@ -5059,7 +5069,7 @@ var RecoveryManager = class {
     const files = [];
     for (const path of trackedPaths) {
       const abstract = this.app.vault.getAbstractFileByPath(path);
-      if (!(abstract instanceof import_obsidian17.TFile)) {
+      if (!(abstract instanceof import_obsidian18.TFile)) {
         files.push({
           path,
           kind: this.inferFileKind(path),
@@ -5124,8 +5134,8 @@ var RecoveryManager = class {
         continue;
       }
       const abstract = this.app.vault.getAbstractFileByPath(entry.path);
-      if (abstract instanceof import_obsidian17.TFile) {
-        await this.app.vault.delete(abstract, true);
+      if (abstract instanceof import_obsidian18.TFile) {
+        await this.app.fileManager.trashFile(abstract);
       } else if (await this.app.vault.adapter.exists(entry.path)) {
         await this.app.vault.adapter.remove(entry.path);
       }
@@ -5158,8 +5168,8 @@ var RecoveryManager = class {
     }
     for (const file of [...state.files].reverse().filter((item) => !item.exists)) {
       const abstract = this.app.vault.getAbstractFileByPath(file.path);
-      if (abstract instanceof import_obsidian17.TFile) {
-        await this.app.vault.delete(abstract, true);
+      if (abstract instanceof import_obsidian18.TFile) {
+        await this.app.fileManager.trashFile(abstract);
       } else if (await this.app.vault.adapter.exists(file.path)) {
         await this.app.vault.adapter.remove(file.path);
       }
@@ -5245,7 +5255,7 @@ var RecoveryManager = class {
       const parsed = JSON.parse(raw);
       return Array.isArray(parsed.transactions) ? parsed.transactions : [];
     } catch (e) {
-      new import_obsidian17.Notice(getNoticeCopy(this.getSettings().uiLanguage).recoveryHistoryReset);
+      new import_obsidian18.Notice(getNoticeCopy(this.getSettings().uiLanguage).recoveryHistoryReset);
       return [];
     }
   }
@@ -5257,12 +5267,12 @@ var RecoveryManager = class {
     await this.app.vault.adapter.write(this.historyPath, JSON.stringify(state, null, 2));
   }
   async writeBinarySnapshot(transactionId, originalPath, data) {
-    const snapshotPath = (0, import_obsidian17.normalizePath)(`${this.snapshotsPath}/${transactionId}-${this.slugPath(originalPath)}.bin`);
+    const snapshotPath = (0, import_obsidian18.normalizePath)(`${this.snapshotsPath}/${transactionId}-${this.slugPath(originalPath)}.bin`);
     await this.app.vault.adapter.writeBinary(snapshotPath, data);
     return snapshotPath;
   }
   async writeTextSnapshot(transactionId, originalPath, content) {
-    const snapshotPath = (0, import_obsidian17.normalizePath)(`${this.snapshotsPath}/${transactionId}-${this.slugPath(originalPath)}.txt`);
+    const snapshotPath = (0, import_obsidian18.normalizePath)(`${this.snapshotsPath}/${transactionId}-${this.slugPath(originalPath)}.txt`);
     await this.app.vault.adapter.write(snapshotPath, content);
     return snapshotPath;
   }
@@ -5273,7 +5283,7 @@ var RecoveryManager = class {
     await this.initialize();
   }
   async ensureDirectory(path) {
-    const normalizedPath = (0, import_obsidian17.normalizePath)(path);
+    const normalizedPath = (0, import_obsidian18.normalizePath)(path);
     if (!normalizedPath || await this.app.vault.adapter.exists(normalizedPath)) {
       return;
     }
@@ -5380,7 +5390,7 @@ var RecoveryManager = class {
 };
 
 // src/services/file-manager/index.ts
-var import_obsidian18 = require("obsidian");
+var import_obsidian19 = require("obsidian");
 var IMAGE_EXTENSIONS = /* @__PURE__ */ new Set(["png", "jpg", "jpeg", "gif", "webp", "bmp", "svg", "tif", "tiff", "heic", "avif"]);
 var FileManager = class {
   constructor(app, getSettings, variableResolver, linkFormatter) {
@@ -5421,11 +5431,11 @@ var FileManager = class {
   }
   async saveRemoteImage(url, noteFile, fileName) {
     var _a;
-    const response = await fetch(url);
-    if (!response.ok) {
+    const response = await (0, import_obsidian19.requestUrl)({ url, throw: false });
+    if (response.status >= 400) {
       throw new Error(`Failed to download image: ${response.status}`);
     }
-    const buffer = await response.arrayBuffer();
+    const buffer = response.arrayBuffer;
     const inferredName = fileName != null ? fileName : decodeURIComponent((_a = url.split("/").pop()) != null ? _a : `download-${Date.now()}.png`);
     return this.saveImage(buffer, inferredName, noteFile);
   }
@@ -5473,7 +5483,7 @@ var FileManager = class {
   }
   async restoreBinaryFile(path, data) {
     const existing = this.app.vault.getAbstractFileByPath(path);
-    if (existing instanceof import_obsidian18.TFile) {
+    if (existing instanceof import_obsidian19.TFile) {
       await this.app.vault.modifyBinary(existing, data, { mtime: Date.now() });
       await this.refreshOpenLeaves(existing, path, path);
       return existing;
@@ -5485,7 +5495,7 @@ var FileManager = class {
   }
   async restoreTextFile(path, content) {
     const existing = this.app.vault.getAbstractFileByPath(path);
-    if (existing instanceof import_obsidian18.TFile) {
+    if (existing instanceof import_obsidian19.TFile) {
       await this.app.vault.modify(existing, content);
       return existing;
     }
@@ -5501,7 +5511,7 @@ var FileManager = class {
     for (const match of content.matchAll(imageLinkRegex)) {
       const parsed = this.linkFormatter.parseLink(match[0]);
       const file = (_a = this.resolveLinkedImageFile(parsed, sourcePath)) == null ? void 0 : _a.file;
-      if (file instanceof import_obsidian18.TFile && this.isImageFile(file) && !seenPaths.has(file.path)) {
+      if (file instanceof import_obsidian19.TFile && this.isImageFile(file) && !seenPaths.has(file.path)) {
         seenPaths.add(file.path);
         files.push(file);
       }
@@ -5511,10 +5521,10 @@ var FileManager = class {
   getImagesInFolder(folder) {
     const files = [];
     for (const child of folder.children) {
-      if (child instanceof import_obsidian18.TFile && this.isImageFile(child)) {
+      if (child instanceof import_obsidian19.TFile && this.isImageFile(child)) {
         files.push(child);
       }
-      if (child instanceof import_obsidian18.TFolder) {
+      if (child instanceof import_obsidian19.TFolder) {
         files.push(...this.getImagesInFolder(child));
       }
     }
@@ -5523,10 +5533,10 @@ var FileManager = class {
   getMarkdownFilesInFolder(folder) {
     const files = [];
     for (const child of folder.children) {
-      if (child instanceof import_obsidian18.TFile && child.extension.toLowerCase() === "md") {
+      if (child instanceof import_obsidian19.TFile && child.extension.toLowerCase() === "md") {
         files.push(child);
       }
-      if (child instanceof import_obsidian18.TFolder) {
+      if (child instanceof import_obsidian19.TFolder) {
         files.push(...this.getMarkdownFilesInFolder(child));
       }
     }
@@ -5652,7 +5662,7 @@ var FileManager = class {
         managedImages.set(image.path, image);
       }
     }
-    if (this.isNoteScopedOutputFolder() && oldFolder instanceof import_obsidian18.TFolder) {
+    if (this.isNoteScopedOutputFolder() && oldFolder instanceof import_obsidian19.TFolder) {
       for (const image of this.getImagesInFolder(oldFolder)) {
         managedImages.set(image.path, image);
       }
@@ -5677,7 +5687,7 @@ var FileManager = class {
     if (updated !== content) {
       await this.app.vault.modify(noteFile, updated);
     }
-    if (oldFolder instanceof import_obsidian18.TFolder) {
+    if (oldFolder instanceof import_obsidian19.TFolder) {
       if (this.getSettings().deleteOrphanImages) {
         await this.deleteOrphanImagesInFolder(oldFolder);
       }
@@ -5689,7 +5699,7 @@ var FileManager = class {
   }
   async deleteOrphanImagesForNote(noteFile, scopeNotePaths = /* @__PURE__ */ new Set([noteFile.path])) {
     const cleanupFolder = this.resolveOrphanCleanupFolderForNote(noteFile);
-    if (!(cleanupFolder instanceof import_obsidian18.TFolder)) {
+    if (!(cleanupFolder instanceof import_obsidian19.TFolder)) {
       return {
         deletedImages: 0,
         deletedFolders: 0,
@@ -5801,7 +5811,7 @@ var FileManager = class {
     const sourcePaths = this.getReferencingNotePaths(oldPath);
     for (const sourcePath of sourcePaths) {
       const sourceFile = this.app.vault.getAbstractFileByPath(sourcePath);
-      if (!(sourceFile instanceof import_obsidian18.TFile) || sourceFile.extension.toLowerCase() !== "md") {
+      if (!(sourceFile instanceof import_obsidian19.TFile) || sourceFile.extension.toLowerCase() !== "md") {
         continue;
       }
       await this.updateLinks(sourceFile, oldPath, newPath, sourceFile.path);
@@ -5890,7 +5900,7 @@ var FileManager = class {
     const settings = this.getSettings();
     return this.rewriteImageLinks(content, (match, _rawTarget, parsed) => {
       const resolved = this.resolveLinkedImageFile(parsed, sourcePath);
-      if (!((resolved == null ? void 0 : resolved.file) instanceof import_obsidian18.TFile) || !this.isImageFile(resolved.file)) {
+      if (!((resolved == null ? void 0 : resolved.file) instanceof import_obsidian19.TFile) || !this.isImageFile(resolved.file)) {
         return match;
       }
       return this.linkFormatter.formatLink(resolved.file.path, noteFile, {
@@ -5944,7 +5954,7 @@ var FileManager = class {
           continue;
         }
         const referenceNote = this.app.vault.getAbstractFileByPath(referencePath);
-        if (referenceNote instanceof import_obsidian18.TFile && referenceNote.extension.toLowerCase() === "md") {
+        if (referenceNote instanceof import_obsidian19.TFile && referenceNote.extension.toLowerCase() === "md") {
           const oldParentPath = (_b = (_a = image.parent) == null ? void 0 : _a.path) != null ? _b : getParentPath(image.path);
           const moved = await this.reassignImageToReferencingNote(image, referenceNote);
           if (oldParentPath) {
@@ -5969,13 +5979,13 @@ var FileManager = class {
         deletedParents.add(parentPath);
       }
       await ((_e = this.recoveryManager) == null ? void 0 : _e.captureBinarySnapshot(image));
-      await this.app.vault.delete(image, true);
+      await this.app.fileManager.trashFile(image);
       deletedImages += 1;
     }
     let deletedFolders = 0;
     for (const folderPath of deletedParents) {
       const abstract = this.app.vault.getAbstractFileByPath(folderPath);
-      if (abstract instanceof import_obsidian18.TFolder) {
+      if (abstract instanceof import_obsidian19.TFolder) {
         deletedFolders += await this.deleteFolderIfEmpty(abstract);
       }
     }
@@ -6018,7 +6028,7 @@ var FileManager = class {
     const managedFolderPath = this.resolveOutputFolderPath(noteFile.path);
     if (managedFolderPath) {
       const managedFolder = this.app.vault.getAbstractFileByPath(managedFolderPath);
-      if (managedFolder instanceof import_obsidian18.TFolder) {
+      if (managedFolder instanceof import_obsidian19.TFolder) {
         return managedFolder;
       }
       if (this.getSettings().outputFolder.trim()) {
@@ -6030,7 +6040,7 @@ var FileManager = class {
       return null;
     }
     const fallbackFolder = this.app.vault.getAbstractFileByPath(fallbackFolderPath);
-    return fallbackFolder instanceof import_obsidian18.TFolder ? fallbackFolder : null;
+    return fallbackFolder instanceof import_obsidian19.TFolder ? fallbackFolder : null;
   }
   resolveManagedFolderCleanupBoundary(notePath) {
     const template = this.getSettings().outputFolder.trim();
@@ -6059,9 +6069,9 @@ var FileManager = class {
     if (!this.getSettings().deleteEmptyFolders || folder.children.length > 0 || folder.path === options.preservePath) {
       return 0;
     }
-    const parent = folder.parent instanceof import_obsidian18.TFolder ? folder.parent : null;
+    const parent = folder.parent instanceof import_obsidian19.TFolder ? folder.parent : null;
     (_a = this.recoveryManager) == null ? void 0 : _a.recordDeletedFolder(folder.path);
-    await this.app.vault.delete(folder, true);
+    await this.app.fileManager.trashFile(folder);
     const parentDeleted = parent ? await this.deleteFolderIfEmpty(parent, options) : 0;
     return 1 + parentDeleted;
   }
@@ -6144,7 +6154,7 @@ var FileManager = class {
     }
     for (const candidate of getParsedLinkResolutionCandidates(parsed)) {
       const resolved = this.app.metadataCache.getFirstLinkpathDest(candidate, sourcePath);
-      if (resolved instanceof import_obsidian18.TFile) {
+      if (resolved instanceof import_obsidian19.TFile) {
         return {
           file: resolved,
           matchedTarget: candidate
@@ -6201,7 +6211,7 @@ var FileManager = class {
     }
     this.app.workspace.iterateAllLeaves((leaf) => {
       var _a;
-      if (leaf.view instanceof import_obsidian18.MarkdownView && leaf.view.file) {
+      if (leaf.view instanceof import_obsidian19.MarkdownView && leaf.view.file) {
         markdownViews.push(leaf.view);
         return;
       }
@@ -6308,7 +6318,7 @@ var FileManager = class {
       return;
     }
     const abstract = this.app.vault.getAbstractFileByPath(imagePath);
-    if (!(abstract instanceof import_obsidian18.TFile)) {
+    if (!(abstract instanceof import_obsidian19.TFile)) {
       return;
     }
     const freshSrc = this.buildFreshResourcePath(abstract);
@@ -6400,7 +6410,7 @@ var ImageProcessor = class {
     this.assertOutputFormatSupported(this.extensionToFormat(file.extension));
     const source = await this.app.vault.readBinary(file);
     const image = await this.loadImage(source, file.extension);
-    const canvas = document.createElement("canvas");
+    const canvas = activeDocument.createElement("canvas");
     const ctx = canvas.getContext("2d");
     if (!ctx) {
       throw new Error("Canvas context is unavailable");
@@ -6418,7 +6428,7 @@ var ImageProcessor = class {
     this.assertOutputFormatSupported(this.extensionToFormat(file.extension));
     const source = await this.app.vault.readBinary(file);
     const image = await this.loadImage(source, file.extension);
-    const canvas = document.createElement("canvas");
+    const canvas = activeDocument.createElement("canvas");
     const ctx = canvas.getContext("2d");
     if (!ctx) {
       throw new Error("Canvas context is unavailable");
@@ -6445,7 +6455,7 @@ var ImageProcessor = class {
     if (!region) {
       throw new Error("Crop selection is empty");
     }
-    const canvas = document.createElement("canvas");
+    const canvas = activeDocument.createElement("canvas");
     const ctx = canvas.getContext("2d");
     if (!ctx) {
       throw new Error("Canvas context is unavailable");
@@ -6469,7 +6479,7 @@ var ImageProcessor = class {
     var _a, _b;
     const source = await this.app.vault.readBinary(file);
     const image = await this.loadImage(source, file.extension);
-    const canvas = document.createElement("canvas");
+    const canvas = activeDocument.createElement("canvas");
     const ctx = canvas.getContext("2d");
     if (!ctx) {
       throw new Error("Canvas context is unavailable");
@@ -6509,7 +6519,7 @@ var ImageProcessor = class {
     return new Promise((resolve, reject) => {
       const blob = new Blob([source], { type: this.extensionToMime(extension) });
       const url = URL.createObjectURL(blob);
-      const image = new Image();
+      const image = activeDocument.createElement("img");
       image.onload = () => {
         URL.revokeObjectURL(url);
         resolve(image);
@@ -6922,7 +6932,7 @@ function normalizeSettings(settings) {
 }
 
 // src/ui/settings/image-manager-setting-tab.ts
-var import_obsidian19 = require("obsidian");
+var import_obsidian20 = require("obsidian");
 
 // src/utils/plugin-conflicts.ts
 var CONFLICT_RULES = [
@@ -7029,7 +7039,7 @@ function dedupePluginConflicts(conflicts) {
 }
 
 // src/ui/settings/image-manager-setting-tab.ts
-var ImageManagerSettingTab = class extends import_obsidian19.PluginSettingTab {
+var ImageManagerSettingTab = class extends import_obsidian20.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
     this.plugin = plugin;
@@ -7053,7 +7063,7 @@ var ImageManagerSettingTab = class extends import_obsidian19.PluginSettingTab {
       copy.sections.naming.title,
       copy.sections.naming.description
     );
-    outputFolderSetting = new import_obsidian19.Setting(namingSection).setName(copy.settings.outputFolderName).setDesc(copy.settings.outputFolderDesc).addTextArea((text) => {
+    outputFolderSetting = new import_obsidian20.Setting(namingSection).setName(copy.settings.outputFolderName).setDesc(copy.settings.outputFolderDesc).addTextArea((text) => {
       outputFolderInput = text;
       text.inputEl.rows = 2;
       text.setPlaceholder("./assets/${noteFileName}");
@@ -7078,7 +7088,7 @@ var ImageManagerSettingTab = class extends import_obsidian19.PluginSettingTab {
     );
     outputFolderPreviewValue = this.createPreviewBlock(namingSection, copy.previews.outputFolder);
     this.updateOutputFolderFeedback(outputFolderSetting, outputFolderPreviewValue, settings.outputFolder);
-    new import_obsidian19.Setting(namingSection).setName(copy.settings.defaultFormatName).setDesc(copy.settings.defaultFormatDesc).addDropdown(
+    new import_obsidian20.Setting(namingSection).setName(copy.settings.defaultFormatName).setDesc(copy.settings.defaultFormatDesc).addDropdown(
       (dropdown) => dropdown.addOption("webp" /* WEBP */, "WebP").addOption("jpeg" /* JPEG */, "JPEG").addOption("png" /* PNG */, "PNG").setValue(settings.defaultFormat).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.defaultFormat = value;
@@ -7088,28 +7098,28 @@ var ImageManagerSettingTab = class extends import_obsidian19.PluginSettingTab {
         }
       })
     );
-    new import_obsidian19.Setting(namingSection).setName(copy.settings.defaultLinkFormatName).setDesc(copy.settings.defaultLinkFormatDesc).addDropdown(
+    new import_obsidian20.Setting(namingSection).setName(copy.settings.defaultLinkFormatName).setDesc(copy.settings.defaultLinkFormatDesc).addDropdown(
       (dropdown) => dropdown.addOption("wiki" /* WIKI */, copy.options.linkFormat.wiki).addOption("markdown" /* MARKDOWN */, copy.options.linkFormat.markdown).setValue(settings.defaultLinkFormat).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.defaultLinkFormat = value;
         });
       })
     );
-    new import_obsidian19.Setting(namingSection).setName(copy.settings.defaultPathFormatName).setDesc(copy.settings.defaultPathFormatDesc).addDropdown(
+    new import_obsidian20.Setting(namingSection).setName(copy.settings.defaultPathFormatName).setDesc(copy.settings.defaultPathFormatDesc).addDropdown(
       (dropdown) => dropdown.addOption("shortest" /* SHORTEST */, copy.options.pathFormat.shortest).addOption("relative" /* RELATIVE */, copy.options.pathFormat.relative).addOption("absolute" /* ABSOLUTE */, copy.options.pathFormat.absolute).setValue(settings.defaultPathFormat).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.defaultPathFormat = value;
         });
       })
     );
-    new import_obsidian19.Setting(namingSection).setName(copy.settings.markdownPathName).setDesc(copy.settings.markdownPathDesc).addDropdown(
+    new import_obsidian20.Setting(namingSection).setName(copy.settings.markdownPathName).setDesc(copy.settings.markdownPathDesc).addDropdown(
       (dropdown) => dropdown.addOption("encoded" /* ENCODED */, copy.options.markdownPathEncodingStrategy.encoded).addOption("readable" /* READABLE */, copy.options.markdownPathEncodingStrategy.readable).addOption("auto" /* AUTO */, copy.options.markdownPathEncodingStrategy.auto).setValue(settings.markdownPathEncodingStrategy).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.markdownPathEncodingStrategy = value;
         });
       })
     );
-    renameSetting = new import_obsidian19.Setting(namingSection).setName(copy.settings.renamePatternName).setDesc(copy.settings.renamePatternDesc).addTextArea((text) => {
+    renameSetting = new import_obsidian20.Setting(namingSection).setName(copy.settings.renamePatternName).setDesc(copy.settings.renamePatternDesc).addTextArea((text) => {
       renameInput = text;
       text.inputEl.rows = 2;
       text.setPlaceholder(DEFAULT_SETTINGS.renamePattern);
@@ -7151,7 +7161,7 @@ var ImageManagerSettingTab = class extends import_obsidian19.PluginSettingTab {
       }
     );
     this.createVariableReference(namingSection);
-    new import_obsidian19.Setting(namingSection).setName(copy.settings.enableAutoRenameName).setDesc(copy.settings.enableAutoRenameDesc).addToggle(
+    new import_obsidian20.Setting(namingSection).setName(copy.settings.enableAutoRenameName).setDesc(copy.settings.enableAutoRenameDesc).addToggle(
       (toggle) => toggle.setValue(settings.enableAutoRename).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.enableAutoRename = value;
@@ -7161,21 +7171,21 @@ var ImageManagerSettingTab = class extends import_obsidian19.PluginSettingTab {
         }
       })
     );
-    new import_obsidian19.Setting(namingSection).setName(copy.settings.renameImagesOnRelocateName).setDesc(copy.settings.renameImagesOnRelocateDesc).addToggle(
+    new import_obsidian20.Setting(namingSection).setName(copy.settings.renameImagesOnRelocateName).setDesc(copy.settings.renameImagesOnRelocateDesc).addToggle(
       (toggle) => toggle.setValue(settings.renameImagesOnNoteRelocate).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.renameImagesOnNoteRelocate = value;
         });
       })
     );
-    new import_obsidian19.Setting(namingSection).setName(copy.settings.deleteEmptyFoldersName).setDesc(copy.settings.deleteEmptyFoldersDesc).addToggle(
+    new import_obsidian20.Setting(namingSection).setName(copy.settings.deleteEmptyFoldersName).setDesc(copy.settings.deleteEmptyFoldersDesc).addToggle(
       (toggle) => toggle.setValue(settings.deleteEmptyFolders).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.deleteEmptyFolders = value;
         });
       })
     );
-    new import_obsidian19.Setting(namingSection).setName(copy.settings.deleteOrphanImagesName).setDesc(copy.settings.deleteOrphanImagesDesc).addToggle(
+    new import_obsidian20.Setting(namingSection).setName(copy.settings.deleteOrphanImagesName).setDesc(copy.settings.deleteOrphanImagesDesc).addToggle(
       (toggle) => toggle.setValue(settings.deleteOrphanImages).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.deleteOrphanImages = value;
@@ -7188,35 +7198,35 @@ var ImageManagerSettingTab = class extends import_obsidian19.PluginSettingTab {
       copy.sections.convert.description
     );
     convertSection.addClass("image-manager-settings-section--convert");
-    new import_obsidian19.Setting(convertSection).setName(copy.settings.defaultQualityName).setDesc(copy.settings.defaultQualityDesc).addSlider(
-      (slider) => slider.setLimits(1, 100, 1).setDynamicTooltip().setValue(settings.defaultQuality).onChange(async (value) => {
+    new import_obsidian20.Setting(convertSection).setName(copy.settings.defaultQualityName).setDesc(copy.settings.defaultQualityDesc).addSlider(
+      (slider) => slider.setLimits(1, 100, 1).setValue(settings.defaultQuality).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.defaultQuality = value;
         });
       })
     );
-    new import_obsidian19.Setting(convertSection).setName(copy.settings.compressionQualityName).setDesc(copy.settings.compressionQualityDesc).addSlider(
-      (slider) => slider.setLimits(1, 100, 1).setDynamicTooltip().setValue(settings.compressionQuality).onChange(async (value) => {
+    new import_obsidian20.Setting(convertSection).setName(copy.settings.compressionQualityName).setDesc(copy.settings.compressionQualityDesc).addSlider(
+      (slider) => slider.setLimits(1, 100, 1).setValue(settings.compressionQuality).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.compressionQuality = value;
         });
       })
     );
-    new import_obsidian19.Setting(convertSection).setName(copy.settings.enableAutoConvertName).setDesc(copy.settings.enableAutoConvertDesc).addToggle(
+    new import_obsidian20.Setting(convertSection).setName(copy.settings.enableAutoConvertName).setDesc(copy.settings.enableAutoConvertDesc).addToggle(
       (toggle) => toggle.setValue(settings.enableAutoConvert).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.enableAutoConvert = value;
         });
       })
     );
-    new import_obsidian19.Setting(convertSection).setName(copy.settings.showOperationNotificationsName).setDesc(copy.settings.showOperationNotificationsDesc).addToggle(
+    new import_obsidian20.Setting(convertSection).setName(copy.settings.showOperationNotificationsName).setDesc(copy.settings.showOperationNotificationsDesc).addToggle(
       (toggle) => toggle.setValue(settings.showOperationNotifications).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.showOperationNotifications = value;
         });
       })
     );
-    new import_obsidian19.Setting(convertSection).setName(copy.settings.showSpaceSavedNotificationName).setDesc(copy.settings.showSpaceSavedNotificationDesc).addToggle(
+    new import_obsidian20.Setting(convertSection).setName(copy.settings.showSpaceSavedNotificationName).setDesc(copy.settings.showSpaceSavedNotificationDesc).addToggle(
       (toggle) => toggle.setValue(settings.showSpaceSavedNotification).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.showSpaceSavedNotification = value;
@@ -7224,7 +7234,7 @@ var ImageManagerSettingTab = class extends import_obsidian19.PluginSettingTab {
       })
     );
     const thresholdWrap = convertSection.createDiv({ cls: "image-manager-settings-threshold" });
-    new import_obsidian19.Setting(thresholdWrap).setName(copy.settings.compressionThresholdKBName).setDesc(copy.settings.compressionThresholdKBDesc).addText((text) => {
+    new import_obsidian20.Setting(thresholdWrap).setName(copy.settings.compressionThresholdKBName).setDesc(copy.settings.compressionThresholdKBDesc).addText((text) => {
       text.inputEl.addClass("image-manager-settings-threshold__input");
       text.setPlaceholder("100").setValue(String(settings.compressionThresholdKB)).onChange(async (value) => {
         const parsed = Number.parseInt(value, 10);
@@ -7235,7 +7245,7 @@ var ImageManagerSettingTab = class extends import_obsidian19.PluginSettingTab {
     });
     const rulePanel = convertSection.createDiv({ cls: "image-manager-settings-rule-panel" });
     const compressionRuleBlock = rulePanel.createDiv({ cls: "image-manager-settings-rule-block" });
-    const compressionIgnoreSetting = new import_obsidian19.Setting(compressionRuleBlock).setName(copy.settings.compressionIgnorePatternName).setDesc(copy.settings.compressionIgnorePatternDesc).addTextArea((text) => {
+    const compressionIgnoreSetting = new import_obsidian20.Setting(compressionRuleBlock).setName(copy.settings.compressionIgnorePatternName).setDesc(copy.settings.compressionIgnorePatternDesc).addTextArea((text) => {
       text.inputEl.rows = 3;
       text.setPlaceholder("^assets/raw/\n\\.gif$");
       text.setValue(settings.compressionIgnorePattern).onChange(async (value) => {
@@ -7260,7 +7270,7 @@ var ImageManagerSettingTab = class extends import_obsidian19.PluginSettingTab {
       }
     ).addClass("image-manager-settings-rule-examples");
     const conversionRuleBlock = rulePanel.createDiv({ cls: "image-manager-settings-rule-block" });
-    const conversionIgnoreSetting = new import_obsidian19.Setting(conversionRuleBlock).setName(copy.settings.conversionIgnorePatternName).setDesc(copy.settings.conversionIgnorePatternDesc).addTextArea((text) => {
+    const conversionIgnoreSetting = new import_obsidian20.Setting(conversionRuleBlock).setName(copy.settings.conversionIgnorePatternName).setDesc(copy.settings.conversionIgnorePatternDesc).addTextArea((text) => {
       text.inputEl.rows = 3;
       text.setPlaceholder("^Screenshots/\n\\.png$");
       text.setValue(settings.conversionIgnorePattern).onChange(async (value) => {
@@ -7289,7 +7299,7 @@ var ImageManagerSettingTab = class extends import_obsidian19.PluginSettingTab {
       copy.sections.editor.title,
       copy.sections.editor.description
     );
-    new import_obsidian19.Setting(editorSection).setName(copy.settings.enablePasteHandlerName).setDesc(copy.settings.enablePasteHandlerDesc).addToggle(
+    new import_obsidian20.Setting(editorSection).setName(copy.settings.enablePasteHandlerName).setDesc(copy.settings.enablePasteHandlerDesc).addToggle(
       (toggle) => toggle.setValue(settings.enablePasteHandler).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.enablePasteHandler = value;
@@ -7297,21 +7307,21 @@ var ImageManagerSettingTab = class extends import_obsidian19.PluginSettingTab {
         this.display();
       })
     );
-    new import_obsidian19.Setting(editorSection).setName(copy.settings.enableAutoDownloadImagesFromTextName).setDesc(copy.settings.enableAutoDownloadImagesFromTextDesc).addToggle(
+    new import_obsidian20.Setting(editorSection).setName(copy.settings.enableAutoDownloadImagesFromTextName).setDesc(copy.settings.enableAutoDownloadImagesFromTextDesc).addToggle(
       (toggle) => toggle.setValue(settings.enableAutoDownloadImagesFromText).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.enableAutoDownloadImagesFromText = value;
         });
       })
     );
-    new import_obsidian19.Setting(editorSection).setName(copy.settings.dropPasteCursorLocationName).setDesc(copy.settings.dropPasteCursorLocationDesc).addDropdown(
+    new import_obsidian20.Setting(editorSection).setName(copy.settings.dropPasteCursorLocationName).setDesc(copy.settings.dropPasteCursorLocationDesc).addDropdown(
       (dropdown) => dropdown.addOption("front", copy.options.dropPasteCursorLocation.front).addOption("back", copy.options.dropPasteCursorLocation.back).setValue(settings.dropPasteCursorLocation).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.dropPasteCursorLocation = value;
         });
       })
     );
-    new import_obsidian19.Setting(editorSection).setName(copy.settings.enableContextMenuName).setDesc(copy.settings.enableContextMenuDesc).addToggle(
+    new import_obsidian20.Setting(editorSection).setName(copy.settings.enableContextMenuName).setDesc(copy.settings.enableContextMenuDesc).addToggle(
       (toggle) => toggle.setValue(settings.enableContextMenu).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.enableContextMenu = value;
@@ -7319,21 +7329,21 @@ var ImageManagerSettingTab = class extends import_obsidian19.PluginSettingTab {
         this.display();
       })
     );
-    new import_obsidian19.Setting(editorSection).setName(copy.settings.enableImageAlignName).setDesc(copy.settings.enableImageAlignDesc).addToggle(
+    new import_obsidian20.Setting(editorSection).setName(copy.settings.enableImageAlignName).setDesc(copy.settings.enableImageAlignDesc).addToggle(
       (toggle) => toggle.setValue(settings.enableImageAlign).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.enableImageAlign = value;
         });
       })
     );
-    new import_obsidian19.Setting(editorSection).setName(copy.settings.imageAlignmentDefaultName).setDesc(copy.settings.imageAlignmentDefaultDesc).addDropdown(
+    new import_obsidian20.Setting(editorSection).setName(copy.settings.imageAlignmentDefaultName).setDesc(copy.settings.imageAlignmentDefaultDesc).addDropdown(
       (dropdown) => dropdown.addOption("none" /* NONE */, copy.options.imageAlignment.none).addOption("left" /* LEFT */, copy.options.imageAlignment.left).addOption("center" /* CENTER */, copy.options.imageAlignment.center).addOption("right" /* RIGHT */, copy.options.imageAlignment.right).setValue(settings.imageAlignmentDefaultAlignment).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.imageAlignmentDefaultAlignment = value;
         });
       })
     );
-    new import_obsidian19.Setting(editorSection).setName(copy.settings.disableImageSelectionName).setDesc(copy.settings.disableImageSelectionDesc).addToggle(
+    new import_obsidian20.Setting(editorSection).setName(copy.settings.disableImageSelectionName).setDesc(copy.settings.disableImageSelectionDesc).addToggle(
       (toggle) => toggle.setValue(settings.disableObsidianImageSelectionOnClick).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.disableObsidianImageSelectionOnClick = value;
@@ -7345,21 +7355,21 @@ var ImageManagerSettingTab = class extends import_obsidian19.PluginSettingTab {
       copy.sections.gallery.title,
       copy.sections.gallery.description
     );
-    new import_obsidian19.Setting(gallerySection).setName(copy.settings.enableGalleryName).setDesc(copy.settings.enableGalleryDesc).addToggle(
+    new import_obsidian20.Setting(gallerySection).setName(copy.settings.enableGalleryName).setDesc(copy.settings.enableGalleryDesc).addToggle(
       (toggle) => toggle.setValue(settings.enableGallery).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.enableGallery = value;
         });
       })
     );
-    new import_obsidian19.Setting(gallerySection).setName(copy.settings.galleryGridSizeName).setDesc(copy.settings.galleryGridSizeDesc).addDropdown(
+    new import_obsidian20.Setting(gallerySection).setName(copy.settings.galleryGridSizeName).setDesc(copy.settings.galleryGridSizeDesc).addDropdown(
       (dropdown) => dropdown.addOption("small" /* SMALL */, copy.options.galleryGridSize.small).addOption("medium" /* MEDIUM */, copy.options.galleryGridSize.medium).addOption("large" /* LARGE */, copy.options.galleryGridSize.large).setValue(settings.galleryGridSize).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.galleryGridSize = value;
         });
       })
     );
-    new import_obsidian19.Setting(gallerySection).setName(copy.settings.gallerySortByName).setDesc(copy.settings.gallerySortByDesc).addDropdown(
+    new import_obsidian20.Setting(gallerySection).setName(copy.settings.gallerySortByName).setDesc(copy.settings.gallerySortByDesc).addDropdown(
       (dropdown) => dropdown.addOption("date" /* DATE */, copy.options.gallerySortBy.date).addOption("name" /* NAME */, copy.options.gallerySortBy.name).addOption("size" /* SIZE */, copy.options.gallerySortBy.size).setValue(settings.gallerySortBy).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.gallerySortBy = value;
@@ -7374,12 +7384,12 @@ var ImageManagerSettingTab = class extends import_obsidian19.PluginSettingTab {
     const languageOptions = getUiLanguageOptions();
     const hero = containerEl.createDiv({ cls: "image-manager-settings-hero" });
     const content = hero.createDiv({ cls: "image-manager-settings-hero__content" });
-    new import_obsidian19.Setting(content).setName(copy.header.title).setHeading();
+    new import_obsidian20.Setting(content).setName(copy.header.title).setHeading();
     content.createEl("p", {
       text: copy.header.subtitle
     });
     const actionWrap = hero.createDiv({ cls: "image-manager-settings-hero__actions" });
-    new import_obsidian19.Setting(actionWrap).setName(copy.languageLabel).setDesc(copy.languageDescription).addDropdown(
+    new import_obsidian20.Setting(actionWrap).setName(copy.languageLabel).setDesc(copy.languageDescription).addDropdown(
       (dropdown) => dropdown.addOption("zh-CN", languageOptions["zh-CN"]).addOption("en", languageOptions.en).setValue(this.plugin.getSettings().uiLanguage).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.uiLanguage = value;
@@ -7387,12 +7397,12 @@ var ImageManagerSettingTab = class extends import_obsidian19.PluginSettingTab {
         this.display();
       })
     );
-    new import_obsidian19.Setting(actionWrap).addButton(
-      (button) => button.setButtonText(copy.header.reset).setWarning().onClick(async () => {
+    new import_obsidian20.Setting(actionWrap).addButton(
+      (button) => button.setButtonText(copy.header.reset).setDestructive().onClick(async () => {
         await this.updateSettings((draft) => {
           Object.assign(draft, DEFAULT_SETTINGS);
         });
-        new import_obsidian19.Notice(copy.header.resetNotice);
+        new import_obsidian20.Notice(copy.header.resetNotice);
         this.display();
       })
     );
@@ -7400,7 +7410,7 @@ var ImageManagerSettingTab = class extends import_obsidian19.PluginSettingTab {
   createSection(containerEl, title, description) {
     const section = containerEl.createDiv({ cls: "image-manager-settings-section" });
     const header = section.createDiv({ cls: "image-manager-settings-section__header" });
-    header.createEl("h3", { text: title });
+    new import_obsidian20.Setting(header).setName(title).setHeading();
     header.createEl("p", { text: description });
     return section;
   }
@@ -7497,7 +7507,7 @@ ${example.description}`;
       copy.sections.compatibility.title,
       copy.sections.compatibility.description
     );
-    new import_obsidian19.Setting(section).setName(copy.settings.enableNoteRenameSyncName).setDesc(copy.settings.enableNoteRenameSyncDesc).addToggle(
+    new import_obsidian20.Setting(section).setName(copy.settings.enableNoteRenameSyncName).setDesc(copy.settings.enableNoteRenameSyncDesc).addToggle(
       (toggle) => toggle.setValue(settings.enableNoteRenameSync).onChange(async (value) => {
         await this.updateSettings((draft) => {
           draft.enableNoteRenameSync = value;
@@ -7856,7 +7866,7 @@ function isScopedDisplayLabel(value) {
 }
 
 // src/main.ts
-var ImageManagerPlugin = class extends import_obsidian20.Plugin {
+var ImageManagerPlugin = class extends import_obsidian21.Plugin {
   constructor() {
     super(...arguments);
     __publicField(this, "settingsManager", new SettingsManager(
@@ -7897,10 +7907,13 @@ var ImageManagerPlugin = class extends import_obsidian20.Plugin {
     this.registerEvent(
       this.app.workspace.on("editor-paste", (event, _editor, view) => {
         var _a, _b, _c, _d;
+        if (event.defaultPrevented) {
+          return;
+        }
         if (!this.settingsManager.getSettings().enablePasteHandler) {
           return;
         }
-        if (!(view instanceof import_obsidian20.MarkdownView) || !view.file) {
+        if (!(view instanceof import_obsidian21.MarkdownView) || !view.file) {
           return;
         }
         const files = Array.from((_b = (_a = event.clipboardData) == null ? void 0 : _a.items) != null ? _b : []).filter((item) => item.type.startsWith("image/")).map((item) => item.getAsFile()).filter((file) => file !== null);
@@ -7912,7 +7925,7 @@ var ImageManagerPlugin = class extends import_obsidian20.Plugin {
         const inputs = files.length > 0 ? files.map((file) => ({ kind: "clipboard-file", file })) : textSources.map((source) => ({ kind: "text-image-source", source }));
         void this.insertPastedImages(inputs, view).catch((error) => {
           console.error("Note Image Manager failed to process pasted images", error);
-          new import_obsidian20.Notice(getNoticeCopy(this.settingsManager.getSettings().uiLanguage).failedToProcessPastedImages);
+          new import_obsidian21.Notice(getNoticeCopy(this.settingsManager.getSettings().uiLanguage).failedToProcessPastedImages);
         });
       })
     );
@@ -8087,7 +8100,7 @@ var ImageManagerPlugin = class extends import_obsidian20.Plugin {
           }
         }
         if (links.length === 0) {
-          new import_obsidian20.Notice(getNoticeCopy(this.settingsManager.getSettings().uiLanguage).failedToSavePastedImages);
+          new import_obsidian21.Notice(getNoticeCopy(this.settingsManager.getSettings().uiLanguage).failedToSavePastedImages);
           return;
         }
         const cursor = view.editor.getCursor();
@@ -8165,7 +8178,7 @@ var ImageManagerPlugin = class extends import_obsidian20.Plugin {
     return normalized === format.toLowerCase();
   }
   async rewriteActiveNoteImageLinks() {
-    const view = this.app.workspace.getActiveViewOfType(import_obsidian20.MarkdownView);
+    const view = this.app.workspace.getActiveViewOfType(import_obsidian21.MarkdownView);
     if (!(view == null ? void 0 : view.file)) {
       return;
     }

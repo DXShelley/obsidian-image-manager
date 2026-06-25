@@ -2,9 +2,11 @@
 
 # 更新日志
 
-## 4.0.2
+## 4.0.3
 
 - 调整 `manifest.json` 描述，移除审核规则认为冗余的 `Obsidian` 字样。
+- 将 `minAppVersion` 提升到 `1.13.1`，与当前使用的 Obsidian API 类型版本保持一致。
+- 按社区插件审核反馈替换直接样式赋值、原生标题元素、`fetch`、永久删除、全局 `document`、已废弃设置控件 API，并在粘贴处理前尊重 `event.defaultPrevented`。
 - 补充 README 与文档索引中的开源依赖、框架、工具链和参考项目致谢。
 
 ## 4.0.1

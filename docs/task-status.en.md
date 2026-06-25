@@ -4,8 +4,8 @@
 
 ## Release
 
-- `v4.0.2` ships centralized bilingual copy, command refresh after language changes, single-image external import, layered AVIF compatibility, conversion ignore regexes, and compression history.
-- Package metadata, manifest metadata, release workflow, marketing site, and user-facing documentation are aligned for the 4.0.2 release.
+- `v4.0.3` ships centralized bilingual copy, command refresh after language changes, single-image external import, layered AVIF compatibility, conversion ignore regexes, and compression history.
+- Package metadata, manifest metadata, release workflow, marketing site, and user-facing documentation are aligned for the 4.0.3 release.
 
 ## Completed
 

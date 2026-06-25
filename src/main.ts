@@ -83,6 +83,10 @@ export default class ImageManagerPlugin extends Plugin {
   private registerPasteHandler(): void {
     this.registerEvent(
       this.app.workspace.on('editor-paste', (event, _editor, view) => {
+        if (event.defaultPrevented) {
+          return;
+        }
+
         if (!this.settingsManager.getSettings().enablePasteHandler) {
           return;
         }

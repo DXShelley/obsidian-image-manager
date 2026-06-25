@@ -1,4 +1,4 @@
-import { Modal } from 'obsidian';
+import { Modal, Setting } from 'obsidian';
 import type { App } from 'obsidian';
 
 interface RiskConfirmModalOptions {
@@ -27,7 +27,7 @@ class RiskConfirmModal extends Modal {
 
   override onOpen(): void {
     this.contentEl.empty();
-    this.contentEl.createEl('h2', { text: this.options.title });
+    new Setting(this.contentEl).setName(this.options.title).setHeading();
     this.contentEl.createEl('p', { text: this.options.message });
 
     const actions = this.contentEl.createDiv({ cls: 'image-manager-risk-confirm-actions' });

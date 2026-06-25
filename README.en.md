@@ -2,7 +2,7 @@
 
 # Note Image Manager
 
-`Note Image Manager` is a desktop-only image-management plugin for Obsidian. `v4.0.2` focuses on centralized bilingual UX, safer external-image import, layered AVIF compatibility, compression de-duplication history, and recovery-first image workflows.
+`Note Image Manager` is a desktop-only image-management plugin for Obsidian. `v4.0.3` focuses on centralized bilingual UX, safer external-image import, layered AVIF compatibility, compression de-duplication history, and recovery-first image workflows.
 
 Import, rename, convert, compress, edit, and recover note images safely.
 
@@ -96,10 +96,10 @@ Import, rename, convert, compress, edit, and recover note images safely.
 
 ## Release
 
-- Version: `4.0.2`
-- Minimum Obsidian version: `0.15.0`
+- Version: `4.0.3`
+- Minimum Obsidian version: `1.13.1`
 - First listing: submit the repository through `community.obsidian.md` and wait for review.
-- Updates after approval: create a Git tag and GitHub Release that exactly matches `manifest.json.version`, for example `4.0.2`, without a `v` prefix.
+- Updates after approval: create a Git tag and GitHub Release that exactly matches `manifest.json.version`, for example `4.0.3`, without a `v` prefix.
 - Release artifacts: `manifest.json`, `main.js`, `styles.css`, `note-image-manager-<version>.zip`
 - Keep the GitHub repository description and homepage aligned with this README so the community directory, repo, and Pages site do not drift.
 

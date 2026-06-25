@@ -2,7 +2,7 @@
 
 # Note Image Manager
 
-`Note Image Manager` 是一个面向 Obsidian 的桌面端图片管理插件，`v4.0.2` 聚焦于集中式双语体验、更稳妥的外部图片导入、AVIF 分层兼容、压缩去重历史，以及恢复优先的图片工作流。
+`Note Image Manager` 是一个面向 Obsidian 的桌面端图片管理插件，`v4.0.3` 聚焦于集中式双语体验、更稳妥的外部图片导入、AVIF 分层兼容、压缩去重历史，以及恢复优先的图片工作流。
 
 Import, rename, convert, compress, edit, and recover note images safely.
 
@@ -98,10 +98,10 @@ Import, rename, convert, compress, edit, and recover note images safely.
 
 ## 发布信息
 
-- 版本：`4.0.2`
-- 最低 Obsidian 版本：`0.15.0`
+- 版本：`4.0.3`
+- 最低 Obsidian 版本：`1.13.1`
 - 首次上架：通过 `community.obsidian.md` 提交仓库并等待审核。
-- 后续更新：创建与 `manifest.json` 中 `version` 完全一致的 Git tag 与 GitHub Release，例如 `4.0.2`，不要加 `v` 前缀。
+- 后续更新：创建与 `manifest.json` 中 `version` 完全一致的 Git tag 与 GitHub Release，例如 `4.0.3`，不要加 `v` 前缀。
 - 发布产物：`manifest.json`、`main.js`、`styles.css`、`note-image-manager-<version>.zip`
 - GitHub 仓库描述与主页需保持和 README 一致，避免社区目录页、仓库页与 Pages 首页口径漂移。
 

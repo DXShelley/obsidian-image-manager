@@ -6,6 +6,7 @@ type ObsidianElement = HTMLElement & {
   removeClass: (...classes: string[]) => ObsidianElement;
   empty: () => ObsidianElement;
   setText: (text: string) => ObsidianElement;
+  setCssStyles: (styles: Partial<CSSStyleDeclaration>) => ObsidianElement;
   createDiv: (options?: { cls?: string; text?: string }) => ObsidianElement;
   createEl: (
     tag: string,
@@ -35,6 +36,10 @@ function enhanceElement<T extends HTMLElement>(element: T): T & ObsidianElement 
   };
   target.setText = (text: string) => {
     target.textContent = text;
+    return target;
+  };
+  target.setCssStyles = (styles) => {
+    Object.assign(target.style, styles);
     return target;
   };
   target.createDiv = (options) => {
@@ -80,6 +85,18 @@ vi.mock('obsidian', () => ({
     open(): void {}
 
     close(): void {}
+  },
+  Setting: class {
+    constructor(private readonly containerEl: ObsidianElement) {}
+
+    setName(text: string): this {
+      this.containerEl.createDiv({ cls: 'setting-item-heading', text });
+      return this;
+    }
+
+    setHeading(): this {
+      return this;
+    }
   }
 }));
 

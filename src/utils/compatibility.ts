@@ -92,7 +92,7 @@ export function detectObsidianDebugMode(app: App): boolean {
     }
   }
 
-  if (typeof document !== 'undefined' && /(debug|developer)/i.test(document.body?.className ?? '')) {
+  if (/(debug|developer)/i.test(activeDocument.body?.className ?? '')) {
     return true;
   }
 
@@ -129,11 +129,7 @@ export function describeCurrentPlatform(language: UiLanguage = 'zh-CN'): string 
 }
 
 function detectCanvasOutputSupport(format: ImageFormat): boolean {
-  if (typeof document === 'undefined') {
-    return false;
-  }
-
-  const canvas = document.createElement('canvas');
+  const canvas = activeDocument.createElement('canvas');
   if (typeof canvas.toDataURL !== 'function') {
     return false;
   }
