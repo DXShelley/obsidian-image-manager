@@ -1,9 +1,13 @@
+import { DEFAULT_UI_LANGUAGE, type UiLanguage } from '@/i18n/language';
+
 export enum ImageFormat {
   WEBP = 'webp',
   JPEG = 'jpeg',
   PNG = 'png',
+  BMP = 'bmp',
   GIF = 'gif',
   HEIC = 'heic',
+  SVG = 'svg',
   TIFF = 'tiff'
 }
 
@@ -43,8 +47,6 @@ export enum MarkdownPathEncodingStrategy {
   AUTO = 'auto'
 }
 
-export type UiLanguage = 'zh-CN' | 'en';
-
 export interface ImageManagerSettings {
   uiLanguage: UiLanguage;
   defaultFormat: ImageFormat;
@@ -79,7 +81,7 @@ export interface ImageManagerSettings {
 }
 
 export const DEFAULT_SETTINGS: Readonly<ImageManagerSettings> = {
-  uiLanguage: 'zh-CN',
+  uiLanguage: DEFAULT_UI_LANGUAGE,
   defaultFormat: ImageFormat.WEBP,
   defaultQuality: 80,
   defaultLinkFormat: LinkFormat.WIKI,
@@ -125,8 +127,4 @@ export function isGallerySortBy(value: unknown): value is GallerySortBy {
 
 export function isValidQuality(value: unknown): value is number {
   return typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= 100;
-}
-
-export function isUiLanguage(value: unknown): value is UiLanguage {
-  return value === 'zh-CN' || value === 'en';
 }

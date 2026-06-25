@@ -14,7 +14,7 @@ import {
   type ImageManagerFeature,
   type ImageManagerSettings
 } from '@/types/index';
-import { getSettingTabCopy, type ExampleOption, type PresetOption } from '@/ui/settings/setting-tab-copy';
+import { getSettingTabCopy, getUiLanguageOptions, type ExampleOption, type PresetOption } from '@/i18n';
 import {
   canWriteImageToClipboard,
   detectObsidianDebugMode,
@@ -261,6 +261,7 @@ export class ImageManagerSettingTab extends PluginSettingTab {
       copy.sections.convert.title,
       copy.sections.convert.description
     );
+    convertSection.addClass('image-manager-settings-section--convert');
 
     new Setting(convertSection)
       .setName(copy.settings.defaultQualityName)
@@ -325,7 +326,24 @@ export class ImageManagerSettingTab extends PluginSettingTab {
         })
       );
 
-    const compressionIgnoreSetting = new Setting(convertSection)
+    const thresholdWrap = convertSection.createDiv({ cls: 'image-manager-settings-threshold' });
+    new Setting(thresholdWrap)
+      .setName(copy.settings.compressionThresholdKBName)
+      .setDesc(copy.settings.compressionThresholdKBDesc)
+      .addText((text) => {
+        text.inputEl.addClass('image-manager-settings-threshold__input');
+        text.setPlaceholder('100').setValue(String(settings.compressionThresholdKB)).onChange(async (value) => {
+          const parsed = Number.parseInt(value, 10);
+          await this.updateSettings((draft) => {
+            draft.compressionThresholdKB = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+          });
+        });
+      });
+
+    const rulePanel = convertSection.createDiv({ cls: 'image-manager-settings-rule-panel' });
+
+    const compressionRuleBlock = rulePanel.createDiv({ cls: 'image-manager-settings-rule-block' });
+    const compressionIgnoreSetting = new Setting(compressionRuleBlock)
       .setName(copy.settings.compressionIgnorePatternName)
       .setDesc(copy.settings.compressionIgnorePatternDesc)
       .addTextArea((text) => {
@@ -340,14 +358,21 @@ export class ImageManagerSettingTab extends PluginSettingTab {
         text.inputEl.addClass('image-manager-settings-code-input');
         text.inputEl.addClass('image-manager-settings-textarea');
       });
+    compressionIgnoreSetting.settingEl.addClass('image-manager-settings-rule-setting');
     this.updateRegexPatternFeedback(compressionIgnoreSetting, settings.compressionIgnorePattern);
-    this.createExampleRow(convertSection, copy.exampleTitles.compressionIgnore, copy.compressionIgnoreExamples, (value) => {
-      void this.applySettingValue((draft) => {
-        draft.compressionIgnorePattern = value;
-      });
-    });
+    this.createExampleRow(
+      compressionRuleBlock,
+      copy.exampleTitles.compressionIgnore,
+      copy.compressionIgnoreExamples,
+      (value) => {
+        void this.applySettingValue((draft) => {
+          draft.compressionIgnorePattern = value;
+        });
+      }
+    ).addClass('image-manager-settings-rule-examples');
 
-    const conversionIgnoreSetting = new Setting(convertSection)
+    const conversionRuleBlock = rulePanel.createDiv({ cls: 'image-manager-settings-rule-block' });
+    const conversionIgnoreSetting = new Setting(conversionRuleBlock)
       .setName(copy.settings.conversionIgnorePatternName)
       .setDesc(copy.settings.conversionIgnorePatternDesc)
       .addTextArea((text) => {
@@ -362,24 +387,18 @@ export class ImageManagerSettingTab extends PluginSettingTab {
         text.inputEl.addClass('image-manager-settings-code-input');
         text.inputEl.addClass('image-manager-settings-textarea');
       });
+    conversionIgnoreSetting.settingEl.addClass('image-manager-settings-rule-setting');
     this.updateRegexPatternFeedback(conversionIgnoreSetting, settings.conversionIgnorePattern);
-    this.createExampleRow(convertSection, copy.exampleTitles.conversionIgnore, copy.conversionIgnoreExamples, (value) => {
-      void this.applySettingValue((draft) => {
-        draft.conversionIgnorePattern = value;
-      });
-    });
-
-    new Setting(convertSection)
-      .setName(copy.settings.compressionThresholdKBName)
-      .setDesc(copy.settings.compressionThresholdKBDesc)
-      .addText((text) =>
-        text.setPlaceholder('100').setValue(String(settings.compressionThresholdKB)).onChange(async (value) => {
-          const parsed = Number.parseInt(value, 10);
-          await this.updateSettings((draft) => {
-            draft.compressionThresholdKB = Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
-          });
-        })
-      );
+    this.createExampleRow(
+      conversionRuleBlock,
+      copy.exampleTitles.conversionIgnore,
+      copy.conversionIgnoreExamples,
+      (value) => {
+        void this.applySettingValue((draft) => {
+          draft.conversionIgnorePattern = value;
+        });
+      }
+    ).addClass('image-manager-settings-rule-examples');
 
     const editorSection = this.createSection(
       containerEl,
@@ -531,6 +550,7 @@ export class ImageManagerSettingTab extends PluginSettingTab {
 
   private renderHeader(containerEl: HTMLElement): void {
     const copy = this.getCopy();
+    const languageOptions = getUiLanguageOptions();
     const hero = containerEl.createDiv({ cls: 'image-manager-settings-hero' });
     const content = hero.createDiv({ cls: 'image-manager-settings-hero__content' });
     content.createEl('h2', { text: copy.header.title });
@@ -544,8 +564,8 @@ export class ImageManagerSettingTab extends PluginSettingTab {
       .setDesc(copy.languageDescription)
       .addDropdown((dropdown) =>
         dropdown
-          .addOption('zh-CN', copy.languageOptions['zh-CN'])
-          .addOption('en', copy.languageOptions.en)
+          .addOption('zh-CN', languageOptions['zh-CN'])
+          .addOption('en', languageOptions.en)
           .setValue(this.plugin.getSettings().uiLanguage)
           .onChange(async (value) => {
             await this.updateSettings((draft) => {
@@ -585,7 +605,7 @@ export class ImageManagerSettingTab extends PluginSettingTab {
     title: string,
     examples: readonly ExampleOption[],
     onApply: (value: string) => void
-  ): void {
+  ): HTMLElement {
     const wrap = containerEl.createDiv({ cls: 'image-manager-settings-examples' });
     wrap.createEl('div', { cls: 'image-manager-settings-examples__title', text: title });
     const list = wrap.createDiv({ cls: 'image-manager-settings-examples__list' });
@@ -598,6 +618,8 @@ export class ImageManagerSettingTab extends PluginSettingTab {
         onApply(example.value);
       });
     }
+
+    return wrap;
   }
 
   private createPresetRow(
@@ -765,7 +787,7 @@ export class ImageManagerSettingTab extends PluginSettingTab {
         title: copy.compatibility.platformTitle,
         tone: 'ok',
         description: copy.compatibility.platformDescription(
-          describeCurrentPlatform(),
+          describeCurrentPlatform(settings.uiLanguage),
           canWriteImageToClipboard()
         )
       },

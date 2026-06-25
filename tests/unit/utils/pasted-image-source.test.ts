@@ -41,6 +41,56 @@ describe('parseTextImageSources', () => {
     expect(parseTextImageSources('普通文本内容')).toEqual([]);
     expect(parseTextImageSources('https://example.com/photo.png\n普通文本')).toEqual([]);
   });
+
+  it('allows extensionless remote urls when explicitly requested by an import flow', () => {
+    expect(parseTextImageSources('https://cdn.example.com/render?id=42', { allowExtensionlessRemote: true })).toEqual([
+      {
+        kind: 'remote',
+        value: 'https://cdn.example.com/render?id=42',
+        originalName: 'render'
+      }
+    ]);
+  });
+
+  it('allows dynamic remote endpoints when explicitly requested by an import flow', () => {
+    expect(parseTextImageSources('https://cdn.example.com/render.php?id=42', { allowExtensionlessRemote: true })).toEqual([
+      {
+        kind: 'remote',
+        value: 'https://cdn.example.com/render.php?id=42',
+        originalName: 'render.php'
+      }
+    ]);
+  });
+
+  it('recognizes AVIF sources across remote, file, and data-url inputs', () => {
+    const fileUrl = pathToFileURL('/tmp/example.avif').toString();
+    expect(
+      parseTextImageSources(
+        [
+          'https://example.com/assets/photo.avif',
+          fileUrl,
+          'data:image/avif;base64,aGVsbG8='
+        ].join('\n')
+      )
+    ).toEqual([
+      {
+        kind: 'remote',
+        value: 'https://example.com/assets/photo.avif',
+        originalName: 'photo.avif'
+      },
+      {
+        kind: 'file',
+        value: fileUrl,
+        originalName: 'example.avif'
+      },
+      {
+        kind: 'data',
+        value: 'data:image/avif;base64,aGVsbG8=',
+        originalName: 'pasted-image.avif',
+        mimeType: 'image/avif'
+      }
+    ]);
+  });
 });
 
 describe('resolveTextImageSource', () => {
@@ -100,6 +150,50 @@ describe('resolveTextImageSource', () => {
 
     expect(fetchMock).toHaveBeenCalledWith('https://example.com/assets/cover.webp');
     expect(resolved.originalName).toBe('cover.webp');
+    expect(Buffer.from(resolved.data)).toEqual(Buffer.from(payload));
+  });
+
+  it('infers an extension for extensionless remote image urls from response content type', async () => {
+    const payload = new Uint8Array([1, 3, 5, 7]);
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      headers: {
+        get: vi.fn(() => 'image/png')
+      },
+      arrayBuffer: vi.fn(async () => payload.buffer.slice(0))
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const resolved = await resolveTextImageSource({
+      kind: 'remote',
+      value: 'https://cdn.example.com/render?id=42',
+      originalName: 'render'
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith('https://cdn.example.com/render?id=42');
+    expect(resolved.originalName).toBe('render.png');
+    expect(Buffer.from(resolved.data)).toEqual(Buffer.from(payload));
+  });
+
+  it('replaces non-image endpoint extensions with an inferred image extension from response content type', async () => {
+    const payload = new Uint8Array([2, 4, 6, 8]);
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      headers: {
+        get: vi.fn(() => 'image/png')
+      },
+      arrayBuffer: vi.fn(async () => payload.buffer.slice(0))
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const resolved = await resolveTextImageSource({
+      kind: 'remote',
+      value: 'https://cdn.example.com/render.php?id=42',
+      originalName: 'render.php'
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith('https://cdn.example.com/render.php?id=42');
+    expect(resolved.originalName).toBe('render.png');
     expect(Buffer.from(resolved.data)).toEqual(Buffer.from(payload));
   });
 });

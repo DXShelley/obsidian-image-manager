@@ -1,16 +1,18 @@
 import { Modal } from 'obsidian';
 import type { App } from 'obsidian';
+import type { UiCopy } from '@/i18n';
 import { GallerySortBy, type ImageInfo } from '@/types/index';
 import type { GalleryGridSize } from '@/types/index';
 import { sortImages } from '@/utils/image-manager';
 
 interface ImageGalleryModalOptions {
   title: string;
+  ui: UiCopy['gallery'];
   images: ImageInfo[];
   defaultSortBy: GallerySortBy;
   defaultGridSize: GalleryGridSize;
   initialSelectedImagePath?: string;
-  onCopyMarkdownLink?: (image: ImageInfo) => Promise<void>;
+  lightboxCloseBehavior?: 'return-to-gallery' | 'close-modal';
   onCopyImageToClipboard?: (image: ImageInfo) => Promise<void>;
 }
 
@@ -28,18 +30,21 @@ function formatBytes(bytes: number): string {
 
 export class ImageGalleryModal extends Modal {
   private readonly title: string;
+  private readonly ui: UiCopy['gallery'];
   private readonly images: ImageInfo[];
   private sortBy: GallerySortBy;
   private readonly gridSize: GalleryGridSize;
   private readonly initialSelectedImagePath: string | null;
-  private readonly onCopyMarkdownLink?: (image: ImageInfo) => Promise<void>;
+  private readonly lightboxCloseBehavior: 'return-to-gallery' | 'close-modal';
   private readonly onCopyImageToClipboard?: (image: ImageInfo) => Promise<void>;
   private filterText = '';
   private viewMode: ViewMode = 'grid';
   private filteredImages: ImageInfo[] = [];
   private selectedImagePath: string | null = null;
+  private lightboxZoom = 1;
   private resultsEl!: HTMLElement;
   private lightboxEl!: HTMLElement;
+  private lightboxViewportEl!: HTMLElement;
   private lightboxImageEl!: HTMLImageElement;
   private lightboxTitleEl!: HTMLElement;
   private lightboxMetaEl!: HTMLElement;
@@ -47,15 +52,29 @@ export class ImageGalleryModal extends Modal {
   private lightboxActionsEl!: HTMLElement;
   private lightboxPrevButton!: HTMLButtonElement;
   private lightboxNextButton!: HTMLButtonElement;
+  private lightboxZoomOutButton!: HTMLButtonElement;
+  private lightboxZoomResetButton!: HTMLButtonElement;
+  private lightboxZoomInButton!: HTMLButtonElement;
+  private lightboxPointerId: number | null = null;
+  private isLightboxDragging = false;
+  private lightboxDragStartX = 0;
+  private lightboxDragStartY = 0;
+  private lightboxDragScrollLeft = 0;
+  private lightboxDragScrollTop = 0;
+
+  private static readonly MIN_ZOOM = 0.5;
+  private static readonly MAX_ZOOM = 4;
+  private static readonly ZOOM_STEP = 0.25;
 
   constructor(app: App, options: ImageGalleryModalOptions) {
     super(app);
     this.title = options.title;
+    this.ui = options.ui;
     this.images = options.images;
     this.sortBy = options.defaultSortBy;
     this.gridSize = options.defaultGridSize;
     this.initialSelectedImagePath = options.initialSelectedImagePath ?? null;
-    this.onCopyMarkdownLink = options.onCopyMarkdownLink;
+    this.lightboxCloseBehavior = options.lightboxCloseBehavior ?? 'return-to-gallery';
     this.onCopyImageToClipboard = options.onCopyImageToClipboard;
   }
 
@@ -69,7 +88,7 @@ export class ImageGalleryModal extends Modal {
     const search = toolbar.createEl('input', {
       cls: 'image-manager-gallery-search',
       type: 'search',
-      placeholder: 'Filter images by name'
+      placeholder: this.ui.searchPlaceholder
     });
     search.addEventListener('input', () => {
       this.filterText = search.value.trim().toLowerCase();
@@ -78,9 +97,9 @@ export class ImageGalleryModal extends Modal {
 
     const sortSelect = toolbar.createEl('select', { cls: 'image-manager-gallery-select' });
     [
-      [GallerySortBy.DATE, 'Newest first'],
-      [GallerySortBy.NAME, 'Name'],
-      [GallerySortBy.SIZE, 'Largest first']
+      [GallerySortBy.DATE, this.ui.sortBy.date],
+      [GallerySortBy.NAME, this.ui.sortBy.name],
+      [GallerySortBy.SIZE, this.ui.sortBy.size]
     ].forEach(([value, label]) => {
       const option = sortSelect.createEl('option', { value, text: label });
       option.selected = value === this.sortBy;
@@ -92,8 +111,8 @@ export class ImageGalleryModal extends Modal {
 
     const viewToggle = toolbar.createDiv({ cls: 'image-manager-gallery-toggle' });
     for (const [mode, label] of [
-      ['grid', 'Grid'],
-      ['list', 'List']
+      ['grid', this.ui.viewMode.grid],
+      ['list', this.ui.viewMode.list]
     ] as const) {
       const button = viewToggle.createEl('button', {
         cls: `image-manager-gallery-button${mode === this.viewMode ? ' is-active' : ''}`,
@@ -153,11 +172,11 @@ export class ImageGalleryModal extends Modal {
     });
 
     if (filtered.length === 0) {
-      this.resultsEl.createEl('p', { text: 'No images match the current filter.' });
+      this.resultsEl.createEl('p', { text: this.ui.emptyResults });
     }
 
     if (this.selectedImagePath && !filtered.some((image) => image.path === this.selectedImagePath)) {
-      this.closeLightbox();
+      this.clearLightboxSelection();
       return;
     }
 
@@ -170,7 +189,7 @@ export class ImageGalleryModal extends Modal {
     this.lightboxEl = this.contentEl.createDiv({ cls: 'image-manager-gallery-lightbox' });
     this.lightboxEl.addEventListener('click', (event) => {
       if (event.target === this.lightboxEl) {
-        this.closeLightbox();
+        this.dismissLightbox();
       }
     });
 
@@ -179,38 +198,74 @@ export class ImageGalleryModal extends Modal {
     const titleWrap = header.createDiv({ cls: 'image-manager-gallery-lightbox__title' });
     this.lightboxTitleEl = titleWrap.createEl('strong', { text: '' });
     this.lightboxMetaEl = titleWrap.createEl('span', { text: '' });
-    const controls = header.createDiv({ cls: 'image-manager-gallery-lightbox__controls' });
-    this.lightboxCounterEl = controls.createEl('span', {
+    const headerMeta = header.createDiv({ cls: 'image-manager-gallery-lightbox__header-meta' });
+    this.lightboxCounterEl = headerMeta.createEl('span', {
       cls: 'image-manager-gallery-lightbox__counter',
       text: ''
     });
-    this.lightboxActionsEl = controls.createDiv({ cls: 'image-manager-gallery-lightbox__actions' });
-    const closeButton = controls.createEl('button', {
+    const closeButton = headerMeta.createEl('button', {
       cls: 'image-manager-gallery-lightbox__close',
-      text: 'Close'
+      text: this.ui.close
     });
     closeButton.type = 'button';
-    closeButton.addEventListener('click', () => this.closeLightbox());
+    closeButton.addEventListener('click', () => this.dismissLightbox());
 
     const body = panel.createDiv({ cls: 'image-manager-gallery-lightbox__body' });
-    this.lightboxPrevButton = body.createEl('button', {
-      cls: 'image-manager-gallery-lightbox__nav',
-      text: 'Prev'
-    });
-    this.lightboxPrevButton.type = 'button';
-    this.lightboxPrevButton.addEventListener('click', () => this.stepLightbox(-1));
-
-    this.lightboxImageEl = body.createEl('img', {
+    this.lightboxViewportEl = body.createDiv({ cls: 'image-manager-gallery-lightbox__viewport' });
+    this.lightboxViewportEl.addEventListener(
+      'wheel',
+      (event) => {
+        event.preventDefault();
+        const delta = event.deltaY < 0 ? ImageGalleryModal.ZOOM_STEP : -ImageGalleryModal.ZOOM_STEP;
+        this.adjustZoom(delta);
+      },
+      { passive: false }
+    );
+    this.lightboxViewportEl.addEventListener('pointerdown', this.onLightboxPointerDown);
+    this.lightboxViewportEl.addEventListener('pointermove', this.onLightboxPointerMove);
+    this.lightboxViewportEl.addEventListener('pointerup', this.onLightboxPointerUp);
+    this.lightboxViewportEl.addEventListener('pointercancel', this.onLightboxPointerUp);
+    this.lightboxImageEl = this.lightboxViewportEl.createEl('img', {
       cls: 'image-manager-gallery-lightbox__image',
       attr: { alt: '' }
     });
+    this.lightboxImageEl.addEventListener('load', () => this.updateLightboxPanUi());
 
-    this.lightboxNextButton = body.createEl('button', {
+    const footer = panel.createDiv({ cls: 'image-manager-gallery-lightbox__footer' });
+    const footerNav = footer.createDiv({ cls: 'image-manager-gallery-lightbox__controls' });
+    this.lightboxPrevButton = footerNav.createEl('button', {
       cls: 'image-manager-gallery-lightbox__nav',
-      text: 'Next'
+      text: this.ui.previous
+    });
+    this.lightboxPrevButton.type = 'button';
+    this.lightboxPrevButton.addEventListener('click', () => this.stepLightbox(-1));
+    this.lightboxActionsEl = footerNav.createDiv({ cls: 'image-manager-gallery-lightbox__actions' });
+    this.lightboxNextButton = footerNav.createEl('button', {
+      cls: 'image-manager-gallery-lightbox__nav',
+      text: this.ui.next
     });
     this.lightboxNextButton.type = 'button';
     this.lightboxNextButton.addEventListener('click', () => this.stepLightbox(1));
+
+    const footerZoom = footer.createDiv({ cls: 'image-manager-gallery-lightbox__controls' });
+    this.lightboxZoomOutButton = footerZoom.createEl('button', {
+      cls: 'image-manager-gallery-lightbox__zoom-button',
+      text: '−'
+    });
+    this.lightboxZoomOutButton.type = 'button';
+    this.lightboxZoomOutButton.addEventListener('click', () => this.adjustZoom(-ImageGalleryModal.ZOOM_STEP));
+    this.lightboxZoomResetButton = footerZoom.createEl('button', {
+      cls: 'image-manager-gallery-lightbox__zoom-button',
+      text: '100%'
+    });
+    this.lightboxZoomResetButton.type = 'button';
+    this.lightboxZoomResetButton.addEventListener('click', () => this.setZoom(1));
+    this.lightboxZoomInButton = footerZoom.createEl('button', {
+      cls: 'image-manager-gallery-lightbox__zoom-button',
+      text: '+'
+    });
+    this.lightboxZoomInButton.type = 'button';
+    this.lightboxZoomInButton.addEventListener('click', () => this.adjustZoom(ImageGalleryModal.ZOOM_STEP));
   }
 
   private openLightbox(index: number): void {
@@ -220,11 +275,23 @@ export class ImageGalleryModal extends Modal {
     }
 
     this.selectedImagePath = image.path;
+    this.setZoom(1);
     this.renderLightbox();
   }
 
-  private closeLightbox(): void {
+  private dismissLightbox(): void {
+    if (this.lightboxCloseBehavior === 'close-modal') {
+      this.close();
+      return;
+    }
+
+    this.clearLightboxSelection();
+  }
+
+  private clearLightboxSelection(): void {
     this.selectedImagePath = null;
+    this.setZoom(1);
+    this.resetLightboxDrag();
     this.lightboxEl.removeClass('is-open');
   }
 
@@ -241,6 +308,7 @@ export class ImageGalleryModal extends Modal {
     }
 
     this.selectedImagePath = nextImage.path;
+    this.setZoom(1);
     this.renderLightbox();
   }
 
@@ -248,7 +316,7 @@ export class ImageGalleryModal extends Modal {
     const selectedIndex = this.getSelectedImageIndex();
     const image = selectedIndex >= 0 ? this.filteredImages[selectedIndex] : null;
     if (!image?.resourcePath) {
-      this.closeLightbox();
+      this.clearLightboxSelection();
       return;
     }
 
@@ -260,6 +328,8 @@ export class ImageGalleryModal extends Modal {
     this.lightboxImageEl.alt = image.name;
     this.lightboxPrevButton.disabled = selectedIndex <= 0;
     this.lightboxNextButton.disabled = selectedIndex >= this.filteredImages.length - 1;
+    this.resetLightboxDrag();
+    this.updateZoomUi();
     this.lightboxEl.addClass('is-open');
   }
 
@@ -268,7 +338,7 @@ export class ImageGalleryModal extends Modal {
   }
 
   private renderItemActions(container: HTMLElement, image: ImageInfo): void {
-    if (!this.onCopyMarkdownLink && !this.onCopyImageToClipboard) {
+    if (!this.onCopyImageToClipboard) {
       return;
     }
 
@@ -282,23 +352,10 @@ export class ImageGalleryModal extends Modal {
   }
 
   private appendActionButtons(container: HTMLElement, image: ImageInfo): void {
-    if (this.onCopyMarkdownLink) {
-      const button = container.createEl('button', {
-        cls: 'image-manager-gallery-action',
-        text: 'Copy Markdown'
-      });
-      button.type = 'button';
-      button.addEventListener('click', (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        void this.onCopyMarkdownLink?.(image);
-      });
-    }
-
     if (this.onCopyImageToClipboard) {
       const button = container.createEl('button', {
         cls: 'image-manager-gallery-action',
-        text: 'Copy Image'
+        text: this.ui.copyImage
       });
       button.type = 'button';
       button.addEventListener('click', (event) => {
@@ -307,5 +364,95 @@ export class ImageGalleryModal extends Modal {
         void this.onCopyImageToClipboard?.(image);
       });
     }
+  }
+
+  private adjustZoom(delta: number): void {
+    this.setZoom(this.lightboxZoom + delta);
+  }
+
+  private setZoom(nextZoom: number): void {
+    this.lightboxZoom = Math.min(ImageGalleryModal.MAX_ZOOM, Math.max(ImageGalleryModal.MIN_ZOOM, nextZoom));
+    if (!this.canPanLightbox()) {
+      this.resetLightboxDrag();
+    }
+    this.updateZoomUi();
+  }
+
+  private updateZoomUi(): void {
+    if (
+      !this.lightboxImageEl ||
+      !this.lightboxZoomResetButton ||
+      !this.lightboxZoomOutButton ||
+      !this.lightboxZoomInButton
+    ) {
+      return;
+    }
+
+    this.lightboxImageEl.style.transform = `scale(${this.lightboxZoom})`;
+    this.lightboxZoomResetButton.setText(`${Math.round(this.lightboxZoom * 100)}%`);
+    this.lightboxZoomOutButton.disabled = this.lightboxZoom <= ImageGalleryModal.MIN_ZOOM;
+    this.lightboxZoomInButton.disabled = this.lightboxZoom >= ImageGalleryModal.MAX_ZOOM;
+    this.updateLightboxPanUi();
+  }
+
+  private readonly onLightboxPointerDown = (event: PointerEvent): void => {
+    if (event.button !== 0 || !this.canPanLightbox()) {
+      return;
+    }
+
+    this.lightboxPointerId = event.pointerId;
+    this.isLightboxDragging = true;
+    this.lightboxDragStartX = event.clientX;
+    this.lightboxDragStartY = event.clientY;
+    this.lightboxDragScrollLeft = this.lightboxViewportEl.scrollLeft;
+    this.lightboxDragScrollTop = this.lightboxViewportEl.scrollTop;
+    this.lightboxViewportEl.classList.add('is-dragging');
+    this.lightboxViewportEl.setPointerCapture?.(event.pointerId);
+    event.preventDefault();
+  };
+
+  private readonly onLightboxPointerMove = (event: PointerEvent): void => {
+    if (!this.isLightboxDragging || this.lightboxPointerId !== event.pointerId) {
+      return;
+    }
+
+    this.lightboxViewportEl.scrollLeft = this.lightboxDragScrollLeft - (event.clientX - this.lightboxDragStartX);
+    this.lightboxViewportEl.scrollTop = this.lightboxDragScrollTop - (event.clientY - this.lightboxDragStartY);
+    event.preventDefault();
+  };
+
+  private readonly onLightboxPointerUp = (event: PointerEvent): void => {
+    if (this.lightboxPointerId !== event.pointerId) {
+      return;
+    }
+
+    this.resetLightboxDrag();
+  };
+
+  private canPanLightbox(): boolean {
+    return (
+      this.lightboxZoom > 1 &&
+      (this.lightboxViewportEl.scrollWidth > this.lightboxViewportEl.clientWidth ||
+        this.lightboxViewportEl.scrollHeight > this.lightboxViewportEl.clientHeight)
+    );
+  }
+
+  private resetLightboxDrag(): void {
+    if (this.lightboxPointerId !== null) {
+      this.lightboxViewportEl.releasePointerCapture?.(this.lightboxPointerId);
+    }
+
+    this.lightboxPointerId = null;
+    this.isLightboxDragging = false;
+    this.lightboxViewportEl.classList.remove('is-dragging');
+    this.updateLightboxPanUi();
+  }
+
+  private updateLightboxPanUi(): void {
+    if (!this.lightboxViewportEl) {
+      return;
+    }
+
+    this.lightboxViewportEl.classList.toggle('is-pannable', this.canPanLightbox());
   }
 }

@@ -3,6 +3,7 @@ import { Alignment, GalleryGridSize, GallerySortBy, ImageFormat, LinkFormat, Mar
 import { detectPluginConflicts, formatPluginConflictNotice } from '@/utils/plugin-conflicts';
 
 const settings: ImageManagerSettings = {
+  uiLanguage: 'zh-CN',
   defaultFormat: ImageFormat.WEBP,
   defaultQuality: 80,
   defaultLinkFormat: LinkFormat.WIKI,

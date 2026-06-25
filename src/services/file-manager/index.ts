@@ -17,7 +17,7 @@ import {
 import { getParsedLinkResolutionCandidates } from '@/utils/link-resolution';
 import { parseTextImageSources, resolveTextImageSource, type TextImageSource } from '@/utils/pasted-image-source';
 
-const IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg', 'tif', 'tiff', 'heic']);
+const IMAGE_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg', 'tif', 'tiff', 'heic', 'avif']);
 
 interface ImageMovePlan {
   file: TFile;
@@ -954,7 +954,9 @@ export class FileManager {
   }
 
   private parseExternalImageSource(rawTarget: string) {
-    const sources = parseTextImageSources(rawTarget);
+    const sources = parseTextImageSources(rawTarget, {
+      allowExtensionlessRemote: true
+    });
     return sources.length === 1 ? sources[0] : null;
   }
 

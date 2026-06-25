@@ -1,5 +1,6 @@
 import { MarkdownView, TFile } from 'obsidian';
-import { LinkFormat, PathFormat, type ImageInfo, type ImageManagerFeatureContext } from '@/types/index';
+import { getNoticeCopy, getUiCopy } from '@/i18n';
+import type { ImageInfo, ImageManagerFeatureContext } from '@/types/index';
 import { ImageGalleryModal } from '@/ui/modals/image-gallery-modal';
 import { writeImageFileToClipboard } from '@/utils/clipboard';
 import { canWriteImageToClipboard } from '@/utils/compatibility';
@@ -11,6 +12,11 @@ interface OpenGalleryOptions {
   readonly files: readonly TFile[];
   readonly initialSelectedImagePath?: string;
   readonly linkSourceFile?: TFile | null;
+  readonly lightboxCloseBehavior?: 'return-to-gallery' | 'close-modal';
+}
+
+interface OpenSingleImageGalleryOptions {
+  readonly lightboxCloseBehavior?: 'return-to-gallery' | 'close-modal';
 }
 
 export async function openGalleryForFiles(
@@ -18,16 +24,16 @@ export async function openGalleryForFiles(
   options: OpenGalleryOptions
 ): Promise<void> {
   const settings = context.services.settings.getSettings();
+  const ui = getUiCopy(settings.uiLanguage);
   const images = await Promise.all(options.files.map((file) => context.services.imageProcessor.getImageInfo(file)));
   new ImageGalleryModal(context.app, {
     title: options.title,
+    ui: ui.gallery,
     images: sortImages(images, settings.gallerySortBy),
     defaultSortBy: settings.gallerySortBy,
     defaultGridSize: settings.galleryGridSize,
     initialSelectedImagePath: options.initialSelectedImagePath,
-    onCopyMarkdownLink: async (image) => {
-      await copyMarkdownImageLink(context, image, options.linkSourceFile);
-    },
+    lightboxCloseBehavior: options.lightboxCloseBehavior,
     onCopyImageToClipboard: async (image) => {
       await copyImageToClipboard(context, image);
     }
@@ -37,67 +43,46 @@ export async function openGalleryForFiles(
 export async function openSingleImageGallery(
   context: ImageManagerFeatureContext,
   imageFile: TFile,
-  linkSourceFile?: TFile | null
+  linkSourceFile?: TFile | null,
+  options?: OpenSingleImageGalleryOptions
 ): Promise<void> {
   const sourceNote = resolveSingleImageGallerySourceFile(context, imageFile.path, linkSourceFile);
   if (sourceNote) {
     const files = await context.services.fileManager.getImagesInNote(sourceNote);
     if (files.some((file) => file.path === imageFile.path)) {
+      const ui = getUiCopy(context.services.settings.getSettings().uiLanguage);
       await openGalleryForFiles(context, {
-        title: `Images in ${sourceNote.basename}`,
+        title: ui.gallery.titleForNote(sourceNote.basename),
         files,
         initialSelectedImagePath: imageFile.path,
-        linkSourceFile: sourceNote
+        linkSourceFile: sourceNote,
+        lightboxCloseBehavior: options?.lightboxCloseBehavior
       });
       return;
     }
   }
 
+  const ui = getUiCopy(context.services.settings.getSettings().uiLanguage);
   await openGalleryForFiles(context, {
-    title: `Image: ${imageFile.name}`,
+    title: ui.gallery.titleForImage(imageFile.name),
     files: [imageFile],
     initialSelectedImagePath: imageFile.path,
-    linkSourceFile
+    linkSourceFile,
+    lightboxCloseBehavior: options?.lightboxCloseBehavior
   });
-}
-
-async function copyMarkdownImageLink(
-  context: ImageManagerFeatureContext,
-  image: ImageInfo,
-  preferredSourceFile?: TFile | null
-): Promise<void> {
-  const settings = context.services.settings.getSettings();
-  if (typeof navigator === 'undefined' || typeof navigator.clipboard?.writeText !== 'function') {
-    showOperationNotice(settings, 'Copy markdown link is not available on this platform');
-    return;
-  }
-
-  const file = resolveImageFile(context, image.path);
-  if (!file) {
-    showOperationNotice(settings, 'Image file is no longer available');
-    return;
-  }
-
-  const sourceFile = resolveMarkdownSourceFile(context, preferredSourceFile);
-  const link = context.services.linkFormatter.formatLink(file.path, sourceFile ?? file, {
-    format: LinkFormat.MARKDOWN,
-    pathFormat: sourceFile ? settings.defaultPathFormat : PathFormat.ABSOLUTE,
-    markdownPathEncodingStrategy: settings.markdownPathEncodingStrategy
-  });
-  await navigator.clipboard.writeText(link);
-  showOperationNotice(settings, 'Markdown image link copied');
 }
 
 async function copyImageToClipboard(context: ImageManagerFeatureContext, image: ImageInfo): Promise<void> {
   const settings = context.services.settings.getSettings();
+  const notices = getNoticeCopy(settings.uiLanguage);
   if (!canWriteImageToClipboard()) {
-    showOperationNotice(settings, 'Copy image is not available on this platform');
+    showOperationNotice(settings, notices.copyImageUnavailable);
     return;
   }
 
   const file = resolveImageFile(context, image.path);
   if (!file) {
-    showOperationNotice(settings, 'Image file is no longer available');
+    showOperationNotice(settings, notices.imageFileUnavailable);
     return;
   }
 
@@ -107,12 +92,12 @@ async function copyImageToClipboard(context: ImageManagerFeatureContext, image: 
       filePath: file.path,
       mimeType
     });
-    showOperationNotice(settings, 'Image copied');
+    showOperationNotice(settings, notices.imageCopied);
   } catch (error) {
     context.services.logger.error('Failed to copy image to clipboard', error, {
       filePath: file.path
     });
-    showOperationNotice(settings, 'Failed to copy image to clipboard');
+    showOperationNotice(settings, notices.failedToCopyImage);
   }
 }
 
@@ -121,10 +106,7 @@ function resolveImageFile(context: ImageManagerFeatureContext, imagePath: string
   return abstract instanceof TFile ? abstract : null;
 }
 
-function resolveMarkdownSourceFile(
-  context: ImageManagerFeatureContext,
-  preferredSourceFile?: TFile | null
-): TFile | null {
+function resolveMarkdownSourceFile(context: ImageManagerFeatureContext, preferredSourceFile?: TFile | null): TFile | null {
   if (preferredSourceFile instanceof TFile && preferredSourceFile.extension.toLowerCase() === 'md') {
     return preferredSourceFile;
   }

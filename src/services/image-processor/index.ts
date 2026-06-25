@@ -10,6 +10,22 @@ import { MIME_BY_FORMAT } from './format-support';
 import { canEncodeCanvasOutputFormat, getSupportedCanvasOutputFormats } from '@/utils/compatibility';
 import { normalizeImageSelection } from '@/utils/image-edit';
 
+const SUPPORTED_SOURCE_IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg', 'tif', 'tiff', 'heic', 'avif'] as const;
+const IN_PLACE_RESTRICTED_EXTENSIONS = new Set(['avif']);
+const SOURCE_MIME_BY_EXTENSION: Readonly<Record<string, string>> = {
+  avif: 'image/avif',
+  bmp: 'image/bmp',
+  gif: 'image/gif',
+  heic: 'image/heic',
+  jpeg: 'image/jpeg',
+  jpg: 'image/jpeg',
+  png: 'image/png',
+  svg: 'image/svg+xml',
+  tif: 'image/tiff',
+  tiff: 'image/tiff',
+  webp: 'image/webp'
+};
+
 export class ImageProcessor {
   constructor(
     private readonly app: App,
@@ -17,9 +33,15 @@ export class ImageProcessor {
   ) {}
 
   isSupportedImage(file: TFile): boolean {
-    return ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg', 'tif', 'tiff', 'heic'].includes(
-      file.extension.toLowerCase()
-    );
+    return SUPPORTED_SOURCE_IMAGE_EXTENSIONS.includes(file.extension.toLowerCase() as (typeof SUPPORTED_SOURCE_IMAGE_EXTENSIONS)[number]);
+  }
+
+  canModifyInPlace(file: TFile): boolean {
+    return this.getInPlaceModificationRestriction(file) === null;
+  }
+
+  getInPlaceModificationRestriction(file: TFile): string | null {
+    return this.getInPlaceModificationRestrictionByExtension(file.extension);
   }
 
   async getImageInfo(file: TFile): Promise<ImageInfo> {
@@ -37,6 +59,7 @@ export class ImageProcessor {
   }
 
   async compress(file: TFile, quality = this.getSettings().compressionQuality): Promise<ArrayBuffer> {
+    this.assertInPlaceModificationSupported(file.extension);
     this.assertOutputFormatSupported(this.extensionToFormat(file.extension));
     return this.process(file, {
       format: this.extensionToFormat(file.extension),
@@ -53,6 +76,7 @@ export class ImageProcessor {
   }
 
   async resize(file: TFile, maxWidth?: number, maxHeight?: number): Promise<ArrayBuffer> {
+    this.assertInPlaceModificationSupported(file.extension);
     this.assertOutputFormatSupported(this.extensionToFormat(file.extension));
     return this.process(file, {
       format: this.extensionToFormat(file.extension),
@@ -63,6 +87,7 @@ export class ImageProcessor {
   }
 
   async rotate(file: TFile, degrees: 90 | 180 | 270): Promise<ArrayBuffer> {
+    this.assertInPlaceModificationSupported(file.extension);
     this.assertOutputFormatSupported(this.extensionToFormat(file.extension));
     const source = await this.app.vault.readBinary(file);
     const image = await this.loadImage(source, file.extension);
@@ -83,6 +108,7 @@ export class ImageProcessor {
   }
 
   async flip(file: TFile, direction: 'horizontal' | 'vertical'): Promise<ArrayBuffer> {
+    this.assertInPlaceModificationSupported(file.extension);
     this.assertOutputFormatSupported(this.extensionToFormat(file.extension));
     const source = await this.app.vault.readBinary(file);
     const image = await this.loadImage(source, file.extension);
@@ -108,6 +134,7 @@ export class ImageProcessor {
   }
 
   async crop(file: TFile, selection: ImageSelection): Promise<ArrayBuffer> {
+    this.assertInPlaceModificationSupported(file.extension);
     this.assertOutputFormatSupported(this.extensionToFormat(file.extension));
     const source = await this.app.vault.readBinary(file);
     const image = await this.loadImage(source, file.extension);
@@ -222,6 +249,9 @@ export class ImageProcessor {
     if (normalized === 'jpg') {
       return ImageFormat.JPEG;
     }
+    if (normalized === 'tif') {
+      return ImageFormat.TIFF;
+    }
     if (Object.values(ImageFormat).includes(normalized as ImageFormat)) {
       return normalized as ImageFormat;
     }
@@ -229,7 +259,8 @@ export class ImageProcessor {
   }
 
   private extensionToMime(extension: string): string {
-    return MIME_BY_FORMAT[this.extensionToFormat(extension)] ?? `image/${extension}`;
+    const normalized = extension.toLowerCase();
+    return SOURCE_MIME_BY_EXTENSION[normalized] ?? MIME_BY_FORMAT[this.extensionToFormat(extension)] ?? `image/${normalized}`;
   }
 
   private assertOutputFormatSupported(format: ImageFormat): void {
@@ -241,5 +272,21 @@ export class ImageProcessor {
       .map((item) => item.toUpperCase())
       .join(', ');
     throw new Error(`Current platform cannot encode ${format.toUpperCase()} images. Supported outputs: ${supportedFormats}`);
+  }
+
+  private assertInPlaceModificationSupported(extension: string): void {
+    const restriction = this.getInPlaceModificationRestrictionByExtension(extension);
+    if (restriction) {
+      throw new Error(restriction);
+    }
+  }
+
+  private getInPlaceModificationRestrictionByExtension(extension: string): string | null {
+    const normalized = extension.toLowerCase();
+    if (IN_PLACE_RESTRICTED_EXTENSIONS.has(normalized)) {
+      return `Convert ${normalized.toUpperCase()} to PNG, JPEG, or WebP before editing or compressing it in place`;
+    }
+
+    return null;
   }
 }

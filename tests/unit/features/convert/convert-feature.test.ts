@@ -49,6 +49,7 @@ describe('ConvertFeature', () => {
         },
         settings: {
           getSettings: vi.fn(() => ({
+            uiLanguage: 'en',
             defaultFormat: ImageFormat.WEBP,
             showOperationNotifications: true,
             conversionIgnorePattern: ''
@@ -83,6 +84,7 @@ describe('ConvertFeature', () => {
         },
         settings: {
           getSettings: vi.fn(() => ({
+            uiLanguage: 'en',
             defaultFormat: ImageFormat.WEBP,
             showOperationNotifications: true,
             conversionIgnorePattern: ''
@@ -127,6 +129,7 @@ describe('ConvertFeature', () => {
         },
         settings: {
           getSettings: vi.fn(() => ({
+            uiLanguage: 'en',
             defaultFormat: ImageFormat.WEBP,
             showOperationNotifications: true,
             conversionIgnorePattern: ''
@@ -169,6 +172,7 @@ describe('ConvertFeature', () => {
         },
         settings: {
           getSettings: vi.fn(() => ({
+            uiLanguage: 'en',
             defaultFormat: ImageFormat.WEBP,
             showOperationNotifications: true,
             conversionIgnorePattern: '\\.png$'

@@ -28,15 +28,15 @@
 - Compression
 - Format conversion
 - Preview decoration
-- Image editor quick actions
+- File context-menu image editing
 - Note / folder gallery
 - Batch compression queue
-- Resize preset
 - Context-menu integration
 
 ## Deferred Extension Points
 
 - Markdown image-alignment transforms
 - Interactive canvas editor UI
+- Resize preset
 - OCR, search, and classification
 - Worker-based off-main-thread processing

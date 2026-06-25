@@ -1,11 +1,14 @@
+import { getUiCopy } from '@/i18n';
 import type { App } from 'obsidian';
+import type { UiLanguage } from '@/types/index';
 import { confirmRiskAction } from '@/ui/modals/risk-confirm-modal';
 
-export async function confirmVaultScopeOperation(app: App, actionName: string): Promise<boolean> {
+export async function confirmVaultScopeOperation(app: App, language: UiLanguage, actionName: string): Promise<boolean> {
+  const copy = getUiCopy(language).vaultOperation;
   return confirmRiskAction(app, {
-    title: '确认整库操作',
-    message: `${actionName}会处理整个库中的图片或笔记，可能产生大范围修改。是否继续？`,
-    confirmText: '继续整库操作',
-    cancelText: '取消'
+    title: copy.title,
+    message: copy.message(actionName),
+    confirmText: copy.confirmText,
+    cancelText: copy.cancelText
   });
 }

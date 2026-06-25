@@ -25,7 +25,7 @@ export function createPluginServices(app: App, settingsManager: SettingsManager)
   const variableResolver = new VariableResolver();
   const linkFormatter = new LinkFormatter(app);
   const fileManager = new FileManager(app, () => settingsManager.getSettings(), variableResolver, linkFormatter);
-  const recovery = new RecoveryManager(app, 'note-image-manager', fileManager);
+  const recovery = new RecoveryManager(app, 'note-image-manager', fileManager, () => settingsManager.getSettings());
   fileManager.setRecoveryManager(recovery);
 
   return {

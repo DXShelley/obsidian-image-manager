@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { detectObsidianDebugMode } from '@/utils/compatibility';
+import { describeCurrentPlatform, detectObsidianDebugMode } from '@/utils/compatibility';
 
 describe('detectObsidianDebugMode', () => {
   afterEach(() => {
@@ -59,5 +59,15 @@ describe('detectObsidianDebugMode', () => {
     };
 
     expect(detectObsidianDebugMode(app as never)).toBe(false);
+  });
+});
+
+describe('describeCurrentPlatform', () => {
+  it('returns an English platform label when requested', () => {
+    expect(describeCurrentPlatform('en')).toBe('Desktop');
+  });
+
+  it('keeps the Chinese platform label by default', () => {
+    expect(describeCurrentPlatform()).toBe('桌面端');
   });
 });

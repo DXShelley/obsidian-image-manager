@@ -2,6 +2,16 @@
 
 # Changelog
 
+## 4.0.0
+
+- Added centralized bilingual copy so settings, feature status, command names, notices, context menus, and vault-risk confirmations follow the selected UI language.
+- Refresh registered commands after language changes, keeping scoped command ordering and command-palette labels aligned with the settings page.
+- Improved external-image import: reading view can import only the selected external image from the context menu, pasted text sources report clearer fallback details, and explicit import can identify extensionless or dynamic image URLs from response `content-type`.
+- Added conversion ignore regexes, conversion-skip notices, and batch-conversion summaries; `AVIF` now participates in image detection, external import, and conversion input while still requiring conversion before in-place edit / compression paths.
+- Persist compression history per current file version to avoid recompressing the same version or repeating non-beneficial compression attempts.
+- Unified image-link resolution, preview refreshes, gallery lightbox close behavior, and operation feedback for mixed encoded Chinese paths, preview-cache refreshes, and failure notices.
+- Added regression coverage for i18n, command refresh, preview external-image import, compression, conversion, file management, and feedback copy, with README, user-guide, task-status, and test-case documentation updated together.
+
 ## 3.1.0
 
 - Moved watermark removal into the planned-feature list so the project no longer ships an implementation that fails the quality bar.

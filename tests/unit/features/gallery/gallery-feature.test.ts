@@ -1,10 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { GalleryFeature } from '@/features/gallery/gallery-feature';
 
-const { openSingleImageGalleryMock } = vi.hoisted(() => ({
-  openSingleImageGalleryMock: vi.fn(async () => undefined)
-}));
-
 vi.mock('obsidian', () => ({
   MarkdownView: class {},
   TFile: class {
@@ -19,8 +15,7 @@ vi.mock('obsidian', () => ({
 }));
 
 vi.mock('@/features/gallery/gallery-actions', () => ({
-  openGalleryForFiles: vi.fn(async () => undefined),
-  openSingleImageGallery: openSingleImageGalleryMock
+  openGalleryForFiles: vi.fn(async () => undefined)
 }));
 
 vi.mock('@/utils/command-logging', () => ({
@@ -29,18 +24,12 @@ vi.mock('@/utils/command-logging', () => ({
 }));
 
 describe('GalleryFeature', () => {
-  it('registers an active-image command and opens a single-image gallery for the selected image file', async () => {
-    const { TFile } = await import('obsidian');
+  it('registers note and folder gallery commands', async () => {
     const feature = new GalleryFeature();
-    const activeFile = Object.assign(new TFile(), {
-      path: 'assets/cover.png',
-      name: 'cover.png',
-      extension: 'png'
-    });
     const context = {
       app: {
         workspace: {
-          getActiveFile: vi.fn(() => activeFile),
+          getActiveFile: vi.fn(() => null),
           getActiveViewOfType: vi.fn(() => null)
         }
       },
@@ -68,22 +57,20 @@ describe('GalleryFeature', () => {
 
     await feature.register(context as never);
 
-    expect(context.plugin.addCommand).toHaveBeenCalledTimes(3);
+    expect(context.plugin.addCommand).toHaveBeenCalledTimes(2);
     expect(context.plugin.addCommand).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        id: 'open-active-image-gallery',
-        name: '打开当前图片画廊'
+        id: 'open-current-note-gallery',
+        name: '打开画廊'
       })
     );
-
-    const command = vi.mocked(context.plugin.addCommand).mock.calls[0]?.[0];
-    expect(command).toBeDefined();
-
-    command?.callback?.();
-
-    await vi.waitFor(() => {
-      expect(openSingleImageGalleryMock).toHaveBeenCalledWith(context, activeFile);
-    });
+    expect(context.plugin.addCommand).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        id: 'open-current-folder-gallery',
+        name: '打开画廊'
+      })
+    );
   });
 });

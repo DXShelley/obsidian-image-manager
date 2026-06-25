@@ -1,4 +1,5 @@
 import { Notice, TFile } from 'obsidian';
+import { getNoticeCopy, getUiCopy } from '@/i18n';
 import type { ImageManagerFeature, ImageManagerFeatureContext } from '@/types/index';
 import { showOperationNotice } from '@/utils/operation-feedback';
 
@@ -41,14 +42,17 @@ export class RenameFeature implements ImageManagerFeature {
       });
       const movedCount = await context.services.recovery.runTransaction(
         {
-          label: `同步笔记迁移图片 ${noteFile.basename}`,
+          label: getUiCopy(context.services.settings.getSettings().uiLanguage).transactions.syncManagedImages(
+            noteFile.basename
+          ),
           trigger: 'note-rename-sync',
           scope: 'auto'
         },
         async () => context.services.fileManager.syncManagedImagesForNote(noteFile, oldPath)
       );
       if (movedCount > 0) {
-        showOperationNotice(context.services.settings.getSettings(), `Synced ${movedCount} managed image${movedCount === 1 ? '' : 's'}`);
+        const settings = context.services.settings.getSettings();
+        showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).managedImagesSynced(movedCount));
       }
       context.services.logger.debug('Completed note rename sync', {
         notePath: noteFile.path,
@@ -61,7 +65,7 @@ export class RenameFeature implements ImageManagerFeature {
         notePath: noteFile.path,
         oldPath
       });
-      new Notice('Failed to sync managed images for the renamed or moved note');
+      new Notice(getNoticeCopy(context.services.settings.getSettings().uiLanguage).failedToSyncManagedImages);
     }
   }
 }

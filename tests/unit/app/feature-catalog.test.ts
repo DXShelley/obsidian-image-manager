@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { createBuiltInFeatures } from '@/app/feature-catalog';
 
 describe('createBuiltInFeatures', () => {
-  it('registers the delivered editor and resize features alongside planned items', () => {
+  it('keeps planned items while excluding removed command-only features', () => {
     const features = createBuiltInFeatures();
     const ids = features.map((feature) => feature.id);
 
-    expect(ids).toContain('editor');
-    expect(ids).toContain('resize');
+    expect(ids).not.toContain('editor');
+    expect(ids).not.toContain('resize');
     expect(ids).toContain('watermark-removal');
     expect(ids).toContain('drag-resize');
 

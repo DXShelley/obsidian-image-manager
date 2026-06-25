@@ -1,5 +1,6 @@
 import { Platform, type App } from 'obsidian';
-import { ImageFormat } from '@/types/index';
+import { getUiCopy } from '@/i18n';
+import { ImageFormat, type UiLanguage } from '@/types/index';
 
 const DESKTOP_OUTPUT_FORMATS = [ImageFormat.PNG, ImageFormat.JPEG, ImageFormat.WEBP] as const;
 const DEBUG_MODE_STORAGE_KEYS = [
@@ -19,8 +20,10 @@ const OUTPUT_MIME_BY_FORMAT: Readonly<Record<ImageFormat, string>> = {
   [ImageFormat.WEBP]: 'image/webp',
   [ImageFormat.JPEG]: 'image/jpeg',
   [ImageFormat.PNG]: 'image/png',
+  [ImageFormat.BMP]: 'image/bmp',
   [ImageFormat.GIF]: 'image/gif',
   [ImageFormat.HEIC]: 'image/heic',
+  [ImageFormat.SVG]: 'image/svg+xml',
   [ImageFormat.TIFF]: 'image/tiff'
 } as const;
 
@@ -104,7 +107,8 @@ export function getAttachmentFolderSetting(app: App): string | null {
   return typeof configured === 'string' ? configured : null;
 }
 
-export function describeCurrentPlatform(): string {
+export function describeCurrentPlatform(language: UiLanguage = 'zh-CN'): string {
+  const platforms = getUiCopy(language).common.platforms;
   if (Platform.isIosApp) {
     return 'iOS';
   }
@@ -112,12 +116,16 @@ export function describeCurrentPlatform(): string {
     return 'Android';
   }
   if (Platform.isMobileApp) {
-    return '移动端';
+    return platforms.mobile;
   }
   if (Platform.isDesktopApp) {
-    return '桌面端';
+    return platforms.desktop;
   }
-  return Platform.isMobile ? '移动模式' : '桌面模式';
+  if (Platform.isMobile) {
+    return platforms.mobileMode;
+  }
+
+  return platforms.desktopMode;
 }
 
 function detectCanvasOutputSupport(format: ImageFormat): boolean {

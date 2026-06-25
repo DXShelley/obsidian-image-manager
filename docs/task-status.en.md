@@ -4,8 +4,8 @@
 
 ## Release
 
-- `v3.1.1` adds the final README / Release / Pages alignment before first community submission, closes the single-image external import entry, and moves the release path to exact version tags without a `v` prefix.
-- Package metadata, manifest metadata, release workflow, marketing site, and user-facing documentation are aligned for the 3.1.1 release.
+- `v4.0.0` ships centralized bilingual copy, command refresh after language changes, single-image external import, layered AVIF compatibility, conversion ignore regexes, and compression history.
+- Package metadata, manifest metadata, release workflow, marketing site, and user-facing documentation are aligned for the 4.0.0 release.
 
 ## Completed
 
@@ -17,7 +17,7 @@
 - Compatibility fallback for Obsidian builds that do not expose `Setting.setErrorMessage()`
 - Moved save-path and generated-file-name previews to the top of the settings page
 - Automatically collapse adjacent duplicate rename fragments when expressions such as `{noteName}-{date}` resolve to the same value
-- Rerender Markdown preview after in-place rotate, flip, resize, compress, or convert operations
+- Rerender Markdown preview after in-place rotate, flip, crop, compress, or convert operations
 - Note and folder gallery modal with filtering, sorting, grid / list modes, and lightbox preview
 - Batch image-link rewriting for the current note, current folder, and entire vault, with image relocation into configured directories
 - Image compression for the current file, current folder, and entire vault
@@ -31,12 +31,13 @@
 - Auto-download support for pasted image text sources, including image URLs, `file://` paths, and `data:image/...;base64,...`
 - Command-palette external-image import for current note, current folder, and whole-vault scopes
 - Reading-view right-click import that pulls in only the selected external image
+- Explicit external-image import that can recognize extensionless or dynamic image endpoints by response `content-type`, while adding `AVIF` to recognition, import, and conversion-input flows
 - Persisted recovery transactions for image rewrites, path moves, note-link rewrites, and paste / import flows
 
 ## Partially Completed
 
-- Image editor: quick rotate / flip actions are delivered, but the interactive canvas editor UI is still pending
-- Resize: the preset resize command is delivered, but advanced presets and UI are still pending
+- Image editing: rotate, flip, and crop are delivered from the file context menu; command-palette rotate / flip shortcuts are not registered
+- Resize: the command-palette preset resize command is deferred, and the editor drag-resize UI is still pending
 
 ## Recent Integration Notes
 
@@ -45,6 +46,7 @@
 - Rotate and flip operations rewrite the underlying image file immediately; Markdown preview refresh depends on the current note still referencing that file path.
 - Ignore-regex settings match against `file.path`, support one regex per line, and allow comment lines prefixed with `#`.
 - Markdown image path resolution now uses a raw-path-first strategy with decoded-path fallback so the same note can safely mix `%E6...`-encoded Chinese paths and readable Chinese paths.
+- `AVIF` currently uses layered compatibility: recognition, import, and conversion-input support are available, but in-place compress, crop, rotate, flip, and resize should happen only after converting to `PNG`, `JPEG`, or `WebP`.
 
 ## Deferred
 

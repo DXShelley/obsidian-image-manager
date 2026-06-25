@@ -1,6 +1,8 @@
+import { getNoticeCopy } from '@/i18n';
 import { Notice, TFile, normalizePath, type App } from 'obsidian';
 import type { FileManager } from '@/services/file-manager';
 import type {
+  ImageManagerSettings,
   RecoveryEntry,
   RecoveryFileKind,
   RecoveryFileState,
@@ -33,7 +35,8 @@ export class RecoveryManager {
   constructor(
     private readonly app: App,
     pluginId: string,
-    private readonly fileManager: FileManager
+    private readonly fileManager: FileManager,
+    private readonly getSettings: () => Pick<ImageManagerSettings, 'uiLanguage'>
   ) {
     this.rootPath = normalizePath(`${this.app.vault.configDir}/plugins/${pluginId}/recovery`);
     this.historyPath = normalizePath(`${this.rootPath}/${HISTORY_FILE_NAME}`);
@@ -622,7 +625,7 @@ export class RecoveryManager {
       const parsed = JSON.parse(raw) as RecoveryState;
       return Array.isArray(parsed.transactions) ? parsed.transactions : [];
     } catch {
-      new Notice('Image Manager recovery history is unreadable and has been reset');
+      new Notice(getNoticeCopy(this.getSettings().uiLanguage).recoveryHistoryReset);
       return [];
     }
   }

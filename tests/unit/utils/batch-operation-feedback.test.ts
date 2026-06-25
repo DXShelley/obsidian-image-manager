@@ -14,7 +14,8 @@ describe('batch operation feedback utilities', () => {
         fileCount: 3,
         beforeBytes: 4096,
         afterBytes: 2048,
-        showSpaceSaved: true
+        showSpaceSaved: true,
+        language: 'en'
       })
     ).toBe('Batch compression finished: 3 image(s), 4.0 KB -> 2.0 KB (50.0% reduction)');
   });
@@ -23,7 +24,8 @@ describe('batch operation feedback utilities', () => {
     expect(
       formatBatchConversionNotice({
         imageCount: 5,
-        targetFormat: 'webp'
+        targetFormat: 'webp',
+        language: 'en'
       })
     ).toBe('Batch conversion finished: 5 image(s) -> webp');
   });
@@ -37,7 +39,8 @@ describe('batch operation feedback utilities', () => {
         ],
         importedLinks: 3,
         downloadedImages: 2,
-        failedCount: 0
+        failedCount: 0,
+        language: 'en'
       })
     ).toBe('External image import finished: 2 file(s), 3 link(s) updated: notes/a.md (2 links), notes/b.md (1 link); downloaded 2 image(s)');
   });
@@ -54,7 +57,8 @@ describe('batch operation feedback utilities', () => {
         downloadedImages: 0,
         deletedImages: 0,
         deletedFolders: 0,
-        failedCount: 0
+        failedCount: 0,
+        language: 'en'
       })
     ).toBe('Batch link update finished: 2 file(s), 3 link(s) updated: notes/a.md (2 links), notes/b.md (1 link); moved 1 image(s)');
   });
@@ -66,7 +70,8 @@ describe('batch operation feedback utilities', () => {
         deletedFolders: 1,
         relocatedImages: 0,
         preservedImages: 0,
-        failedCount: 0
+        failedCount: 0,
+        language: 'en'
       })
     ).toBe('Extra image cleanup finished: removed 2 image(s); removed 1 empty folder(s)');
   });
@@ -78,7 +83,8 @@ describe('batch operation feedback utilities', () => {
         deletedFolders: 0,
         relocatedImages: 1,
         preservedImages: 2,
-        failedCount: 0
+        failedCount: 0,
+        language: 'en'
       })
     ).toBe(
       'Extra image cleanup finished: moved 1 image(s) to referenced note folder(s); kept 2 image(s) still referenced by other notes'

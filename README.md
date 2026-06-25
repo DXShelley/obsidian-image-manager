@@ -2,7 +2,7 @@
 
 # Obsidian Image Manager
 
-`Obsidian Image Manager` 是一个面向 Obsidian 的桌面端图片管理插件，`v3.1.1` 聚焦于够用实用的图片工作流、双语设置页、更稳妥的外部图片导入，以及更克制清晰的发布展示面。
+`Obsidian Image Manager` 是一个面向 Obsidian 的桌面端图片管理插件，`v4.0.0` 聚焦于集中式双语体验、更稳妥的外部图片导入、AVIF 分层兼容、压缩去重历史，以及恢复优先的图片工作流。
 
 Desktop-only image workflow for Obsidian with managed import, conversion, compression, lightweight editing, and recovery-first batch operations.
 
@@ -29,14 +29,13 @@ Desktop-only image workflow for Obsidian with managed import, conversion, compre
 - 将粘贴图片自动转换为设定的默认格式。
 - 使用 `{noteName}`、`{fileName}`、`{date}`、`{time}`、`{random}` 等变量生成文件名。
 - 按 Obsidian Wiki 链接或标准 Markdown 链接插入图片引用。
-- 将笔记中的 `URL`、`file://` 与 `data:image/...;base64,...` 外部图片源导入到本地受管目录。
+- 将笔记中的 `URL`、`file://` 与 `data:image/...;base64,...` 外部图片源导入到本地受管目录；显式导入时支持根据响应 `content-type` 识别无后缀或动态图片 URL。
 - 批量转换当前笔记引用的全部图片。
 - 对当前文件、当前文件夹或整个仓库执行压缩和链接更新命令。
 - 对当前文件、当前文件夹或整个仓库执行“删除多余图片文件”命令，清理未被任何笔记引用的图片。
-- 命令面板中的范围型命令按 `a1-a5`、`b1-b5`、`c1-c5` 的 `id` 顺序排序，并统一显示为 `【单文件】`、`【单文件夹】`、`【整库】`。
+- 命令面板中的范围型命令按 `a1-a5`、`b1-b5`、`c1-c5` 的 `id` 顺序排序，并把 `【单文件】`、`【单文件夹】`、`【整库】` 作为命令名后缀展示。
 - 执行整库命令前弹出风险确认，避免误操作。
 - 当前笔记范围的转换和压缩命令会批量处理该笔记引用的所有图片，而不是只处理当前激活图片文件。
-- 提供当前图片的旋转、翻转与 1920px 边界缩放命令，便于在命令面板中直接处理激活图片。
 - 暂停、恢复或取消正在运行的批处理任务。
 - 通过图片右键菜单执行复制、压缩、转换、旋转、水平或垂直翻转和拖拽裁剪。
 - 打开当前图片、当前笔记或当前文件夹画廊，并支持筛选、排序、网格/列表切换，以及在阅读视图中双击图片直接打开画廊。
@@ -48,6 +47,7 @@ Desktop-only image workflow for Obsidian with managed import, conversion, compre
 - 在使用基于时间的命名时，通过 `-01`、`-02` 等后缀安全处理重名。
 - 在格式转换时，如 `aaa.png` 和 `aaa.jpg` 同时转为 `webp`，会自动生成 `aaa.webp`、`aaa-1.webp` 这类唯一名称。
 - Markdown 图片链接支持编码、可读包裹和自动三种路径输出策略，兼容中文、空格、括号及已编码路径混用。
+- `AVIF` 现已纳入图片识别、外链导入与转换输入链路；原位压缩、旋转、翻转、裁剪和缩放前需先转为 `PNG`、`JPEG` 或 `WebP`。
 - 压缩历史会持久化记录当前文件版本，避免对同一版本重复压缩或重复尝试无收益压缩。
 - 持久化记录图片和 Markdown 修改的恢复事务，并支持撤销 / 重做最近的 Image Manager 操作。
 
@@ -57,6 +57,7 @@ Desktop-only image workflow for Obsidian with managed import, conversion, compre
 - 插件不会收集遥测数据，不包含广告，也不会在后台静默上传 vault 内容。
 - 当启用“自动下载文本图片源”等相关能力时，插件会按用户触发去访问网络下载远程图片。
 - 插件支持读取 `file://` 指向的本地图片文件并导入到 vault；该能力仅适用于桌面端，且只会在用户显式粘贴此类来源时执行。
+- `GIF`、`SVG`、`TIFF`、`HEIC`、`AVIF` 等格式属于分层兼容：可识别、可导入或可参与转换，不等同于保证所有原位编辑 / 压缩操作都稳定可用。
 - 插件会在 `.obsidian/plugins/note-image-manager/` 下保存压缩历史与恢复快照，用于去重压缩和撤销 / 重做。
 - 整库转换、整库压缩、整库删除多余图片文件等高风险操作都会先弹出确认；图片与 Markdown 的受管修改支持恢复事务。
 
@@ -94,10 +95,10 @@ Desktop-only image workflow for Obsidian with managed import, conversion, compre
 
 ## 发布信息
 
-- 版本：`3.1.1`
+- 版本：`4.0.0`
 - 最低 Obsidian 版本：`0.15.0`
 - 首次上架：通过 `community.obsidian.md` 提交仓库并等待审核。
-- 后续更新：创建与 `manifest.json` 中 `version` 完全一致的 Git tag 与 GitHub Release，例如 `3.1.1`，不要加 `v` 前缀。
+- 后续更新：创建与 `manifest.json` 中 `version` 完全一致的 Git tag 与 GitHub Release，例如 `4.0.0`，不要加 `v` 前缀。
 - 发布产物：`manifest.json`、`main.js`、`styles.css`
 - GitHub 仓库描述与主页需保持和 README 一致，避免社区目录页、仓库页与 Pages 首页口径漂移。
 
@@ -126,7 +127,7 @@ npm run build
 5. 向笔记粘贴图片，确认保存路径、生成名称、链接格式与光标位置都符合设置。
 6. 对 Markdown 笔记引用的图片执行旋转或翻转，确认文件内容和预览都会刷新。
 7. 在文件管理器中右键图片文件，确认插件右键菜单项正常出现。
-8. 在阅读视图中右键外部图片，确认只出现“下载该外部图片到本地”，且只改写当前这一张。
+8. 在阅读视图中右键外部图片，确认只出现“下载该外部图片”，且只改写当前这一张。
 9. 如果重建后 Obsidian 仍显示旧行为，重新复制 `manifest.json`、`main.js`、`styles.css` 到插件目录并重载插件。
 10. 运行批量压缩命令，确认暂停、恢复与取消行为正常。
 11. 打开笔记画廊和文件夹画廊，确认筛选、排序与网格/列表切换可用。

@@ -1,4 +1,4 @@
-import { DEFAULT_SETTINGS, type ImageManagerSettings } from '@/types/index';
+import { DEFAULT_SETTINGS, resolveUiLanguage, type ImageManagerSettings } from '@/types/index';
 
 type LoadData = () => Promise<unknown>;
 type SaveData = (data: ImageManagerSettings) => Promise<void>;
@@ -17,10 +17,10 @@ export class SettingsManager {
 
   async load(): Promise<ImageManagerSettings> {
     const loaded = await this.loadData();
-    this.settings = {
+    this.settings = normalizeSettings({
       ...DEFAULT_SETTINGS,
       ...(isRecord(loaded) ? loaded : {})
-    };
+    });
 
     return this.getSettings();
   }
@@ -32,8 +32,15 @@ export class SettingsManager {
   async update(mutator: (draft: ImageManagerSettings) => void): Promise<ImageManagerSettings> {
     const draft = this.getSettings();
     mutator(draft);
-    this.settings = draft;
-    await this.saveData(draft);
+    this.settings = normalizeSettings(draft);
+    await this.saveData(this.settings);
     return this.getSettings();
   }
+}
+
+function normalizeSettings(settings: ImageManagerSettings): ImageManagerSettings {
+  return {
+    ...settings,
+    uiLanguage: resolveUiLanguage(settings.uiLanguage)
+  };
 }

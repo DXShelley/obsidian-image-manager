@@ -1,5 +1,6 @@
 import { MarkdownView, TFile } from 'obsidian';
 import type { TFolder } from 'obsidian';
+import { getDefaultCommandName, getNoticeCopy, getUiCopy } from '@/i18n';
 import type { ImageManagerFeature, ImageManagerFeatureContext } from '@/types/index';
 import { formatBatchCompressionNotice } from '@/utils/batch-operation-feedback';
 import { executeLoggedCommand, logSkippedCommand } from '@/utils/command-logging';
@@ -27,7 +28,7 @@ export class CompressFeature implements ImageManagerFeature {
   async register(context: ImageManagerFeatureContext): Promise<void> {
     const activeCommand = {
       commandId: 'a4-compress-active-image',
-      commandName: '【单文件】压缩图片'
+      commandName: getDefaultCommandName('a4-compress-active-image')
     } as const;
     context.plugin.addCommand({
       id: activeCommand.commandId,
@@ -36,7 +37,7 @@ export class CompressFeature implements ImageManagerFeature {
         void executeLoggedCommand(context, activeCommand, async () => {
           await context.services.recovery.runTransaction(
             {
-              label: '压缩当前文件引用图片',
+              label: getUiCopy(context.services.settings.getSettings().uiLanguage).transactions.compressCurrentNoteImages,
               trigger: 'compress',
               scope: 'single-note'
             },
@@ -52,7 +53,7 @@ export class CompressFeature implements ImageManagerFeature {
 
     const folderCommand = {
       commandId: 'b4-compress-current-folder-images',
-      commandName: '【单文件夹】压缩图片'
+      commandName: getDefaultCommandName('b4-compress-current-folder-images')
     } as const;
     context.plugin.addCommand({
       id: folderCommand.commandId,
@@ -65,13 +66,16 @@ export class CompressFeature implements ImageManagerFeature {
               ...folderCommand,
               reason: 'No active folder'
             });
-            showOperationNotice(context.services.settings.getSettings(), 'No active folder');
+            const settings = context.services.settings.getSettings();
+            showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noActiveFolder);
             return;
           }
 
           await context.services.recovery.runTransaction(
             {
-              label: `压缩文件夹图片 ${folder.path || 'vault root'}`,
+              label: getUiCopy(context.services.settings.getSettings().uiLanguage).transactions.compressFolderImages(
+                folder.path || getUiCopy(context.services.settings.getSettings().uiLanguage).common.vaultRoot
+              ),
               trigger: 'compress',
               scope: 'folder'
             },
@@ -85,20 +89,21 @@ export class CompressFeature implements ImageManagerFeature {
 
     const vaultCommand = {
       commandId: 'c4-compress-vault-images',
-      commandName: '【整库】压缩图片'
+      commandName: getDefaultCommandName('c4-compress-vault-images')
     } as const;
     context.plugin.addCommand({
       id: vaultCommand.commandId,
       name: vaultCommand.commandName,
       callback: () => {
         void executeLoggedCommand(context, vaultCommand, async () => {
-          if (!(await confirmVaultScopeOperation(context.app, '整库压缩'))) {
+          const ui = getUiCopy(context.services.settings.getSettings().uiLanguage);
+          if (!(await confirmVaultScopeOperation(context.app, context.services.settings.getSettings().uiLanguage, ui.vaultOperation.actionNames.compression))) {
             return;
           }
 
           await context.services.recovery.runTransaction(
             {
-              label: '压缩整个仓库图片',
+              label: ui.transactions.compressVaultImages,
               trigger: 'compress',
               scope: 'vault'
             },
@@ -159,7 +164,8 @@ export class CompressFeature implements ImageManagerFeature {
         fileCount: compressedCount,
         beforeBytes: beforeTotal,
         afterBytes: afterTotal,
-        showSpaceSaved: context.services.settings.getSettings().showSpaceSavedNotification
+        showSpaceSaved: context.services.settings.getSettings().showSpaceSavedNotification,
+        language: context.services.settings.getSettings().uiLanguage
       })
     );
   }
@@ -173,16 +179,18 @@ export class CompressFeature implements ImageManagerFeature {
 
     const result = await this.compressAndReplace(context, file);
     if (!result) {
-      showOperationNotice(context.services.settings.getSettings(), formatCompressionNoGainNotice(file.name));
+      const settings = context.services.settings.getSettings();
+      showOperationNotice(settings, formatCompressionNoGainNotice(file.name, settings));
       return;
     }
 
-    if (context.services.settings.getSettings().showSpaceSavedNotification) {
-      showOperationNotice(context.services.settings.getSettings(), formatCompressionSummary(result.before, result.after));
+    const settings = context.services.settings.getSettings();
+    if (settings.showSpaceSavedNotification) {
+      showOperationNotice(settings, formatCompressionSummary(result.before, result.after, settings));
       return;
     }
 
-    showOperationNotice(context.services.settings.getSettings(), 'Image compressed');
+    showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).imageCompressed);
   }
 
   private async withActiveNoteFile(
@@ -200,7 +208,8 @@ export class CompressFeature implements ImageManagerFeature {
         ...command,
         reason: 'No active note file'
       });
-      showOperationNotice(context.services.settings.getSettings(), 'Open a note file first');
+      const settings = context.services.settings.getSettings();
+      showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noActiveNoteFile);
       return;
     }
 
@@ -212,15 +221,25 @@ export class CompressFeature implements ImageManagerFeature {
     file: TFile
   ): Promise<CompressionSkipState | null> {
     const settings = context.services.settings.getSettings();
+    const restriction = context.services.imageProcessor.getInPlaceModificationRestriction(file);
+    if (restriction) {
+      context.services.logger.debug('Skipping compression because the format requires conversion before in-place edits', {
+        filePath: file.path,
+        reason: restriction
+      });
+      return {
+        message: restriction
+      };
+    }
     const thresholdBytes = settings.compressionThresholdKB * 1024;
     if (thresholdBytes > 0 && file.stat.size < thresholdBytes) {
       context.services.logger.debug('Skipping compression because file is below threshold', {
         filePath: file.path,
         fileSize: file.stat.size,
-          thresholdBytes
-        });
+        thresholdBytes
+      });
       return {
-        message: formatCompressionBelowThresholdNotice(file.name)
+        message: formatCompressionBelowThresholdNotice(file.name, settings)
       };
     }
 
@@ -228,10 +247,10 @@ export class CompressFeature implements ImageManagerFeature {
     if (ignored) {
       context.services.logger.debug('Skipping compression because file matches ignore pattern', {
         filePath: file.path,
-          pattern: ignored.source
-        });
+        pattern: ignored.source
+      });
       return {
-        message: formatCompressionIgnoredNotice(file.name, ignored.source)
+        message: formatCompressionIgnoredNotice(file.name, ignored.source, settings)
       };
     }
 
@@ -242,7 +261,7 @@ export class CompressFeature implements ImageManagerFeature {
         status: processedStatus
       });
       return {
-        message: formatCompressionProcessedNotice(file.name, processedStatus)
+        message: formatCompressionProcessedNotice(file.name, processedStatus, settings)
       };
     }
 

@@ -112,6 +112,9 @@ describe('ContextMenuFeature', () => {
         fileManager: {
           isImageFile: vi.fn(() => true)
         },
+        imageProcessor: {
+          getInPlaceModificationRestriction: vi.fn(() => null)
+        },
         settings: {
           getSettings: vi.fn(() => ({
             enableContextMenu: false,
@@ -165,6 +168,9 @@ describe('ContextMenuFeature', () => {
         fileManager: {
           isImageFile: vi.fn(() => true)
         },
+        imageProcessor: {
+          getInPlaceModificationRestriction: vi.fn(() => null)
+        },
         settings: {
           getSettings: vi.fn(() => ({
             enableContextMenu: true,
@@ -193,7 +199,9 @@ describe('ContextMenuFeature', () => {
     galleryItem?.onClick?.();
 
     await vi.waitFor(() => {
-      expect(openSingleImageGalleryMock).toHaveBeenCalledWith(context, file);
+      expect(openSingleImageGalleryMock).toHaveBeenCalledWith(context, file, undefined, {
+        lightboxCloseBehavior: 'close-modal'
+      });
     });
   });
 
@@ -237,7 +245,8 @@ describe('ContextMenuFeature', () => {
           replaceFile: replaceFileMock
         },
         imageProcessor: {
-          crop: cropMock
+          crop: cropMock,
+          getInPlaceModificationRestriction: vi.fn(() => null)
         },
         recovery: {
           runTransaction: recoveryRunTransaction
@@ -284,6 +293,144 @@ describe('ContextMenuFeature', () => {
       });
       expect(replaceFileMock).toHaveBeenCalledWith(file, expect.any(ArrayBuffer));
     });
+  });
+
+  it('adds clockwise and counterclockwise rotate actions', async () => {
+    const { TFile } = await import('obsidian');
+    const feature = new ContextMenuFeature();
+    let fileMenuHandler:
+      | ((menu: unknown, file: InstanceType<typeof TFile>) => void)
+      | undefined;
+    const file = Object.assign(new TFile(), {
+      path: 'assets/photo.png',
+      name: 'photo.png',
+      extension: 'png'
+    });
+    const { menu, addedItems } = createMenuSpy();
+    const recoveryRunTransaction = vi.fn(async (_meta: unknown, run: () => Promise<void>) => run());
+    const rotateMock = vi.fn(async () => new ArrayBuffer(4));
+    const replaceFileMock = vi.fn(async () => file);
+    const context = {
+      app: {
+        workspace: {
+          on: vi.fn((_event: string, callback: typeof fileMenuHandler) => {
+            fileMenuHandler = callback;
+            return { event: 'file-menu' };
+          }),
+          getActiveViewOfType: vi.fn(() => null)
+        }
+      },
+      plugin: {
+        registerEvent: vi.fn()
+      },
+      services: {
+        fileManager: {
+          isImageFile: vi.fn(() => true),
+          replaceFile: replaceFileMock
+        },
+        imageProcessor: {
+          rotate: rotateMock,
+          getInPlaceModificationRestriction: vi.fn(() => null)
+        },
+        recovery: {
+          runTransaction: recoveryRunTransaction
+        },
+        settings: {
+          getSettings: vi.fn(() => ({
+            enableContextMenu: true,
+            enableGallery: true,
+            showOperationNotifications: true
+          }))
+        },
+        logger: {
+          refreshMode: vi.fn(),
+          debug: vi.fn(),
+          warn: vi.fn(),
+          error: vi.fn()
+        }
+      }
+    };
+
+    await feature.register(context as never);
+    fileMenuHandler?.(menu as never, file);
+
+    const clockwiseItem = addedItems.find((item) => item.title === '顺时针旋转 90°');
+    const counterClockwiseItem = addedItems.find((item) => item.title === '逆时针旋转 90°');
+    expect(clockwiseItem?.icon).toBe('rotate-cw');
+    expect(counterClockwiseItem?.icon).toBe('rotate-ccw');
+
+    clockwiseItem?.onClick?.();
+    counterClockwiseItem?.onClick?.();
+
+    await vi.waitFor(() => {
+      expect(recoveryRunTransaction).toHaveBeenCalledTimes(2);
+      expect(rotateMock).toHaveBeenNthCalledWith(1, file, 90);
+      expect(rotateMock).toHaveBeenNthCalledWith(2, file, 270);
+      expect(replaceFileMock).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it('limits AVIF context-menu actions to safe operations', async () => {
+    const { TFile } = await import('obsidian');
+    const feature = new ContextMenuFeature();
+    let fileMenuHandler:
+      | ((menu: unknown, file: InstanceType<typeof TFile>) => void)
+      | undefined;
+    const file = Object.assign(new TFile(), {
+      path: 'assets/photo.avif',
+      name: 'photo.avif',
+      extension: 'avif'
+    });
+    const { menu, addedItems } = createMenuSpy();
+    const context = {
+      app: {
+        workspace: {
+          on: vi.fn((_event: string, callback: typeof fileMenuHandler) => {
+            fileMenuHandler = callback;
+            return { event: 'file-menu' };
+          }),
+          getActiveViewOfType: vi.fn(() => null)
+        }
+      },
+      plugin: {
+        registerEvent: vi.fn()
+      },
+      services: {
+        fileManager: {
+          isImageFile: vi.fn(() => true)
+        },
+        imageProcessor: {
+          getInPlaceModificationRestriction: vi.fn(
+            () => 'Convert AVIF to PNG, JPEG, or WebP before editing or compressing it in place'
+          )
+        },
+        settings: {
+          getSettings: vi.fn(() => ({
+            enableContextMenu: true,
+            enableGallery: true,
+            showOperationNotifications: true
+          }))
+        },
+        logger: {
+          refreshMode: vi.fn(),
+          debug: vi.fn(),
+          warn: vi.fn(),
+          error: vi.fn()
+        }
+      }
+    };
+
+    await feature.register(context as never);
+    fileMenuHandler?.(menu as never, file);
+
+    expect(addedItems.map((item) => item.title)).toContain('在画廊中打开');
+    expect(addedItems.map((item) => item.title)).toContain('转换为默认格式');
+    expect(addedItems.map((item) => item.title)).not.toContain('压缩图片');
+    expect(addedItems.map((item) => item.title)).not.toContain('拖拽裁剪');
+    expect(addedItems.map((item) => item.title)).not.toContain('顺时针旋转 90°');
+    expect(addedItems.map((item) => item.title)).not.toContain('逆时针旋转 90°');
+    expect(addedItems.map((item) => item.title)).not.toContain('水平翻转');
+    expect(addedItems.map((item) => item.title)).not.toContain('垂直翻转');
   });
 
 });

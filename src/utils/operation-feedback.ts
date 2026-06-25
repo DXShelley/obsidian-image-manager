@@ -1,5 +1,6 @@
+import { getNoticeCopy, getUiCopy } from '@/i18n';
 import { Notice } from 'obsidian';
-import type { ImageManagerSettings } from '@/types/index';
+import { resolveUiLanguage, type ImageManagerSettings } from '@/types/index';
 import type { CompressionRecordStatus } from '@/core/compression/compression-tracker';
 import { getParentPath } from '@/utils/image-manager';
 
@@ -13,68 +14,104 @@ export function formatBytes(bytes: number): string {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
-export function formatCompressionSummary(before: number, after: number, label = 'Image compressed'): string {
+export function formatCompressionSummary(
+  before: number,
+  after: number,
+  settings: Pick<ImageManagerSettings, 'uiLanguage'>,
+  label?: string
+): string {
+  const notices = getNoticeCopy(resolveUiLanguage(settings.uiLanguage));
   const ratio = before > 0 ? (Math.abs(before - after) / before) * 100 : 0;
-  const direction = after <= before ? 'reduction' : 'increase';
-  return `${label}: ${formatBytes(before)} -> ${formatBytes(after)} (${ratio.toFixed(1)}% ${direction})`;
+  const direction = after <= before ? notices.compressionDirectionReduction : notices.compressionDirectionIncrease;
+  return notices.compressionSummary(
+    formatBytes(before),
+    formatBytes(after),
+    `${ratio.toFixed(1)}%`,
+    direction,
+    label ?? notices.imageCompressed
+  );
 }
 
-export function formatSavedLocationNotice(paths: string[]): string {
+export function formatSavedLocationNotice(paths: string[], settings: Pick<ImageManagerSettings, 'uiLanguage'>): string {
+  const language = resolveUiLanguage(settings.uiLanguage);
+  const notices = getNoticeCopy(language);
+  const ui = getUiCopy(language);
   if (paths.length === 0) {
-    return 'No images were saved';
+    return notices.noImagesSaved;
   }
 
   if (paths.length === 1) {
-    return `Saved image to ${paths[0]}`;
+    return notices.savedSingleImage(paths[0] ?? '');
   }
 
-  const folders = [...new Set(paths.map((path) => getParentPath(path) || 'vault root'))];
+  const folders = [...new Set(paths.map((path) => getParentPath(path) || ui.common.vaultRoot))];
   if (folders.length === 1) {
-    return `Saved ${paths.length} images to ${folders[0]}`;
+    return notices.savedImagesToFolder(paths.length, folders[0] ?? '');
   }
 
-  return `Saved ${paths.length} images across ${folders.length} folders`;
+  return notices.savedImagesAcrossFolders(paths.length, folders.length);
 }
 
-export function formatConversionIgnoredNotice(fileName: string, pattern: string): string {
-  return `Skipped conversion for ${fileName}: matched ignore rule "${pattern}"`;
+export function formatConversionIgnoredNotice(
+  fileName: string,
+  pattern: string,
+  settings: Pick<ImageManagerSettings, 'uiLanguage'>
+): string {
+  return getNoticeCopy(resolveUiLanguage(settings.uiLanguage)).conversionIgnored(fileName, pattern);
 }
 
-export function formatCompressionIgnoredNotice(fileName: string, pattern: string): string {
-  return `Skipped compression for ${fileName}: matched ignore rule "${pattern}"`;
+export function formatCompressionIgnoredNotice(
+  fileName: string,
+  pattern: string,
+  settings: Pick<ImageManagerSettings, 'uiLanguage'>
+): string {
+  return getNoticeCopy(resolveUiLanguage(settings.uiLanguage)).compressionIgnored(fileName, pattern);
 }
 
-export function formatCompressionBelowThresholdNotice(fileName: string): string {
-  return `Skipped compression for ${fileName}: below size threshold`;
+export function formatCompressionBelowThresholdNotice(
+  fileName: string,
+  settings: Pick<ImageManagerSettings, 'uiLanguage'>
+): string {
+  return getNoticeCopy(resolveUiLanguage(settings.uiLanguage)).compressionBelowThreshold(fileName);
 }
 
-export function formatCompressionProcessedNotice(fileName: string, status: CompressionRecordStatus): string {
+export function formatCompressionProcessedNotice(
+  fileName: string,
+  status: CompressionRecordStatus,
+  settings: Pick<ImageManagerSettings, 'uiLanguage'>
+): string {
+  const notices = getNoticeCopy(resolveUiLanguage(settings.uiLanguage));
   if (status === 'compressed') {
-    return `Skipped compression for ${fileName}: current file version was already compressed`;
+    return notices.compressionAlreadyProcessed(fileName);
   }
 
-  return `Skipped compression for ${fileName}: current file version should not be recompressed`;
+  return notices.compressionShouldNotRecompress(fileName);
 }
 
-export function formatCompressionNoGainNotice(fileName: string): string {
-  return `Skipped compression for ${fileName}: no smaller output was produced`;
+export function formatCompressionNoGainNotice(fileName: string, settings: Pick<ImageManagerSettings, 'uiLanguage'>): string {
+  return getNoticeCopy(resolveUiLanguage(settings.uiLanguage)).compressionNoGain(fileName);
 }
 
-export function formatAutoConvertFallbackNotice(ignoredCount: number, failedCount: number): string {
+export function formatAutoConvertFallbackNotice(
+  ignoredCount: number,
+  failedCount: number,
+  settings: Pick<ImageManagerSettings, 'uiLanguage'>
+): string {
+  const notices = getNoticeCopy(resolveUiLanguage(settings.uiLanguage));
   const total = ignoredCount + failedCount;
   if (total === 0) {
-    return 'No pasted images fell back to their original format';
+    return notices.noAutoConvertFallback;
   }
 
   if (ignoredCount > 0 && failedCount > 0) {
-    return `Pasted ${total} image(s) without conversion: ${ignoredCount} matched ignore rules, ${failedCount} failed to convert`;
+    return notices.autoConvertFallbackMixed(total, ignoredCount, failedCount);
   }
 
   if (ignoredCount > 0) {
-    return `Pasted ${ignoredCount} image(s) without conversion: matched conversion ignore rules`;
+    return notices.autoConvertFallbackIgnored(ignoredCount);
   }
 
-  return `Pasted ${failedCount} image(s) without conversion: failed to convert to the requested format`;
+  return notices.autoConvertFallbackFailed(failedCount);
 }
 
 export function showOperationNotice(settings: ImageManagerSettings, message: string): void {

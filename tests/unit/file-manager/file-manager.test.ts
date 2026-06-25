@@ -563,6 +563,74 @@ describe('FileManager.rewriteImageLinksInNote', () => {
     expect(app.vault.modify).toHaveBeenCalledWith(note, '![Remote](photo.png)');
   });
 
+  it('imports extensionless external image urls when the response confirms an image content type', async () => {
+    const note = Object.assign(new TFile(), {
+      path: 'notes/test.md',
+      name: 'test.md',
+      basename: 'test',
+      extension: 'md'
+    });
+    const savedImage = Object.assign(new TFile(), {
+      path: 'notes/render.png',
+      name: 'render.png',
+      basename: 'render',
+      extension: 'png',
+      parent: { path: 'notes' }
+    });
+    const app = {
+      vault: {
+        read: vi.fn(async () => '![Remote](https://cdn.example.com/render?id=42)'),
+        modify: vi.fn(async () => undefined),
+        getFiles: vi.fn(() => [note, savedImage]),
+        getAbstractFileByPath: vi.fn((path: string) => {
+          if (path === 'notes') {
+            return { path: 'notes' };
+          }
+          return null;
+        }),
+        createBinary: vi.fn(async () => savedImage)
+      },
+      metadataCache: {
+        getFirstLinkpathDest: vi.fn((rawTarget: string) => {
+          if (rawTarget === 'render.png' || rawTarget === 'notes/render.png') {
+            return savedImage;
+          }
+          return null;
+        }),
+        resolvedLinks: {}
+      },
+      fileManager: {
+        renameFile: vi.fn(async () => undefined)
+      }
+    };
+    const manager = new FileManager(
+      app as never,
+      () => ({
+        ...settings,
+        enableAutoRename: false,
+        defaultLinkFormat: LinkFormat.MARKDOWN,
+        defaultPathFormat: PathFormat.RELATIVE
+      }),
+      new VariableResolver(),
+      new LinkFormatter(app as never)
+    );
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      headers: {
+        get: vi.fn(() => 'image/png')
+      },
+      arrayBuffer: vi.fn(async () => new Uint8Array([7, 8, 9]).buffer)
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await manager.importExternalImageLinksInNote(note as never);
+
+    expect(fetchMock).toHaveBeenCalledWith('https://cdn.example.com/render?id=42');
+    expect(app.vault.createBinary).toHaveBeenCalled();
+    expect(result).toEqual({ replaced: 1, downloaded: 1 });
+    expect(app.vault.modify).toHaveBeenCalledWith(note, '![Remote](render.png)');
+  });
+
   it('imports only the external image link that matches the selected rendered image source', async () => {
     const note = Object.assign(new TFile(), {
       path: 'notes/test.md',
@@ -873,6 +941,39 @@ describe('FileManager.rewriteImageLinksInNote', () => {
     const app = {
       vault: {
         read: vi.fn(async () => '![One](photo.png)\n![Two](photo.png)')
+      },
+      metadataCache: {
+        getFirstLinkpathDest: vi.fn(() => image)
+      }
+    };
+    const manager = new FileManager(
+      app as never,
+      () => settings,
+      new VariableResolver(),
+      new LinkFormatter(app as never)
+    );
+
+    const files = await manager.getImagesInNote(note as never);
+
+    expect(files).toEqual([image]);
+  });
+
+  it('treats AVIF files as managed note images for conversion and link maintenance', async () => {
+    const note = Object.assign(new TFile(), {
+      path: 'notes/test.md',
+      name: 'test.md',
+      basename: 'test',
+      extension: 'md'
+    });
+    const image = Object.assign(new TFile(), {
+      path: 'notes/photo.avif',
+      name: 'photo.avif',
+      basename: 'photo',
+      extension: 'avif'
+    });
+    const app = {
+      vault: {
+        read: vi.fn(async () => '![One](photo.avif)')
       },
       metadataCache: {
         getFirstLinkpathDest: vi.fn(() => image)

@@ -5,6 +5,7 @@ import { ImageFormat } from '@/types/index';
 import { canWriteImageToClipboard } from '@/utils/compatibility';
 
 const SOURCE_MIME_BY_EXTENSION: Readonly<Record<string, string>> = {
+  avif: 'image/avif',
   bmp: 'image/bmp',
   gif: 'image/gif',
   heic: 'image/heic',
