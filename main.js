@@ -7397,15 +7397,29 @@ var ImageManagerSettingTab = class extends import_obsidian20.PluginSettingTab {
         this.display();
       })
     );
-    new import_obsidian20.Setting(actionWrap).addButton(
-      (button) => button.setButtonText(copy.header.reset).setDestructive().onClick(async () => {
+    new import_obsidian20.Setting(actionWrap).addButton((button) => {
+      button.setButtonText(copy.header.reset);
+      this.styleDestructiveButton(button);
+      button.onClick(async () => {
         await this.updateSettings((draft) => {
           Object.assign(draft, DEFAULT_SETTINGS);
         });
         new import_obsidian20.Notice(copy.header.resetNotice);
         this.display();
-      })
-    );
+      });
+    });
+  }
+  styleDestructiveButton(button) {
+    const compatibleButton = button;
+    if (typeof compatibleButton.setDestructive === "function") {
+      compatibleButton.setDestructive();
+      return;
+    }
+    if (typeof compatibleButton.setWarning === "function") {
+      compatibleButton.setWarning();
+      return;
+    }
+    button.buttonEl.addClass("mod-warning");
   }
   createSection(containerEl, title, description) {
     const section = containerEl.createDiv({ cls: "image-manager-settings-section" });

@@ -12,7 +12,7 @@
 ## Release 附件与版本
 
 - `manifest.json.version`、`package.json.version`、`versions.json`、网站版本文案保持一致。
-- Git tag 必须与 `manifest.json.version` 完全一致，例如 `4.0.3`，不要写成 `v4.0.3`。
+- Git tag 必须与 `manifest.json.version` 完全一致，例如 `4.0.4`，不要写成 `v4.0.4`。
 - GitHub Release 附件必须包含：`manifest.json`、`main.js`、`styles.css`、`note-image-manager.zip`。
 - Release 前必须重新执行 `npm run validate` 与 `npm run build`。
 - 发布工作流建议自动校验 tag 与 `manifest.json.version` 一致，并自动上传附件。

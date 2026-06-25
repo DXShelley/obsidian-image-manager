@@ -2,6 +2,12 @@
 
 # Changelog
 
+## 4.0.4
+
+- Fixed settings-page rendering on older Obsidian builds where `ButtonComponent.setDestructive()` is unavailable; the reset button now falls back to `setWarning()` or the `mod-warning` class.
+- Added settings-page compatibility regression tests and expanded the test Obsidian mock so release validation covers the older button API path.
+- Updated `manifest.json`, `package.json`, `versions.json`, README, task status, and website version copy for a `4.0.4` tag release.
+
 ## 4.0.3
 
 - Updated the `manifest.json` description to remove the redundant `Obsidian` wording flagged by plugin review.

@@ -2,6 +2,12 @@
 
 # 更新日志
 
+## 4.0.4
+
+- 修复旧版 Obsidian 中 `ButtonComponent.setDestructive()` 不存在时设置页渲染中断的问题，重置按钮会自动回退到 `setWarning()` 或 `mod-warning` 样式。
+- 补充设置页兼容性回归测试，并扩展测试用 Obsidian mock，使发布前验证覆盖旧版按钮 API 场景。
+- 同步更新 `manifest.json`、`package.json`、`versions.json`、README、任务状态与网站版本文案，准备以 `4.0.4` tag 重新发布。
+
 ## 4.0.3
 
 - 调整 `manifest.json` 描述，移除审核规则认为冗余的 `Obsidian` 字样。

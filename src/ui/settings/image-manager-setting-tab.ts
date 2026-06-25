@@ -1,5 +1,5 @@
 import { Notice, PluginSettingTab, Setting } from 'obsidian';
-import type { App, TextAreaComponent } from 'obsidian';
+import type { App, ButtonComponent, TextAreaComponent } from 'obsidian';
 import { VariableResolver } from '@/services/variable-resolver';
 import type ImageManagerPlugin from '@/main';
 import {
@@ -573,15 +573,36 @@ export class ImageManagerSettingTab extends PluginSettingTab {
           })
       );
 
-    new Setting(actionWrap).addButton((button) =>
-      button.setButtonText(copy.header.reset).setDestructive().onClick(async () => {
+    new Setting(actionWrap).addButton((button) => {
+      button.setButtonText(copy.header.reset);
+      this.styleDestructiveButton(button);
+      button.onClick(async () => {
         await this.updateSettings((draft) => {
           Object.assign(draft, DEFAULT_SETTINGS);
         });
         new Notice(copy.header.resetNotice);
         this.display();
-      })
-    );
+      });
+    });
+  }
+
+  private styleDestructiveButton(button: ButtonComponent): void {
+    const compatibleButton = button as ButtonComponent & {
+      setDestructive?: () => ButtonComponent;
+      setWarning?: () => ButtonComponent;
+    };
+
+    if (typeof compatibleButton.setDestructive === 'function') {
+      compatibleButton.setDestructive();
+      return;
+    }
+
+    if (typeof compatibleButton.setWarning === 'function') {
+      compatibleButton.setWarning();
+      return;
+    }
+
+    button.buttonEl.addClass('mod-warning');
   }
 
   private createSection(containerEl: HTMLElement, title: string, description: string): HTMLElement {
