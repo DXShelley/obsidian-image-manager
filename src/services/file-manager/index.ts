@@ -556,7 +556,7 @@ export class FileManager {
         });
         replaced += 1;
       } catch (error) {
-        console.error(`Image Manager failed to import external image link "${rawTarget}"`, error);
+        console.error(`Note Image Manager failed to import external image link "${rawTarget}"`, error);
       }
     }
 

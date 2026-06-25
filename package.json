@@ -1,6 +1,6 @@
 {
   "name": "note-image-manager",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "Desktop-only image workflow for Obsidian",
   "main": "main.js",
   "scripts": {

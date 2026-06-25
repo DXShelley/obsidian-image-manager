@@ -9,7 +9,7 @@ export class DebugLogger {
 
   constructor(
     private readonly app: App,
-    private readonly prefix = 'Image Manager'
+    private readonly prefix = 'Note Image Manager'
   ) {}
 
   refreshMode(reason: string): boolean {

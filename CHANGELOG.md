@@ -2,6 +2,12 @@
 
 # 更新日志
 
+## 4.0.1
+
+- 将社区目录展示名从泛用的 `Image Manager` 调整为更唯一的 `Note Image Manager`，降低与既有社区插件重名导致的审核退回风险。
+- 发布工作流新增 `note-image-manager-<version>.zip` 附件，方便用户直接下载完整安装包。
+- 设置页顶部标题改用 Obsidian 推荐的 `Setting.setHeading()` 渲染，减少人工审核中的 UI 规范评论。
+
 ## 4.0.0
 
 - 新增集中式双语文案体系，设置页、功能状态、命令名、通知、右键菜单与风险确认会按界面语言输出。
@@ -42,7 +48,7 @@
 
 ## 1.0.0
 
-- `Obsidian Image Manager` 首个稳定版本。
+- `Note Image Manager` 首个稳定版本。
 - 将插件按 `app`、`core`、`features`、`services`、`types`、`ui` 与 `utils` 模块化拆分。
 - 增加可配置的粘贴处理、保存路径模板、重命名模板与实时设置预览。
 - 为适用功能增加当前文件、当前文件夹与整个仓库范围的命令。

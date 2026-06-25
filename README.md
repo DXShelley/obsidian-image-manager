@@ -1,8 +1,8 @@
 [中文](README.md) | [English](README.en.md)
 
-# Obsidian Image Manager
+# Note Image Manager
 
-`Obsidian Image Manager` 是一个面向 Obsidian 的桌面端图片管理插件，`v4.0.0` 聚焦于集中式双语体验、更稳妥的外部图片导入、AVIF 分层兼容、压缩去重历史，以及恢复优先的图片工作流。
+`Note Image Manager` 是一个面向 Obsidian 的桌面端图片管理插件，`v4.0.1` 聚焦于集中式双语体验、更稳妥的外部图片导入、AVIF 分层兼容、压缩去重历史，以及恢复优先的图片工作流。
 
 Desktop-only image workflow for Obsidian with managed import, conversion, compression, lightweight editing, and recovery-first batch operations.
 
@@ -49,7 +49,7 @@ Desktop-only image workflow for Obsidian with managed import, conversion, compre
 - Markdown 图片链接支持编码、可读包裹和自动三种路径输出策略，兼容中文、空格、括号及已编码路径混用。
 - `AVIF` 现已纳入图片识别、外链导入与转换输入链路；原位压缩、旋转、翻转、裁剪和缩放前需先转为 `PNG`、`JPEG` 或 `WebP`。
 - 压缩历史会持久化记录当前文件版本，避免对同一版本重复压缩或重复尝试无收益压缩。
-- 持久化记录图片和 Markdown 修改的恢复事务，并支持撤销 / 重做最近的 Image Manager 操作。
+- 持久化记录图片和 Markdown 修改的恢复事务，并支持撤销 / 重做最近的 Note Image Manager 操作。
 
 ## 限制与披露
 
@@ -82,7 +82,7 @@ Desktop-only image workflow for Obsidian with managed import, conversion, compre
 
 ## 安装
 
-- 社区市场上架后：在 **Settings -> Community plugins** 中搜索 `Image Manager` 并安装。
+- 社区市场上架后：在 **Settings -> Community plugins** 中搜索 `Note Image Manager` 并安装。
 - 首次审核前或手动安装时：从对应的 GitHub Release 下载 `manifest.json`、`main.js`、`styles.css`，复制到 `.obsidian/plugins/note-image-manager/` 后启用插件。
 - 当前插件定位为桌面端；移动端不在本次发布范围内。
 
@@ -95,11 +95,11 @@ Desktop-only image workflow for Obsidian with managed import, conversion, compre
 
 ## 发布信息
 
-- 版本：`4.0.0`
+- 版本：`4.0.1`
 - 最低 Obsidian 版本：`0.15.0`
 - 首次上架：通过 `community.obsidian.md` 提交仓库并等待审核。
-- 后续更新：创建与 `manifest.json` 中 `version` 完全一致的 Git tag 与 GitHub Release，例如 `4.0.0`，不要加 `v` 前缀。
-- 发布产物：`manifest.json`、`main.js`、`styles.css`
+- 后续更新：创建与 `manifest.json` 中 `version` 完全一致的 Git tag 与 GitHub Release，例如 `4.0.1`，不要加 `v` 前缀。
+- 发布产物：`manifest.json`、`main.js`、`styles.css`、`note-image-manager-<version>.zip`
 - GitHub 仓库描述与主页需保持和 README 一致，避免社区目录页、仓库页与 Pages 首页口径漂移。
 
 ## 恢复机制
@@ -107,7 +107,7 @@ Desktop-only image workflow for Obsidian with managed import, conversion, compre
 - 恢复快照保存在 `.obsidian/plugins/note-image-manager/recovery/`。
 - `.gitignore` 默认忽略 `.obsidian/plugins/note-image-manager/recovery/`，避免本地恢复快照进入版本控制。
 - 历史记录最多保留最新 `10` 笔事务，并清理超过 `24` 小时的事务。
-- 使用命令 `恢复：撤销上一步图片管理修改` 可回滚最近一次 Image Manager 事务。
+- 使用命令 `恢复：撤销上一步图片管理修改` 可回滚最近一次 Note Image Manager 事务。
 - 使用命令 `恢复：重做上一步图片管理修改` 可重新应用刚撤销的事务。
 
 ## 开发
@@ -121,8 +121,8 @@ npm run build
 ## 手动验证
 
 1. 将 `manifest.json`、`main.js` 与 `styles.css` 复制到 `.obsidian/plugins/note-image-manager/`。
-2. 在 **Settings -> Community plugins** 中启用 **Image Manager**，每次重新构建后执行一次重载。
-3. 打开 **Settings -> Image Manager**，确认设置页能够渲染，且保存路径与文件名预览无控制台报错。
+2. 在 **Settings -> Community plugins** 中启用 **Note Image Manager**，每次重新构建后执行一次重载。
+3. 打开 **Settings -> Note Image Manager**，确认设置页能够渲染，且保存路径与文件名预览无控制台报错。
 4. 在设置页顶部切换 `界面语言 / Interface Language`，确认设置分组、字段说明与功能状态随语言即时刷新。
 5. 向笔记粘贴图片，确认保存路径、生成名称、链接格式与光标位置都符合设置。
 6. 对 Markdown 笔记引用的图片执行旋转或翻转，确认文件内容和预览都会刷新。

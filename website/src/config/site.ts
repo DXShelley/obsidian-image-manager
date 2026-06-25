@@ -78,15 +78,15 @@ interface SiteConfig {
   };
 }
 
-const VERSION = 'v4.0.0';
+const VERSION = 'v4.0.1';
 
 const SITE_CONFIGS: Readonly<Record<SiteLocale, SiteConfig>> = {
   'zh-CN': {
     locale: 'zh-CN',
-    name: 'Obsidian Image Manager',
+    name: 'Note Image Manager',
     version: VERSION,
     meta: {
-      title: `Obsidian Image Manager ${VERSION}`,
+      title: `Note Image Manager ${VERSION}`,
       description:
         '面向 Obsidian 的图片管理插件主页，聚焦够用实用的图片落盘、批量处理、恢复事务、画廊浏览与轻量编辑。'
     },
@@ -110,7 +110,7 @@ const SITE_CONFIGS: Readonly<Record<SiteLocale, SiteConfig>> = {
       badge: 'Obsidian 图片工作流',
       title: '把图片处理收敛成够用、顺手、可回退的一条链路。',
       subtitle:
-        'Obsidian Image Manager 关注真实写作场景里的图片导入、命名、转换、批处理与恢复，而不是用一堆零散开关堆出复杂度。',
+        'Note Image Manager 关注真实写作场景里的图片导入、命名、转换、批处理与恢复，而不是用一堆零散开关堆出复杂度。',
       primaryCta: { label: '查看功能状态', href: '#status' },
       secondaryCta: { label: '浏览核心能力', href: '#features' },
       panelTag: '当前笔记',
@@ -258,10 +258,10 @@ const SITE_CONFIGS: Readonly<Record<SiteLocale, SiteConfig>> = {
   },
   en: {
     locale: 'en',
-    name: 'Obsidian Image Manager',
+    name: 'Note Image Manager',
     version: VERSION,
     meta: {
-      title: `Obsidian Image Manager ${VERSION}`,
+      title: `Note Image Manager ${VERSION}`,
       description:
         'Landing page for an Obsidian image-management plugin focused on practical storage rules, batch jobs, recovery transactions, gallery browsing, and lightweight editing.'
     },
@@ -285,7 +285,7 @@ const SITE_CONFIGS: Readonly<Record<SiteLocale, SiteConfig>> = {
       badge: 'Image Workflows For Obsidian',
       title: 'Keep image operations practical, smooth, and reversible.',
       subtitle:
-        'Obsidian Image Manager focuses on the image flows people actually hit while writing: import, naming, conversion, batch cleanup, and safe rollback without piling on design entropy.',
+        'Note Image Manager focuses on the image flows people actually hit while writing: import, naming, conversion, batch cleanup, and safe rollback without piling on design entropy.',
       primaryCta: { label: 'View feature status', href: '#status' },
       secondaryCta: { label: 'Browse core features', href: '#features' },
       panelTag: 'Current Note',

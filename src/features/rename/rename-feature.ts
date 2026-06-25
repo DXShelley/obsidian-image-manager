@@ -60,7 +60,7 @@ export class RenameFeature implements ImageManagerFeature {
         movedCount
       });
     } catch (error) {
-      console.error('Image Manager failed to sync managed images after note rename/move', error);
+      console.error('Note Image Manager failed to sync managed images after note rename/move', error);
       context.services.logger.error('Note rename sync failed', error, {
         notePath: noteFile.path,
         oldPath

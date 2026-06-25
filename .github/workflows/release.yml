@@ -23,6 +23,8 @@ jobs:
       - run: npm ci
       - run: npm run validate
       - run: npm run build
+      - name: Package install zip
+        run: zip -9 "note-image-manager-${GITHUB_REF_NAME}.zip" manifest.json main.js styles.css
       - uses: softprops/action-gh-release@v2
         with:
           name: ${{ github.ref_name }}
@@ -31,3 +33,4 @@ jobs:
             manifest.json
             main.js
             styles.css
+            note-image-manager-${{ github.ref_name }}.zip

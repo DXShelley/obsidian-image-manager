@@ -401,10 +401,10 @@ const ZH_SETTINGS_TAB: SettingTabCopy = {
   languageLabel: '界面语言',
   languageDescription: '切换设置页与功能状态的显示语言。默认中文。',
   header: {
-    title: 'Image Manager 设置',
+    title: 'Note Image Manager 设置',
     subtitle: '管理 Obsidian 图片保存、转换、压缩和恢复。',
     reset: '恢复默认设置',
-    resetNotice: 'Image Manager 设置已恢复为默认值'
+    resetNotice: 'Note Image Manager 设置已恢复为默认值'
   },
   sections: {
     naming: {
@@ -625,10 +625,10 @@ const EN_SETTINGS_TAB: SettingTabCopy = {
   languageLabel: 'Interface Language',
   languageDescription: 'Switch settings language. Default: Chinese.',
   header: {
-    title: 'Image Manager Settings',
+    title: 'Note Image Manager Settings',
     subtitle: 'Manage image storage, conversion, compression, and recovery in Obsidian.',
     reset: 'Reset To Defaults',
-    resetNotice: 'Image Manager settings were reset to defaults'
+    resetNotice: 'Note Image Manager settings were reset to defaults'
   },
   sections: {
     naming: {
@@ -831,7 +831,7 @@ const EN_SETTINGS_TAB: SettingTabCopy = {
     pasteConflictEnabled: 'Paste takeover is on and may overlap with attachment plugins.',
     pasteConflictDisabled: 'Paste takeover is off.',
     nativeAttachmentTitle: 'Native attachment folder',
-    nativeAttachmentDescription: (folder) => `Obsidian attachment folder: "${folder}". Image Manager paste rules take priority.`,
+    nativeAttachmentDescription: (folder) => `Obsidian attachment folder: "${folder}". Note Image Manager paste rules take priority.`,
     pluginConflictTitle: (featureLabel) => `${featureLabel} conflict`,
     pluginConflictDescription: (pluginName, pluginId, description) => `Detected enabled plugin "${pluginName}" (${pluginId}). ${description}`,
     renameSyncTitle: 'Rename-sync scope',
@@ -1111,7 +1111,7 @@ const EN_UI: UiCopy = {
 };
 
 const ZH_NOTICES: NoticeCopy = {
-  loaded: 'Image Manager 已加载',
+  loaded: 'Note Image Manager 已加载',
   failedToProcessPastedImages: '处理粘贴图片失败',
   failedToSavePastedImages: '保存粘贴图片失败',
   failedToSavePastedImage: (fileName) => `保存粘贴图片失败：${fileName}`,
@@ -1146,7 +1146,7 @@ const ZH_NOTICES: NoticeCopy = {
   batchLinkRewriteFailed: '批量更新图片链接失败',
   batchExternalImageImportFailed: '批量下载外部图片失败',
   orphanCleanupFailed: '清理多余图片失败',
-  recoveryHistoryReset: 'Image Manager 恢复历史损坏，已自动重置',
+  recoveryHistoryReset: 'Note Image Manager 恢复历史损坏，已自动重置',
   selectAreaFirst: '请先拖拽选择一个区域',
   compressionSummary: (before, after, ratio, direction, label) => `${label}：${before} -> ${after}（${ratio} ${direction}）`,
   compressionDirectionReduction: '减小',
@@ -1208,11 +1208,11 @@ const ZH_NOTICES: NoticeCopy = {
   orphanCleanupFinished: (segments) => `清理多余图片完成：${segments}`,
   pluginConflictPreviewItem: (featureLabel, pluginName) => `${featureLabel} vs ${pluginName}`,
   pluginConflictMore: (count) => `；另有 ${count} 项`,
-  pluginConflictSummary: (preview, suffix) => `检测到潜在插件冲突：${preview}${suffix}。可在 Image Manager 设置的“兼容性与冲突规避”中查看。`
+  pluginConflictSummary: (preview, suffix) => `检测到潜在插件冲突：${preview}${suffix}。可在 Note Image Manager 设置的“兼容性与冲突规避”中查看。`
 };
 
 const EN_NOTICES: NoticeCopy = {
-  loaded: 'Image Manager loaded',
+  loaded: 'Note Image Manager loaded',
   failedToProcessPastedImages: 'Failed to process pasted images',
   failedToSavePastedImages: 'Failed to save pasted images',
   failedToSavePastedImage: (fileName) => `Failed to save pasted image: ${fileName}`,
@@ -1235,19 +1235,19 @@ const EN_NOTICES: NoticeCopy = {
   imageCopied: 'Image copied',
   failedToCopyImage: 'Failed to copy image to clipboard',
   imageFileUnavailable: 'Image file is no longer available',
-  noUndoTransaction: 'No recoverable Image Manager transaction is available',
+  noUndoTransaction: 'No recoverable Note Image Manager transaction is available',
   undoCompleted: (label) => `Restored: ${label}`,
-  undoFailed: 'Failed to undo the last Image Manager transaction',
-  noRedoTransaction: 'No redoable Image Manager transaction is available',
+  undoFailed: 'Failed to undo the last Note Image Manager transaction',
+  noRedoTransaction: 'No redoable Note Image Manager transaction is available',
   redoCompleted: (label) => `Redone: ${label}`,
-  redoFailed: 'Failed to redo the last Image Manager transaction',
+  redoFailed: 'Failed to redo the last Note Image Manager transaction',
   managedImagesSynced: (count) => `Synced ${count} managed image${count === 1 ? '' : 's'}`,
   failedToSyncManagedImages: 'Failed to sync managed images for the renamed or moved note',
   commandFailed: (commandName) => `Command failed: ${commandName}`,
   batchLinkRewriteFailed: 'Batch link rewrite failed',
   batchExternalImageImportFailed: 'Batch external image import failed',
   orphanCleanupFailed: 'Orphan image cleanup failed',
-  recoveryHistoryReset: 'Image Manager recovery history is unreadable and has been reset',
+  recoveryHistoryReset: 'Note Image Manager recovery history is unreadable and has been reset',
   selectAreaFirst: 'Drag to select an area first',
   compressionSummary: (before, after, ratio, direction, label) => `${label}: ${before} -> ${after} (${ratio} ${direction})`,
   compressionDirectionReduction: 'reduction',
@@ -1313,7 +1313,7 @@ const EN_NOTICES: NoticeCopy = {
   pluginConflictPreviewItem: (featureLabel, pluginName) => `${featureLabel} vs ${pluginName}`,
   pluginConflictMore: (count) => `; ${count} more`,
   pluginConflictSummary: (preview, suffix) =>
-    `Potential plugin conflicts detected: ${preview}${suffix}. Review them in Image Manager settings under Compatibility.`
+    `Potential plugin conflicts detected: ${preview}${suffix}. Review them in Note Image Manager settings under Compatibility.`
 };
 
 const LOCALES: Readonly<Record<UiLanguage, LocaleBundle>> = {

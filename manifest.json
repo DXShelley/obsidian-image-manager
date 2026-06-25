@@ -1,7 +1,7 @@
 {
   "id": "note-image-manager",
-  "name": "Image Manager",
-  "version": "4.0.0",
+  "name": "Note Image Manager",
+  "version": "4.0.1",
   "minAppVersion": "0.15.0",
   "description": "Desktop-only image workflow for Obsidian. Import, rename, convert, compress, edit, and recover images safely.",
   "author": "DXShelley",

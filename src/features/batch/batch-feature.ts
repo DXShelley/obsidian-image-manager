@@ -417,7 +417,7 @@ export class BatchFeature implements ImageManagerFeature {
         })
       );
     } catch (error) {
-      console.error('Image Manager batch link rewrite failed', error);
+      console.error('Note Image Manager batch link rewrite failed', error);
       context.services.logger.error('Batch link rewrite failed', error, {
         scope,
         sourcePath: source?.path
@@ -494,7 +494,7 @@ export class BatchFeature implements ImageManagerFeature {
         })
       );
     } catch (error) {
-      console.error('Image Manager batch external image import failed', error);
+      console.error('Note Image Manager batch external image import failed', error);
       context.services.logger.error('Batch external image import failed', error, {
         scope,
         sourcePath: source?.path
@@ -565,7 +565,7 @@ export class BatchFeature implements ImageManagerFeature {
         })
       );
     } catch (error) {
-      console.error('Image Manager orphan image cleanup failed', error);
+      console.error('Note Image Manager orphan image cleanup failed', error);
       context.services.logger.error('Orphan image cleanup failed', error, {
         scope,
         sourcePath: source?.path

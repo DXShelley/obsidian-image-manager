@@ -94,7 +94,7 @@ describe('plugin conflict detection', () => {
     ]);
 
     expect(message).toBe(
-      '检测到潜在插件冲突：粘贴接管 vs Paste Image Rename；笔记改名同步 vs Custom Attachment Location。可在 Image Manager 设置的“兼容性与冲突规避”中查看。'
+      '检测到潜在插件冲突：粘贴接管 vs Paste Image Rename；笔记改名同步 vs Custom Attachment Location。可在 Note Image Manager 设置的“兼容性与冲突规避”中查看。'
     );
   });
 });

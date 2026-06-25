@@ -56,7 +56,7 @@
 - `recordCreatedFile(path)`: record a newly created file so undo can delete it.
 - `recordRename(fromPath, toPath)`: track a move or rename for reverse replay.
 - `recordDeletedFolder(path)`: record removed folders so undo can recreate them.
-- `undoLastTransaction()`: restore the latest committed or failed Image Manager transaction.
+- `undoLastTransaction()`: restore the latest committed or failed Note Image Manager transaction.
 - `redoLastUndoneTransaction()`: reapply the most recently undone transaction.
 
 ### `ImageProcessor`

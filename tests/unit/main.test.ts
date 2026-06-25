@@ -38,7 +38,7 @@ vi.mock('@/app/feature-catalog', () => ({
         });
         context.plugin.addCommand({
           id: 'custom-unlocalized-command',
-          name: 'Image Manager: Image Manager: Legacy command',
+          name: 'Note Image Manager: Note Image Manager: Legacy command',
           callback: () => undefined
         });
       })

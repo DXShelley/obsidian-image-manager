@@ -94,10 +94,10 @@ var ZH_SETTINGS_TAB = {
   languageLabel: "\u754C\u9762\u8BED\u8A00",
   languageDescription: "\u5207\u6362\u8BBE\u7F6E\u9875\u4E0E\u529F\u80FD\u72B6\u6001\u7684\u663E\u793A\u8BED\u8A00\u3002\u9ED8\u8BA4\u4E2D\u6587\u3002",
   header: {
-    title: "Image Manager \u8BBE\u7F6E",
+    title: "Note Image Manager \u8BBE\u7F6E",
     subtitle: "\u7BA1\u7406 Obsidian \u56FE\u7247\u4FDD\u5B58\u3001\u8F6C\u6362\u3001\u538B\u7F29\u548C\u6062\u590D\u3002",
     reset: "\u6062\u590D\u9ED8\u8BA4\u8BBE\u7F6E",
-    resetNotice: "Image Manager \u8BBE\u7F6E\u5DF2\u6062\u590D\u4E3A\u9ED8\u8BA4\u503C"
+    resetNotice: "Note Image Manager \u8BBE\u7F6E\u5DF2\u6062\u590D\u4E3A\u9ED8\u8BA4\u503C"
   },
   sections: {
     naming: {
@@ -316,10 +316,10 @@ var EN_SETTINGS_TAB = {
   languageLabel: "Interface Language",
   languageDescription: "Switch settings language. Default: Chinese.",
   header: {
-    title: "Image Manager Settings",
+    title: "Note Image Manager Settings",
     subtitle: "Manage image storage, conversion, compression, and recovery in Obsidian.",
     reset: "Reset To Defaults",
-    resetNotice: "Image Manager settings were reset to defaults"
+    resetNotice: "Note Image Manager settings were reset to defaults"
   },
   sections: {
     naming: {
@@ -521,7 +521,7 @@ var EN_SETTINGS_TAB = {
     pasteConflictEnabled: "Paste takeover is on and may overlap with attachment plugins.",
     pasteConflictDisabled: "Paste takeover is off.",
     nativeAttachmentTitle: "Native attachment folder",
-    nativeAttachmentDescription: (folder) => `Obsidian attachment folder: "${folder}". Image Manager paste rules take priority.`,
+    nativeAttachmentDescription: (folder) => `Obsidian attachment folder: "${folder}". Note Image Manager paste rules take priority.`,
     pluginConflictTitle: (featureLabel) => `${featureLabel} conflict`,
     pluginConflictDescription: (pluginName, pluginId, description) => `Detected enabled plugin "${pluginName}" (${pluginId}). ${description}`,
     renameSyncTitle: "Rename-sync scope",
@@ -793,7 +793,7 @@ var EN_UI = {
   }
 };
 var ZH_NOTICES = {
-  loaded: "Image Manager \u5DF2\u52A0\u8F7D",
+  loaded: "Note Image Manager \u5DF2\u52A0\u8F7D",
   failedToProcessPastedImages: "\u5904\u7406\u7C98\u8D34\u56FE\u7247\u5931\u8D25",
   failedToSavePastedImages: "\u4FDD\u5B58\u7C98\u8D34\u56FE\u7247\u5931\u8D25",
   failedToSavePastedImage: (fileName) => `\u4FDD\u5B58\u7C98\u8D34\u56FE\u7247\u5931\u8D25\uFF1A${fileName}`,
@@ -828,7 +828,7 @@ var ZH_NOTICES = {
   batchLinkRewriteFailed: "\u6279\u91CF\u66F4\u65B0\u56FE\u7247\u94FE\u63A5\u5931\u8D25",
   batchExternalImageImportFailed: "\u6279\u91CF\u4E0B\u8F7D\u5916\u90E8\u56FE\u7247\u5931\u8D25",
   orphanCleanupFailed: "\u6E05\u7406\u591A\u4F59\u56FE\u7247\u5931\u8D25",
-  recoveryHistoryReset: "Image Manager \u6062\u590D\u5386\u53F2\u635F\u574F\uFF0C\u5DF2\u81EA\u52A8\u91CD\u7F6E",
+  recoveryHistoryReset: "Note Image Manager \u6062\u590D\u5386\u53F2\u635F\u574F\uFF0C\u5DF2\u81EA\u52A8\u91CD\u7F6E",
   selectAreaFirst: "\u8BF7\u5148\u62D6\u62FD\u9009\u62E9\u4E00\u4E2A\u533A\u57DF",
   compressionSummary: (before, after, ratio, direction, label) => `${label}\uFF1A${before} -> ${after}\uFF08${ratio} ${direction}\uFF09`,
   compressionDirectionReduction: "\u51CF\u5C0F",
@@ -886,10 +886,10 @@ var ZH_NOTICES = {
   orphanCleanupFinished: (segments) => `\u6E05\u7406\u591A\u4F59\u56FE\u7247\u5B8C\u6210\uFF1A${segments}`,
   pluginConflictPreviewItem: (featureLabel, pluginName) => `${featureLabel} vs ${pluginName}`,
   pluginConflictMore: (count) => `\uFF1B\u53E6\u6709 ${count} \u9879`,
-  pluginConflictSummary: (preview, suffix) => `\u68C0\u6D4B\u5230\u6F5C\u5728\u63D2\u4EF6\u51B2\u7A81\uFF1A${preview}${suffix}\u3002\u53EF\u5728 Image Manager \u8BBE\u7F6E\u7684\u201C\u517C\u5BB9\u6027\u4E0E\u51B2\u7A81\u89C4\u907F\u201D\u4E2D\u67E5\u770B\u3002`
+  pluginConflictSummary: (preview, suffix) => `\u68C0\u6D4B\u5230\u6F5C\u5728\u63D2\u4EF6\u51B2\u7A81\uFF1A${preview}${suffix}\u3002\u53EF\u5728 Note Image Manager \u8BBE\u7F6E\u7684\u201C\u517C\u5BB9\u6027\u4E0E\u51B2\u7A81\u89C4\u907F\u201D\u4E2D\u67E5\u770B\u3002`
 };
 var EN_NOTICES = {
-  loaded: "Image Manager loaded",
+  loaded: "Note Image Manager loaded",
   failedToProcessPastedImages: "Failed to process pasted images",
   failedToSavePastedImages: "Failed to save pasted images",
   failedToSavePastedImage: (fileName) => `Failed to save pasted image: ${fileName}`,
@@ -912,19 +912,19 @@ var EN_NOTICES = {
   imageCopied: "Image copied",
   failedToCopyImage: "Failed to copy image to clipboard",
   imageFileUnavailable: "Image file is no longer available",
-  noUndoTransaction: "No recoverable Image Manager transaction is available",
+  noUndoTransaction: "No recoverable Note Image Manager transaction is available",
   undoCompleted: (label) => `Restored: ${label}`,
-  undoFailed: "Failed to undo the last Image Manager transaction",
-  noRedoTransaction: "No redoable Image Manager transaction is available",
+  undoFailed: "Failed to undo the last Note Image Manager transaction",
+  noRedoTransaction: "No redoable Note Image Manager transaction is available",
   redoCompleted: (label) => `Redone: ${label}`,
-  redoFailed: "Failed to redo the last Image Manager transaction",
+  redoFailed: "Failed to redo the last Note Image Manager transaction",
   managedImagesSynced: (count) => `Synced ${count} managed image${count === 1 ? "" : "s"}`,
   failedToSyncManagedImages: "Failed to sync managed images for the renamed or moved note",
   commandFailed: (commandName) => `Command failed: ${commandName}`,
   batchLinkRewriteFailed: "Batch link rewrite failed",
   batchExternalImageImportFailed: "Batch external image import failed",
   orphanCleanupFailed: "Orphan image cleanup failed",
-  recoveryHistoryReset: "Image Manager recovery history is unreadable and has been reset",
+  recoveryHistoryReset: "Note Image Manager recovery history is unreadable and has been reset",
   selectAreaFirst: "Drag to select an area first",
   compressionSummary: (before, after, ratio, direction, label) => `${label}: ${before} -> ${after} (${ratio} ${direction})`,
   compressionDirectionReduction: "reduction",
@@ -982,7 +982,7 @@ var EN_NOTICES = {
   orphanCleanupFinished: (segments) => `Extra image cleanup finished: ${segments}`,
   pluginConflictPreviewItem: (featureLabel, pluginName) => `${featureLabel} vs ${pluginName}`,
   pluginConflictMore: (count) => `; ${count} more`,
-  pluginConflictSummary: (preview, suffix) => `Potential plugin conflicts detected: ${preview}${suffix}. Review them in Image Manager settings under Compatibility.`
+  pluginConflictSummary: (preview, suffix) => `Potential plugin conflicts detected: ${preview}${suffix}. Review them in Note Image Manager settings under Compatibility.`
 };
 var LOCALES = {
   "zh-CN": {
@@ -1104,7 +1104,7 @@ async function executeLoggedCommand(context, meta, run) {
   } catch (error) {
     const language = resolveUiLanguage(context.services.settings.getSettings().uiLanguage);
     const commandName = (_c = getLocalizedCommandName(meta.commandId, language)) != null ? _c : meta.commandName;
-    console.error(`Image Manager command failed: ${meta.commandName}`, error);
+    console.error(`Note Image Manager command failed: ${meta.commandName}`, error);
     context.services.logger.error("Command failed", error, {
       commandId: meta.commandId,
       commandName: meta.commandName,
@@ -1831,7 +1831,7 @@ var BatchFeature = class {
         })
       );
     } catch (error) {
-      console.error("Image Manager batch link rewrite failed", error);
+      console.error("Note Image Manager batch link rewrite failed", error);
       context.services.logger.error("Batch link rewrite failed", error, {
         scope,
         sourcePath: source == null ? void 0 : source.path
@@ -1901,7 +1901,7 @@ var BatchFeature = class {
         })
       );
     } catch (error) {
-      console.error("Image Manager batch external image import failed", error);
+      console.error("Note Image Manager batch external image import failed", error);
       context.services.logger.error("Batch external image import failed", error, {
         scope,
         sourcePath: source == null ? void 0 : source.path
@@ -1961,7 +1961,7 @@ var BatchFeature = class {
         })
       );
     } catch (error) {
-      console.error("Image Manager orphan image cleanup failed", error);
+      console.error("Note Image Manager orphan image cleanup failed", error);
       context.services.logger.error("Orphan image cleanup failed", error, {
         scope,
         sourcePath: source == null ? void 0 : source.path
@@ -4347,7 +4347,7 @@ var RecoveryFeature = class {
   constructor() {
     __publicField(this, "id", "recovery");
     __publicField(this, "name", "Recovery");
-    __publicField(this, "summary", "Undo or redo the most recent Image Manager transaction from persisted snapshots.");
+    __publicField(this, "summary", "Undo or redo the most recent Note Image Manager transaction from persisted snapshots.");
     __publicField(this, "state", "implemented");
   }
   async register(context) {
@@ -4377,7 +4377,7 @@ var RecoveryFeature = class {
       }
       showOperationNotice(settings, notices.undoCompleted(restored.label));
     } catch (error) {
-      console.error("Image Manager failed to undo the last transaction", error);
+      console.error("Note Image Manager failed to undo the last transaction", error);
       context.services.logger.error("Recovery undo failed", error);
       new import_obsidian14.Notice(error instanceof Error ? error.message : getNoticeCopy(context.services.settings.getSettings().uiLanguage).undoFailed);
     }
@@ -4393,7 +4393,7 @@ var RecoveryFeature = class {
       }
       showOperationNotice(settings, notices.redoCompleted(restored.label));
     } catch (error) {
-      console.error("Image Manager failed to redo the last transaction", error);
+      console.error("Note Image Manager failed to redo the last transaction", error);
       context.services.logger.error("Recovery redo failed", error);
       new import_obsidian14.Notice(error instanceof Error ? error.message : getNoticeCopy(context.services.settings.getSettings().uiLanguage).redoFailed);
     }
@@ -4453,7 +4453,7 @@ var RenameFeature = class {
         movedCount
       });
     } catch (error) {
-      console.error("Image Manager failed to sync managed images after note rename/move", error);
+      console.error("Note Image Manager failed to sync managed images after note rename/move", error);
       context.services.logger.error("Note rename sync failed", error, {
         notePath: noteFile.path,
         oldPath
@@ -4612,7 +4612,7 @@ var CompressionTracker = class {
 
 // src/core/debug/debug-logger.ts
 var DebugLogger = class {
-  constructor(app, prefix = "Image Manager") {
+  constructor(app, prefix = "Note Image Manager") {
     this.app = app;
     this.prefix = prefix;
     __publicField(this, "enabled", false);
@@ -5777,7 +5777,7 @@ var FileManager = class {
         });
         replaced += 1;
       } catch (error) {
-        console.error(`Image Manager failed to import external image link "${rawTarget}"`, error);
+        console.error(`Note Image Manager failed to import external image link "${rawTarget}"`, error);
       }
     }
     if (replacements.length === 0) {
@@ -7374,7 +7374,7 @@ var ImageManagerSettingTab = class extends import_obsidian19.PluginSettingTab {
     const languageOptions = getUiLanguageOptions();
     const hero = containerEl.createDiv({ cls: "image-manager-settings-hero" });
     const content = hero.createDiv({ cls: "image-manager-settings-hero__content" });
-    content.createEl("h2", { text: copy.header.title });
+    new import_obsidian19.Setting(content).setName(copy.header.title).setHeading();
     content.createEl("p", {
       text: copy.header.subtitle
     });
@@ -7911,7 +7911,7 @@ var ImageManagerPlugin = class extends import_obsidian20.Plugin {
         event.preventDefault();
         const inputs = files.length > 0 ? files.map((file) => ({ kind: "clipboard-file", file })) : textSources.map((source) => ({ kind: "text-image-source", source }));
         void this.insertPastedImages(inputs, view).catch((error) => {
-          console.error("Image Manager failed to process pasted images", error);
+          console.error("Note Image Manager failed to process pasted images", error);
           new import_obsidian20.Notice(getNoticeCopy(this.settingsManager.getSettings().uiLanguage).failedToProcessPastedImages);
         });
       })
@@ -7931,7 +7931,7 @@ var ImageManagerPlugin = class extends import_obsidian20.Plugin {
     });
     if (changedKeys.includes("defaultLinkFormat") || changedKeys.includes("defaultPathFormat") || changedKeys.includes("markdownPathEncodingStrategy")) {
       void this.rewriteActiveNoteImageLinks().catch((error) => {
-        console.error("Image Manager failed to update image links after settings change", error);
+        console.error("Note Image Manager failed to update image links after settings change", error);
         this.services.logger.error("Failed to update image links after settings change", error);
       });
     }
@@ -7999,8 +7999,8 @@ var ImageManagerPlugin = class extends import_obsidian20.Plugin {
   }
   stripPluginNamePrefixes(commandName) {
     var _a, _b;
-    const pluginName = (_b = (_a = this.manifest) == null ? void 0 : _a.name) != null ? _b : "Image Manager";
-    const prefixes = [...new Set([pluginName, "Image Manager"].filter((value) => value.trim().length > 0))];
+    const pluginName = (_b = (_a = this.manifest) == null ? void 0 : _a.name) != null ? _b : "Note Image Manager";
+    const prefixes = [...new Set([pluginName, "Note Image Manager", "Image Manager"].filter((value) => value.trim().length > 0))];
     let nextName = commandName.trimStart();
     let changed = true;
     while (changed) {
@@ -8058,7 +8058,7 @@ var ImageManagerPlugin = class extends import_obsidian20.Plugin {
                   output = await this.convertAndReplace(tempFile, settings.defaultFormat);
                 }
               } catch (error) {
-                console.warn(`Image Manager skipped auto-convert for "${originalName}"`, error);
+                console.warn(`Note Image Manager skipped auto-convert for "${originalName}"`, error);
                 this.services.logger.warn("Auto-convert skipped", {
                   error,
                   originalName,
@@ -8078,7 +8078,7 @@ var ImageManagerPlugin = class extends import_obsidian20.Plugin {
             savedPaths.push(output.path);
           } catch (error) {
             const failedName = this.getClipboardImageInputLabel(input);
-            console.error(`Image Manager failed to save pasted image "${failedName}"`, error);
+            console.error(`Note Image Manager failed to save pasted image "${failedName}"`, error);
             this.services.logger.error("Failed to save pasted image", error, {
               originalName: failedName,
               notePath: noteFile.path

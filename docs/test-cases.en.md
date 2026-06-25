@@ -76,14 +76,14 @@ Status mapping:
   - `manifest.json`, `main.js`, and `styles.css` have been copied into the plugin directory.
   - Obsidian has opened the test vault.
 - Steps:
-  1. Enable `Image Manager` in Obsidian.
+  1. Enable `Note Image Manager` in Obsidian.
   2. Observe the plugin loading flow.
   3. Open the developer console and check for errors.
 - Expected:
   - The plugin is enabled successfully.
-  - `Image Manager loaded` is shown.
+  - `Note Image Manager loaded` is shown.
   - No uncaught exception appears in the console.
-  - `Image Manager` appears in Settings.
+  - `Note Image Manager` appears in Settings.
 
 #### TC-INIT-002 Plugin Reload
 
@@ -107,7 +107,7 @@ Status mapping:
 - Status: `Implemented`
 - Objective: Verify that the settings page renders completely.
 - Steps:
-  1. Open `Settings -> Image Manager`.
+  1. Open `Settings -> Note Image Manager`.
   2. Inspect the grouped sections.
 - Expected:
   - `界面语言` is shown at the top by default.
@@ -162,7 +162,7 @@ Status mapping:
 - Status: `Implemented`
 - Objective: Verify that the settings page still works when `Setting.setErrorMessage()` is unavailable.
 - Steps:
-  1. Open `Settings -> Image Manager` in the target Obsidian version.
+  1. Open `Settings -> Note Image Manager` in the target Obsidian version.
   2. Edit `图片文件保存位置`.
   3. Edit `生成的图片文件名`.
 - Expected:

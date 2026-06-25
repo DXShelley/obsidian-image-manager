@@ -111,7 +111,7 @@ export default class ImageManagerPlugin extends Plugin {
             ? files.map((file) => ({ kind: 'clipboard-file', file }))
             : textSources.map((source) => ({ kind: 'text-image-source', source }));
         void this.insertPastedImages(inputs, view).catch((error: unknown) => {
-          console.error('Image Manager failed to process pasted images', error);
+          console.error('Note Image Manager failed to process pasted images', error);
           new Notice(getNoticeCopy(this.settingsManager.getSettings().uiLanguage).failedToProcessPastedImages);
         });
       })
@@ -137,7 +137,7 @@ export default class ImageManagerPlugin extends Plugin {
       changedKeys.includes('markdownPathEncodingStrategy')
     ) {
       void this.rewriteActiveNoteImageLinks().catch((error: unknown) => {
-        console.error('Image Manager failed to update image links after settings change', error);
+        console.error('Note Image Manager failed to update image links after settings change', error);
         this.services.logger.error('Failed to update image links after settings change', error);
       });
     }
@@ -217,8 +217,8 @@ export default class ImageManagerPlugin extends Plugin {
   }
 
   private stripPluginNamePrefixes(commandName: string): string {
-    const pluginName = this.manifest?.name ?? 'Image Manager';
-    const prefixes = [...new Set([pluginName, 'Image Manager'].filter((value) => value.trim().length > 0))];
+    const pluginName = this.manifest?.name ?? 'Note Image Manager';
+    const prefixes = [...new Set([pluginName, 'Note Image Manager', 'Image Manager'].filter((value) => value.trim().length > 0))];
     let nextName = commandName.trimStart();
     let changed = true;
 
@@ -283,7 +283,7 @@ export default class ImageManagerPlugin extends Plugin {
                   output = await this.convertAndReplace(tempFile, settings.defaultFormat);
                 }
               } catch (error: unknown) {
-                console.warn(`Image Manager skipped auto-convert for "${originalName}"`, error);
+                console.warn(`Note Image Manager skipped auto-convert for "${originalName}"`, error);
                 this.services.logger.warn('Auto-convert skipped', {
                   error,
                   originalName,
@@ -304,7 +304,7 @@ export default class ImageManagerPlugin extends Plugin {
             savedPaths.push(output.path);
           } catch (error: unknown) {
             const failedName = this.getClipboardImageInputLabel(input);
-            console.error(`Image Manager failed to save pasted image "${failedName}"`, error);
+            console.error(`Note Image Manager failed to save pasted image "${failedName}"`, error);
             this.services.logger.error('Failed to save pasted image', error, {
               originalName: failedName,
               notePath: noteFile.path
