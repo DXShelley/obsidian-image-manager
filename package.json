@@ -1,7 +1,7 @@
 {
   "name": "note-image-manager",
-  "version": "4.0.1",
-  "description": "Desktop-only image workflow for Obsidian",
+  "version": "4.0.2",
+  "description": "Import, rename, convert, compress, edit, and recover note images safely.",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",

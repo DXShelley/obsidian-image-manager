@@ -2,9 +2,9 @@
 
 # Note Image Manager
 
-`Note Image Manager` 是一个面向 Obsidian 的桌面端图片管理插件，`v4.0.1` 聚焦于集中式双语体验、更稳妥的外部图片导入、AVIF 分层兼容、压缩去重历史，以及恢复优先的图片工作流。
+`Note Image Manager` 是一个面向 Obsidian 的桌面端图片管理插件，`v4.0.2` 聚焦于集中式双语体验、更稳妥的外部图片导入、AVIF 分层兼容、压缩去重历史，以及恢复优先的图片工作流。
 
-Desktop-only image workflow for Obsidian with managed import, conversion, compression, lightweight editing, and recovery-first batch operations.
+Import, rename, convert, compress, edit, and recover note images safely.
 
 ## 项目理念
 
@@ -89,16 +89,19 @@ Desktop-only image workflow for Obsidian with managed import, conversion, compre
 ## 致谢与参考
 
 - [Obsidian](https://obsidian.md/)：提供插件运行时、编辑器和仓库模型，本项目所有能力都建立在其插件 API 之上。
+- [piexifjs](https://github.com/hMatoba/piexifjs)：用于 JPEG EXIF 处理相关能力。
+- [TypeScript](https://www.typescriptlang.org/)、[esbuild](https://esbuild.github.io/)、[ESLint](https://eslint.org/)、[typescript-eslint](https://typescript-eslint.io/)、[Vitest](https://vitest.dev/)、[@vitest/coverage-v8](https://vitest.dev/guide/coverage.html)、[happy-dom](https://github.com/capricorn86/happy-dom)、[@faker-js/faker](https://fakerjs.dev/)、[type-coverage](https://github.com/plantain-00/type-coverage)：支撑本项目的类型检查、打包、静态检查、单元测试、测试数据生成与覆盖率约束。
+- [React](https://react.dev/)、[React DOM](https://react.dev/reference/react-dom)、[Vite](https://vite.dev/) 与 [pnpm](https://pnpm.io/)：用于项目 GitHub Pages 展示站点的开发、构建和依赖管理。
 - [Custom Attachment Location](https://github.com/mnaoumov/obsidian-custom-attachment-location)：本项目的附件目录模板、空目录清理、孤立附件清理等行为设计参考了该插件的部分交互语义。
 - [obsidian-image-converter](https://github.com/xRyul/obsidian-image-converter)：本项目在图片处理插件的交互边界、命令组织和能力取舍上参考了它的产品思路。
-- 以上项目用于能力设计和行为语义参考，不代表本插件与其保持完全兼容。
+- 以上框架、工具、组件与开源项目分别用于运行、开发、测试、展示站点或行为语义参考；提到参考项目不代表本插件与其保持完全兼容。
 
 ## 发布信息
 
-- 版本：`4.0.1`
+- 版本：`4.0.2`
 - 最低 Obsidian 版本：`0.15.0`
 - 首次上架：通过 `community.obsidian.md` 提交仓库并等待审核。
-- 后续更新：创建与 `manifest.json` 中 `version` 完全一致的 Git tag 与 GitHub Release，例如 `4.0.1`，不要加 `v` 前缀。
+- 后续更新：创建与 `manifest.json` 中 `version` 完全一致的 Git tag 与 GitHub Release，例如 `4.0.2`，不要加 `v` 前缀。
 - 发布产物：`manifest.json`、`main.js`、`styles.css`、`note-image-manager-<version>.zip`
 - GitHub 仓库描述与主页需保持和 README 一致，避免社区目录页、仓库页与 Pages 首页口径漂移。
 

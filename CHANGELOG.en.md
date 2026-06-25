@@ -2,6 +2,11 @@
 
 # Changelog
 
+## 4.0.2
+
+- Updated the `manifest.json` description to remove the redundant `Obsidian` wording flagged by plugin review.
+- Expanded README and docs-index acknowledgements for open-source dependencies, frameworks, tooling, and reference projects.
+
 ## 4.0.1
 
 - Renamed the community-directory display name from the generic `Image Manager` to the more specific `Note Image Manager` to reduce review risk from an existing plugin with the same name.
