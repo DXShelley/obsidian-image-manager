@@ -6,7 +6,6 @@ import { DEFAULT_SETTINGS, type ImageManagerSettings } from '@/types/index';
 function createSettingTab(): ImageManagerSettingTab {
   const settings: ImageManagerSettings = { ...DEFAULT_SETTINGS };
   const app = {
-    loadLocalStorage: vi.fn(() => null),
     vault: {
       getConfig: vi.fn(() => null)
     },

@@ -17,6 +17,13 @@
 - Re-run `npm run validate` and `npm run build` before cutting the release.
 - The release workflow should verify tag/version consistency and upload the required assets automatically.
 
+## Support And Payments
+
+- Voluntary sponsorship uses `manifest.json.fundingUrl` and points to the website support section, for example `https://dxshelley.github.io/obsidian-image-manager/#support`.
+- When the plugin only offers voluntary sponsorship and has no paid unlocks or paid services, select `Free` for the Obsidian Payments category.
+- `Optional payment` is only for optional paid features, paid services, or paid APIs. It is not for pure tipping or sponsorship.
+- README files, the Pages site, and community-directory copy should make clear that the support link is voluntary and does not gate installation, usage, or core features.
+
 ## Common Review Risks
 
 - `name` should not include `Obsidian` or `Plugin`; `id` should use lowercase letters and hyphens only, and should not include `obsidian`.

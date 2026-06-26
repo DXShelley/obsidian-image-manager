@@ -7,6 +7,8 @@ on:
 
 permissions:
   contents: write
+  id-token: write
+  attestations: write
 
 jobs:
   build:
@@ -25,6 +27,14 @@ jobs:
       - run: npm run build
       - name: Package install zip
         run: zip -9 note-image-manager.zip manifest.json main.js styles.css
+      - name: Attest release artifacts
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            manifest.json
+            main.js
+            styles.css
+            note-image-manager.zip
       - uses: softprops/action-gh-release@v2
         with:
           name: ${{ github.ref_name }}

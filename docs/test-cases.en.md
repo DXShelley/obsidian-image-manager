@@ -200,6 +200,23 @@ Status mapping:
   - The menu item appears immediately after re-enabling.
   - After disabling the gallery, the command shows `Gallery is disabled in settings`.
 
+#### TC-SET-008 Detailed Debug Logging Toggle
+
+- Status: `Implemented`
+- Objective: Verify that detailed debug logging is controlled by the plugin setting and that command failures include stack information.
+- Steps:
+  1. Open the developer console and filter for `Note Image Manager`.
+  2. Enable `Enable detailed debug logging` in the settings page.
+  3. Run any plugin command, such as `Compress images【File】`.
+  4. Trigger a failure path, such as a recovery command with invalid recovery data or a manually simulated error environment.
+  5. Disable `Enable detailed debug logging`.
+- Expected:
+  - After enabling, the console shows `[Note Image Manager] Debug logging enabled`.
+  - Running a command writes `Command started` and `Command completed`.
+  - A command failure writes `Command failed`, and the `Error` object can be expanded to inspect the stack.
+  - Disabling writes one `Debug logging disabled` line.
+  - After disabling, running another command no longer writes detailed command logs.
+
 ### 3. Variable Resolution And Rename Rules
 
 #### TC-VAR-001 `{noteName}` Replacement
@@ -1262,3 +1279,4 @@ Status mapping:
 - Link updates, conversion, and preview remain consistent when a single note mixes encoded Chinese paths and readable Chinese paths.
 - `Download external images to local` imports `URL`, `file://`, and `data:image/...;base64,...` sources and rewrites them as local links.
 - Clicking a gallery thumbnail does not open a blank lightbox preview.
+- When detailed debug logging is enabled, every command writes start / completion / failure logs; after disabling it, detailed command logs stop.

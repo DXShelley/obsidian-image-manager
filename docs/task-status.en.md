@@ -4,8 +4,8 @@
 
 ## Release
 
-- `v4.0.5` builds on the previous release and adds the plugin support entry, with `manifest.json` now carrying a `fundingUrl` that points to the project support page.
-- Package metadata, manifest metadata, release workflow, marketing site, and user-facing documentation are aligned for the 4.0.5 release.
+- `v4.0.6` builds on the previous release with a plugin-owned detailed debug logging toggle, and command failure logs expose expandable `Error` stacks in the developer console.
+- Package metadata, manifest metadata, release workflow, marketing site, and user-facing documentation are aligned for the 4.0.6 release.
 
 ## Completed
 

@@ -6,10 +6,11 @@ function App(): JSX.Element {
   const siteConfig = getSiteConfig(locale);
 
   useEffect(() => {
-    document.documentElement.lang = locale;
-    document.title = siteConfig.meta.title;
+    const pageDocument = globalThis.document;
+    pageDocument.documentElement.lang = locale;
+    pageDocument.title = siteConfig.meta.title;
 
-    const description = document.querySelector('meta[name="description"]');
+    const description = pageDocument.querySelector('meta[name="description"]');
     if (description) {
       description.setAttribute('content', siteConfig.meta.description);
     }
@@ -22,7 +23,7 @@ function App(): JSX.Element {
     }
 
     const animationFrame = window.requestAnimationFrame(() => {
-      document.getElementById(targetId)?.scrollIntoView();
+      globalThis.document.getElementById(targetId)?.scrollIntoView();
     });
 
     return () => {

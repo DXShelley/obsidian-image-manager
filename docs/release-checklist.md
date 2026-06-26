@@ -17,6 +17,13 @@
 - Release 前必须重新执行 `npm run validate` 与 `npm run build`。
 - 发布工作流建议自动校验 tag 与 `manifest.json.version` 一致，并自动上传附件。
 
+## 支持与付款
+
+- 自愿赞助使用 `manifest.json.fundingUrl` 指向网站支持页，例如 `https://dxshelley.github.io/obsidian-image-manager/#support`。
+- 只有自愿赞助、没有付费解锁功能或付费服务时，Obsidian Payments 分类选择 `Free`。
+- `Optional payment` 仅用于可选付费功能、付费服务或付费 API，不用于纯打赏或赞助。
+- README、Pages 首页和社区目录说明应明确支持链接是自愿赞助，不暗示安装、使用或核心功能需要付款。
+
 ## 审核风险高频项
 
 - `name` 不包含 `Obsidian` 或 `Plugin`，`id` 仅使用小写字母和连字符，且不包含 `obsidian`。

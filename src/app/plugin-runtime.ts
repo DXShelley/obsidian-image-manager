@@ -20,7 +20,7 @@ import type {
 
 export function createPluginServices(app: App, settingsManager: SettingsManager): ImageManagerServices {
   const eventBus = new EventBus<ImageManagerEventMap>();
-  const logger = new DebugLogger(app);
+  const logger = new DebugLogger(() => settingsManager.getSettings().enableDebugLogging);
   const compressionTracker = new CompressionTracker(app, 'note-image-manager');
   const variableResolver = new VariableResolver();
   const linkFormatter = new LinkFormatter(app);

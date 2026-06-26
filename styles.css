@@ -598,6 +598,8 @@
 }
 
 .image-manager-gallery-lightbox__viewport.is-pannable {
+  align-items: flex-start;
+  justify-content: flex-start;
   cursor: grab;
 }
 
@@ -614,6 +616,10 @@
   transform-origin: center center;
   transition: transform 120ms ease;
   user-select: none;
+}
+
+.image-manager-gallery-lightbox__viewport.is-pannable .image-manager-gallery-lightbox__image {
+  transform-origin: top left;
 }
 
 .image-manager-selection-modal {

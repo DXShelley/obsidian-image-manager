@@ -86,6 +86,8 @@ export interface SettingTabCopy {
     readonly showOperationNotificationsDesc: string;
     readonly showSpaceSavedNotificationName: string;
     readonly showSpaceSavedNotificationDesc: string;
+    readonly enableDebugLoggingName: string;
+    readonly enableDebugLoggingDesc: string;
     readonly compressionIgnorePatternName: string;
     readonly compressionIgnorePatternDesc: string;
     readonly conversionIgnorePatternName: string;
@@ -481,6 +483,8 @@ const ZH_SETTINGS_TAB: SettingTabCopy = {
     showOperationNotificationsDesc: '关闭后，仅保留失败提示。',
     showSpaceSavedNotificationName: '压缩后提示节省空间',
     showSpaceSavedNotificationDesc: '显示压缩前后大小和比例。',
+    enableDebugLoggingName: '启用详细调试日志',
+    enableDebugLoggingDesc: '打开后在开发者控制台输出带 Note Image Manager 前缀的详细运行日志。',
     compressionIgnorePatternName: '压缩忽略正则',
     compressionIgnorePatternDesc: '每行一个正则；命中路径时跳过压缩。支持 `#` 注释。',
     conversionIgnorePatternName: '转换忽略正则',
@@ -597,9 +601,9 @@ const ZH_SETTINGS_TAB: SettingTabCopy = {
     platformTitle: '当前平台',
     platformDescription: (platform, canWriteClipboard) =>
       `${platform}；剪贴板复制${canWriteClipboard ? '可用' : '不可用'}。`,
-    debugTitle: '调试日志模式',
-    debugEnabled: '调试模式已开启，会输出更多日志。',
-    debugDisabled: '调试模式关闭。',
+    debugTitle: '插件详细日志',
+    debugEnabled: '详细日志已开启，会在开发者控制台输出更多运行信息。',
+    debugDisabled: '详细日志已关闭。',
     formatsTitle: '可编码输出格式',
     formatsAvailable: (formats) => `可输出：${formats.join('、')}。GIF、HEIC、TIFF 不保证重编码。`,
     formatsUnavailable: '未检测到稳定输出格式，建议保留原图。',
@@ -705,6 +709,8 @@ const EN_SETTINGS_TAB: SettingTabCopy = {
     showOperationNotificationsDesc: 'When off, only failure notices remain.',
     showSpaceSavedNotificationName: 'Show saved space after compression',
     showSpaceSavedNotificationDesc: 'Show before/after size and ratio after compression.',
+    enableDebugLoggingName: 'Enable detailed debug logging',
+    enableDebugLoggingDesc: 'Write detailed Note Image Manager logs to the developer console.',
     compressionIgnorePatternName: 'Compression ignore regex',
     compressionIgnorePatternDesc: 'One regex per line. Skip compression when a path matches. `#` comments are allowed.',
     conversionIgnorePatternName: 'Conversion ignore regex',
@@ -821,9 +827,9 @@ const EN_SETTINGS_TAB: SettingTabCopy = {
     platformTitle: 'Current platform',
     platformDescription: (platform, canWriteClipboard) =>
       `${platform}; clipboard copy is ${canWriteClipboard ? 'available' : 'unavailable'}.`,
-    debugTitle: 'Debug logging mode',
-    debugEnabled: 'Debug mode is on; extra logs are enabled.',
-    debugDisabled: 'Debug mode is off.',
+    debugTitle: 'Plugin debug logging',
+    debugEnabled: 'Detailed logging is on and writes extra runtime details to the developer console.',
+    debugDisabled: 'Detailed logging is off.',
     formatsTitle: 'Encodable output formats',
     formatsAvailable: (formats) => `Can encode: ${formats.join(', ')}. GIF, HEIC, and TIFF may not round-trip.`,
     formatsUnavailable: 'No stable output format detected. Keep originals.',

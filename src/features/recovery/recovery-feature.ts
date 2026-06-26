@@ -1,6 +1,7 @@
 import { getDefaultCommandName, getNoticeCopy } from '@/i18n';
 import { Notice } from 'obsidian';
 import type { ImageManagerFeature, ImageManagerFeatureContext } from '@/types/index';
+import { executeLoggedCommand } from '@/utils/command-logging';
 import { showOperationNotice } from '@/utils/operation-feedback';
 
 export class RecoveryFeature implements ImageManagerFeature {
@@ -10,19 +11,31 @@ export class RecoveryFeature implements ImageManagerFeature {
   readonly state = 'implemented' as const;
 
   async register(context: ImageManagerFeatureContext): Promise<void> {
+    const undoCommand = {
+      commandId: 'd1-undo-last-image-manager-transaction',
+      commandName: getDefaultCommandName('d1-undo-last-image-manager-transaction')
+    } as const;
     context.plugin.addCommand({
-      id: 'd1-undo-last-image-manager-transaction',
-      name: getDefaultCommandName('d1-undo-last-image-manager-transaction'),
+      id: undoCommand.commandId,
+      name: undoCommand.commandName,
       callback: () => {
-        void this.undoLastTransaction(context);
+        void executeLoggedCommand(context, undoCommand, async () => {
+          await this.undoLastTransaction(context);
+        });
       }
     });
 
+    const redoCommand = {
+      commandId: 'd2-redo-last-image-manager-transaction',
+      commandName: getDefaultCommandName('d2-redo-last-image-manager-transaction')
+    } as const;
     context.plugin.addCommand({
-      id: 'd2-redo-last-image-manager-transaction',
-      name: getDefaultCommandName('d2-redo-last-image-manager-transaction'),
+      id: redoCommand.commandId,
+      name: redoCommand.commandName,
       callback: () => {
-        void this.redoLastTransaction(context);
+        void executeLoggedCommand(context, redoCommand, async () => {
+          await this.redoLastTransaction(context);
+        });
       }
     });
   }
@@ -42,6 +55,7 @@ export class RecoveryFeature implements ImageManagerFeature {
       console.error('Note Image Manager failed to undo the last transaction', error);
       context.services.logger.error('Recovery undo failed', error);
       new Notice(error instanceof Error ? error.message : getNoticeCopy(context.services.settings.getSettings().uiLanguage).undoFailed);
+      throw error;
     }
   }
 
@@ -60,6 +74,7 @@ export class RecoveryFeature implements ImageManagerFeature {
       console.error('Note Image Manager failed to redo the last transaction', error);
       context.services.logger.error('Recovery redo failed', error);
       new Notice(error instanceof Error ? error.message : getNoticeCopy(context.services.settings.getSettings().uiLanguage).redoFailed);
+      throw error;
     }
   }
 }

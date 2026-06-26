@@ -103,8 +103,7 @@ describe('ImageManagerPlugin command localization', () => {
       },
       vault: {
         getFiles: vi.fn(() => [])
-      },
-      loadLocalStorage: vi.fn(() => null)
+      }
     } as never;
     plugin.addCommand = addCommand as never;
     plugin.removeCommand = removeCommand as never;
@@ -157,8 +156,7 @@ describe('ImageManagerPlugin command localization', () => {
       },
       vault: {
         getFiles: vi.fn(() => [])
-      },
-      loadLocalStorage: vi.fn(() => null)
+      }
     } as never;
     plugin.addCommand = addCommand as never;
     plugin.removeCommand = removeCommand as never;

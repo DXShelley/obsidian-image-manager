@@ -1,4 +1,4 @@
-[中文](README.md) | [English](README.en.md)
+[中文](README.zh-CN.md) | [English](README.md)
 
 # Note Image Manager
 
@@ -9,7 +9,7 @@
 
 `Note Image Manager` is an image-management plugin for Obsidian. It keeps image import, naming, conversion, compression, lightweight editing, gallery browsing, and recovery in one controlled workflow.
 
-Current version: `4.0.5`<br>
+Current version: `4.0.6`<br>
 Minimum Obsidian version: `1.13.1`<br>
 Release target: desktop plugin, with `isDesktopOnly` set to `true` in `manifest.json`
 
@@ -37,12 +37,6 @@ After marketplace approval, install it from **Settings -> Community plugins** by
 2. Download `manifest.json`, `main.js`, and `styles.css` for the target version, or download `note-image-manager.zip`.
 3. Place the files in your vault under `.obsidian/plugins/note-image-manager/`.
 4. Enable **Note Image Manager** in **Settings -> Community plugins**.
-
-## Support The Project
-
-If `Note Image Manager` saves you time managing images, you can support ongoing maintenance through WeChat Pay or Alipay:
-
-[Support with WeChat Pay / Alipay](https://dxshelley.github.io/obsidian-image-manager/#support)
 
 ## Documentation
 
@@ -112,3 +106,9 @@ tests          Vitest unit tests
 This project is built on the [Obsidian](https://obsidian.md/) plugin API and is developed with [TypeScript](https://www.typescriptlang.org/), [esbuild](https://esbuild.github.io/), [ESLint](https://eslint.org/), and [Vitest](https://vitest.dev/).
 
 Image handling and product boundaries were informed by parts of [piexifjs](https://github.com/hMatoba/piexifjs), [Custom Attachment Location](https://github.com/mnaoumov/obsidian-custom-attachment-location), and [obsidian-image-converter](https://github.com/xRyul/obsidian-image-converter). Mentioning a reference project is not a promise of full compatibility.
+
+## Support The Project
+
+If `Note Image Manager` saves you time managing images, you can support ongoing maintenance through WeChat Pay or Alipay:
+
+[Support with WeChat Pay / Alipay](https://dxshelley.github.io/obsidian-image-manager/#support)

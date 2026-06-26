@@ -35,6 +35,7 @@ const settings: ImageManagerSettings = {
   dropPasteCursorLocation: 'back',
   showOperationNotifications: true,
   showSpaceSavedNotification: true,
+  enableDebugLogging: false,
   enableNoteRenameSync: true,
   renameImagesOnNoteRelocate: false,
   deleteEmptyFolders: true,

@@ -17,7 +17,6 @@ import {
 import { getSettingTabCopy, getUiLanguageOptions, type ExampleOption, type PresetOption } from '@/i18n';
 import {
   canWriteImageToClipboard,
-  detectObsidianDebugMode,
   describeCurrentPlatform,
   getAttachmentFolderSetting,
   getSupportedCanvasOutputFormats
@@ -321,6 +320,18 @@ export class ImageManagerSettingTab extends PluginSettingTab {
           await this.updateSettings((draft) => {
             draft.showSpaceSavedNotification = value;
           });
+        })
+      );
+
+    new Setting(convertSection)
+      .setName(copy.settings.enableDebugLoggingName)
+      .setDesc(copy.settings.enableDebugLoggingDesc)
+      .addToggle((toggle) =>
+        toggle.setValue(settings.enableDebugLogging).onChange(async (value) => {
+          await this.updateSettings((draft) => {
+            draft.enableDebugLogging = value;
+          });
+          this.display();
         })
       );
 
@@ -799,7 +810,7 @@ export class ImageManagerSettingTab extends PluginSettingTab {
     const copy = this.getCopy();
     const supportedFormats = getSupportedCanvasOutputFormats().map((format) => format.toUpperCase());
     const attachmentFolder = getAttachmentFolderSetting(this.app);
-    const debugModeEnabled = detectObsidianDebugMode(this.app);
+    const debugLoggingEnabled = settings.enableDebugLogging;
     const pluginConflicts = detectPluginConflicts(this.app, settings);
     const cards: CompatibilityCard[] = [
       {
@@ -812,8 +823,8 @@ export class ImageManagerSettingTab extends PluginSettingTab {
       },
       {
         title: copy.compatibility.debugTitle,
-        tone: debugModeEnabled ? 'warning' : 'ok',
-        description: debugModeEnabled ? copy.compatibility.debugEnabled : copy.compatibility.debugDisabled
+        tone: debugLoggingEnabled ? 'warning' : 'ok',
+        description: debugLoggingEnabled ? copy.compatibility.debugEnabled : copy.compatibility.debugDisabled
       },
       {
         title: copy.compatibility.formatsTitle,

@@ -77,8 +77,16 @@ Right-click an image file in the file explorer to access:
 - The top of the settings page now includes an `Interface Language` switch for Simplified Chinese and English.
 - The save-location editor and generated-file-name editor appear at the top of the settings page.
 - Both fields include a live preview block.
+- `Enable detailed debug logging` is off by default. When enabled, the plugin writes developer-console logs prefixed with `[Note Image Manager]` for command start, completion, skip, failure, and key processing branches. Error logs pass the `Error` object as a direct console argument so the stack is easy to expand.
 - The `Feature Status` section shows both shipped and planned capabilities; watermark removal is currently listed only as planned.
 - On older Obsidian builds, the plugin skips inline field-error rendering instead of crashing the entire settings page.
+
+## Diagnostic Logging
+
+- Detailed debug logging is a Note Image Manager setting and does not depend on Obsidian debug mode.
+- When enabled, normal commands write `Command started` and `Command completed`; failed commands write `Command failed` with the error object and command context.
+- Paste, compression, conversion, batch processing, context menus, recovery transactions, note rename sync, and other key paths add extra context such as command ID, note path, image path, ignore regex, skip reason, or failure reason.
+- After the setting is turned off, detailed logs stop. A single `Debug logging disabled` line is written when the setting changes so you can confirm the toggle took effect.
 
 ## Refresh Behavior
 

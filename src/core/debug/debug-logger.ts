@@ -1,27 +1,21 @@
-import type { App } from 'obsidian';
-import { detectObsidianDebugMode } from '@/utils/compatibility';
-
 type LogPayload = Readonly<Record<string, unknown>>;
+type DebugLoggingEnabledGetter = () => boolean;
 
 export class DebugLogger {
   private enabled = false;
   private initialized = false;
 
   constructor(
-    private readonly app: App,
+    private readonly isDebugLoggingEnabled: DebugLoggingEnabledGetter,
     private readonly prefix = 'Note Image Manager'
   ) {}
 
   refreshMode(reason: string): boolean {
-    const next = detectObsidianDebugMode(this.app);
+    const next = this.isDebugLoggingEnabled();
     const changed = !this.initialized || this.enabled !== next;
     const previous = this.enabled;
     this.initialized = true;
     this.enabled = next;
-
-    if (!next && !previous && changed) {
-      console.info(`[${this.prefix}] Debug logging inactive`, { reason });
-    }
 
     if (next && changed) {
       console.info(`[${this.prefix}] Debug logging enabled`, { reason, previous });
@@ -43,7 +37,7 @@ export class DebugLogger {
       return;
     }
 
-    console.debug(`[${this.prefix}] ${message}`, payload ?? {});
+    console.log(`[${this.prefix}] ${message}`, payload ?? {});
   }
 
   info(message: string, payload?: LogPayload): void {
@@ -67,9 +61,6 @@ export class DebugLogger {
       return;
     }
 
-    console.error(`[${this.prefix}] ${message}`, {
-      ...(payload ?? {}),
-      error
-    });
+    console.error(`[${this.prefix}] ${message}`, error, payload ?? {});
   }
 }

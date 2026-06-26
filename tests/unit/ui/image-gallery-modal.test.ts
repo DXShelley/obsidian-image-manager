@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
 import { GalleryGridSize, GallerySortBy } from '@/types/index';
 
 type ObsidianElement = HTMLElement & {
@@ -183,6 +184,17 @@ describe('ImageGalleryModal', () => {
 
     viewport.dispatchEvent(createPointerEvent('pointerup', { pointerId: 1, clientX: 150, clientY: 120 }));
     expect(viewport.classList.contains('is-dragging')).toBe(false);
+  });
+
+  it('anchors pannable zoomed images to the scroll origin', () => {
+    const styles = readFileSync('styles.css', 'utf8');
+
+    expect(styles).toMatch(
+      /\.image-manager-gallery-lightbox__viewport\.is-pannable\s*{[^}]*align-items:\s*flex-start;[^}]*justify-content:\s*flex-start;/s
+    );
+    expect(styles).toMatch(
+      /\.image-manager-gallery-lightbox__viewport\.is-pannable\s+\.image-manager-gallery-lightbox__image\s*{[^}]*transform-origin:\s*top left;/s
+    );
   });
 
   it('does not start dragging when the image is not zoomed in', async () => {

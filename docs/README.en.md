@@ -8,7 +8,7 @@ This directory contains user, development, testing, and release documentation fo
 
 | Document | Contents |
 | --- | --- |
-| [User Guide](user-guide.en.md) | Commands, context menus, galleries, settings, compatibility strategy, and recovery. |
+| [User Guide](user-guide.en.md) | Commands, context menus, galleries, settings, compatibility strategy, diagnostic logging, and recovery. |
 | [Variable Reference](variables.en.md) | Naming and path variables supported by `renamePattern` and `outputFolder`. |
 | [Changelog](../CHANGELOG.en.md) | Versioned feature additions, behavior changes, and review-related fixes. |
 
@@ -33,7 +33,8 @@ This directory contains user, development, testing, and release documentation fo
 
 | Document | Contents |
 | --- | --- |
-| [Archived User Prompts](user-prompts.en.md) | Archived user prompts from the visible project session, kept only as project context. |
+| [Archived User Prompts](user-prompts.en.md) | User prompts from non-archived and archived sessions that match the current project, kept only as project context. |
+| [Maintenance Notes](maintenance-notes.en.md) | Durable maintenance decisions distilled from current non-archived project sessions; newest sessions win conflicts. |
 
 ## Recommended Reading Paths
 
@@ -48,6 +49,7 @@ This directory contains user, development, testing, and release documentation fo
 - Keep configuration templates, naming variables, and path variables in the [Variable Reference](variables.en.md).
 - Keep release, review, artifact, and tag rules in the [Release Checklist](release-checklist.en.md).
 - Keep test steps, acceptance criteria, and regression matrices in [Test Cases](test-cases.en.md).
+- Keep cross-session maintenance decisions in [Maintenance Notes](maintenance-notes.en.md), using only non-archived project sessions; newest sessions win conflicts.
 - When adding a Chinese document, add the `.en.md` mirror as well; when deleting or renaming docs, update this index and the root README together.
 
 ## Acknowledgements And References

@@ -68,6 +68,7 @@ export interface ImageManagerSettings {
   dropPasteCursorLocation: 'front' | 'back';
   showOperationNotifications: boolean;
   showSpaceSavedNotification: boolean;
+  enableDebugLogging: boolean;
   enableNoteRenameSync: boolean;
   renameImagesOnNoteRelocate: boolean;
   deleteEmptyFolders: boolean;
@@ -101,6 +102,7 @@ export const DEFAULT_SETTINGS: Readonly<ImageManagerSettings> = {
   dropPasteCursorLocation: 'back',
   showOperationNotifications: true,
   showSpaceSavedNotification: true,
+  enableDebugLogging: false,
   enableNoteRenameSync: true,
   renameImagesOnNoteRelocate: false,
   deleteEmptyFolders: true,

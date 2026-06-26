@@ -3,7 +3,7 @@ import pluginJs from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { files: ['**/*.{js,mjs,cjs,ts}'] },
+  { files: ['**/*.{js,mjs,cjs,ts,tsx}'] },
   { languageOptions: { globals: globals.browser } },
   pluginJs.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
@@ -12,6 +12,15 @@ export default tseslint.config(
     languageOptions: {
       parserOptions: {
         project: true,
+        tsconfigRootDir: import.meta.dirname
+      }
+    }
+  },
+  {
+    files: ['website/src/**/*.{ts,tsx}'],
+    languageOptions: {
+      parserOptions: {
+        project: './website/tsconfig.app.json',
         tsconfigRootDir: import.meta.dirname
       }
     }

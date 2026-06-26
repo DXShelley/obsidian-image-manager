@@ -89,7 +89,7 @@ interface SiteConfig {
   };
 }
 
-const VERSION = 'v4.0.5';
+const VERSION = 'v4.0.6';
 
 const SITE_CONFIGS: Readonly<Record<SiteLocale, SiteConfig>> = {
   'zh-CN': {
