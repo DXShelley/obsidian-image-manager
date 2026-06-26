@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 import { getSiteConfig, type SiteLocale } from './config/site';
 
+function getPublicAssetUrl(path: string): string {
+  return `${import.meta.env.BASE_URL}${path.replace(/^\/+/, '')}`;
+}
+
 function App(): JSX.Element {
   const [locale, setLocale] = useState<SiteLocale>('zh-CN');
   const siteConfig = getSiteConfig(locale);
@@ -240,7 +244,7 @@ function App(): JSX.Element {
               {siteConfig.support.methods.map((item, index) => (
                 <article className={`support-card reveal reveal-delay-${(index % 3) + 1}`} key={item.title}>
                   <div className="support-image-frame">
-                    <img src={item.image} alt={item.alt} loading="lazy" />
+                    <img src={getPublicAssetUrl(item.image)} alt={item.alt} loading="lazy" />
                   </div>
                   <h3>{item.title}</h3>
                   <p>{item.description}</p>
