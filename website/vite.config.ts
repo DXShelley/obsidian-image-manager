@@ -6,5 +6,14 @@ const base = process.env.GITHUB_ACTIONS ? `/${repositoryName}/` : '/';
 
 export default defineConfig({
   base,
-  plugins: [react()]
+  plugins: [react()],
+  build: {
+    rollupOptions: {
+      output: {
+        entryFileNames: 'assets/[name].js',
+        chunkFileNames: 'assets/[name].js',
+        assetFileNames: 'assets/[name][extname]'
+      }
+    }
+  }
 });
