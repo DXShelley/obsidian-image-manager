@@ -2,6 +2,13 @@
 
 # Changelog
 
+## 4.0.6
+
+- Added a plugin-owned detailed debug logging toggle instead of relying on Obsidian debug mode; when enabled, the console records command start, completion, skip, failure, and key processing branches.
+- Command failure logs now pass the `Error` object directly so stacks are easy to expand in developer tools; recovery commands now use the shared command logger too.
+- Added regression coverage for recovery command failure logging, and included website linting in `npm run validate`.
+- Updated the user guide, test cases, and docs index with diagnostic logging guidance.
+
 ## 4.0.5
 
 - Added `fundingUrl` to the plugin `manifest.json`, pointing to the project support page so Obsidian can expose a support entry.

@@ -174,6 +174,8 @@ var ZH_SETTINGS_TAB = {
     showOperationNotificationsDesc: "\u5173\u95ED\u540E\uFF0C\u4EC5\u4FDD\u7559\u5931\u8D25\u63D0\u793A\u3002",
     showSpaceSavedNotificationName: "\u538B\u7F29\u540E\u63D0\u793A\u8282\u7701\u7A7A\u95F4",
     showSpaceSavedNotificationDesc: "\u663E\u793A\u538B\u7F29\u524D\u540E\u5927\u5C0F\u548C\u6BD4\u4F8B\u3002",
+    enableDebugLoggingName: "\u542F\u7528\u8BE6\u7EC6\u8C03\u8BD5\u65E5\u5FD7",
+    enableDebugLoggingDesc: "\u6253\u5F00\u540E\u5728\u5F00\u53D1\u8005\u63A7\u5236\u53F0\u8F93\u51FA\u5E26 Note Image Manager \u524D\u7F00\u7684\u8BE6\u7EC6\u8FD0\u884C\u65E5\u5FD7\u3002",
     compressionIgnorePatternName: "\u538B\u7F29\u5FFD\u7565\u6B63\u5219",
     compressionIgnorePatternDesc: "\u6BCF\u884C\u4E00\u4E2A\u6B63\u5219\uFF1B\u547D\u4E2D\u8DEF\u5F84\u65F6\u8DF3\u8FC7\u538B\u7F29\u3002\u652F\u6301 `#` \u6CE8\u91CA\u3002",
     conversionIgnorePatternName: "\u8F6C\u6362\u5FFD\u7565\u6B63\u5219",
@@ -289,9 +291,9 @@ var ZH_SETTINGS_TAB = {
   compatibility: {
     platformTitle: "\u5F53\u524D\u5E73\u53F0",
     platformDescription: (platform, canWriteClipboard) => `${platform}\uFF1B\u526A\u8D34\u677F\u590D\u5236${canWriteClipboard ? "\u53EF\u7528" : "\u4E0D\u53EF\u7528"}\u3002`,
-    debugTitle: "\u8C03\u8BD5\u65E5\u5FD7\u6A21\u5F0F",
-    debugEnabled: "\u8C03\u8BD5\u6A21\u5F0F\u5DF2\u5F00\u542F\uFF0C\u4F1A\u8F93\u51FA\u66F4\u591A\u65E5\u5FD7\u3002",
-    debugDisabled: "\u8C03\u8BD5\u6A21\u5F0F\u5173\u95ED\u3002",
+    debugTitle: "\u63D2\u4EF6\u8BE6\u7EC6\u65E5\u5FD7",
+    debugEnabled: "\u8BE6\u7EC6\u65E5\u5FD7\u5DF2\u5F00\u542F\uFF0C\u4F1A\u5728\u5F00\u53D1\u8005\u63A7\u5236\u53F0\u8F93\u51FA\u66F4\u591A\u8FD0\u884C\u4FE1\u606F\u3002",
+    debugDisabled: "\u8BE6\u7EC6\u65E5\u5FD7\u5DF2\u5173\u95ED\u3002",
     formatsTitle: "\u53EF\u7F16\u7801\u8F93\u51FA\u683C\u5F0F",
     formatsAvailable: (formats) => `\u53EF\u8F93\u51FA\uFF1A${formats.join("\u3001")}\u3002GIF\u3001HEIC\u3001TIFF \u4E0D\u4FDD\u8BC1\u91CD\u7F16\u7801\u3002`,
     formatsUnavailable: "\u672A\u68C0\u6D4B\u5230\u7A33\u5B9A\u8F93\u51FA\u683C\u5F0F\uFF0C\u5EFA\u8BAE\u4FDD\u7559\u539F\u56FE\u3002",
@@ -396,6 +398,8 @@ var EN_SETTINGS_TAB = {
     showOperationNotificationsDesc: "When off, only failure notices remain.",
     showSpaceSavedNotificationName: "Show saved space after compression",
     showSpaceSavedNotificationDesc: "Show before/after size and ratio after compression.",
+    enableDebugLoggingName: "Enable detailed debug logging",
+    enableDebugLoggingDesc: "Write detailed Note Image Manager logs to the developer console.",
     compressionIgnorePatternName: "Compression ignore regex",
     compressionIgnorePatternDesc: "One regex per line. Skip compression when a path matches. `#` comments are allowed.",
     conversionIgnorePatternName: "Conversion ignore regex",
@@ -511,9 +515,9 @@ var EN_SETTINGS_TAB = {
   compatibility: {
     platformTitle: "Current platform",
     platformDescription: (platform, canWriteClipboard) => `${platform}; clipboard copy is ${canWriteClipboard ? "available" : "unavailable"}.`,
-    debugTitle: "Debug logging mode",
-    debugEnabled: "Debug mode is on; extra logs are enabled.",
-    debugDisabled: "Debug mode is off.",
+    debugTitle: "Plugin debug logging",
+    debugEnabled: "Detailed logging is on and writes extra runtime details to the developer console.",
+    debugDisabled: "Detailed logging is off.",
     formatsTitle: "Encodable output formats",
     formatsAvailable: (formats) => `Can encode: ${formats.join(", ")}. GIF, HEIC, and TIFF may not round-trip.`,
     formatsUnavailable: "No stable output format detected. Keep originals.",
@@ -1072,6 +1076,7 @@ var DEFAULT_SETTINGS = {
   dropPasteCursorLocation: "back",
   showOperationNotifications: true,
   showSpaceSavedNotification: true,
+  enableDebugLogging: false,
   enableNoteRenameSync: true,
   renameImagesOnNoteRelocate: false,
   deleteEmptyFolders: true,
@@ -2817,18 +2822,6 @@ var MIME_BY_FORMAT = {
 // src/utils/compatibility.ts
 var import_obsidian7 = require("obsidian");
 var DESKTOP_OUTPUT_FORMATS = ["png" /* PNG */, "jpeg" /* JPEG */, "webp" /* WEBP */];
-var DEBUG_MODE_STORAGE_KEYS = [
-  "debug-mode",
-  "debugMode",
-  "debug-plugin",
-  "debug-plugins",
-  "developer-mode",
-  "developerMode",
-  "dev-mode",
-  "devMode",
-  "debug",
-  "developer"
-];
 var OUTPUT_MIME_BY_FORMAT = {
   ["webp" /* WEBP */]: "image/webp",
   ["jpeg" /* JPEG */]: "image/jpeg",
@@ -2855,35 +2848,6 @@ function canEncodeCanvasOutputFormat(format) {
 function canWriteImageToClipboard() {
   var _a;
   return !import_obsidian7.Platform.isMobileApp && typeof navigator !== "undefined" && typeof ((_a = navigator.clipboard) == null ? void 0 : _a.write) === "function" && typeof ClipboardItem !== "undefined";
-}
-function detectObsidianDebugMode(app) {
-  var _a, _b, _c, _d, _e, _f;
-  const appWithDebugMode = app;
-  const directDebugMode = (_d = (_c = (_b = (_a = callBooleanGetter(appWithDebugMode.debugMode)) != null ? _a : callBooleanGetter(appWithDebugMode.isDebugMode)) != null ? _b : callBooleanGetter(appWithDebugMode.developerMode)) != null ? _c : callBooleanGetter(appWithDebugMode.isDeveloperMode)) != null ? _d : normalizeBoolean(appWithDebugMode.isDebug);
-  if (directDebugMode !== null) {
-    return directDebugMode;
-  }
-  for (const key of DEBUG_MODE_STORAGE_KEYS) {
-    const stored = normalizeBoolean(app.loadLocalStorage(key));
-    if (stored !== null) {
-      return stored;
-    }
-  }
-  if (typeof window !== "undefined" && "localStorage" in window) {
-    for (const key of DEBUG_MODE_STORAGE_KEYS) {
-      const stored = normalizeBoolean(window.localStorage.getItem(key));
-      if (stored !== null) {
-        return stored;
-      }
-    }
-    if (scanStorageForDebugFlag(window.localStorage)) {
-      return true;
-    }
-  }
-  if (/(debug|developer)/i.test((_f = (_e = activeDocument.body) == null ? void 0 : _e.className) != null ? _f : "")) {
-    return true;
-  }
-  return false;
 }
 function getAttachmentFolderSetting(app) {
   var _a;
@@ -2922,52 +2886,6 @@ function detectCanvasOutputSupport(format) {
   } catch (e) {
     return false;
   }
-}
-function callBooleanGetter(getter) {
-  if (typeof getter !== "function") {
-    return null;
-  }
-  try {
-    return getter();
-  } catch (e) {
-    return null;
-  }
-}
-function normalizeBoolean(value) {
-  if (typeof value === "boolean") {
-    return value;
-  }
-  if (typeof value === "string") {
-    const normalized = value.trim().toLowerCase();
-    if (normalized === "true" || normalized === "1") {
-      return true;
-    }
-    if (normalized === "false" || normalized === "0") {
-      return false;
-    }
-  }
-  if (typeof value === "number") {
-    if (value === 1) {
-      return true;
-    }
-    if (value === 0) {
-      return false;
-    }
-  }
-  return null;
-}
-function scanStorageForDebugFlag(storage) {
-  for (let index = 0; index < storage.length; index += 1) {
-    const key = storage.key(index);
-    if (!key || !/(debug|developer)/i.test(key)) {
-      continue;
-    }
-    const stored = normalizeBoolean(storage.getItem(key));
-    if (stored === true) {
-      return true;
-    }
-  }
-  return false;
 }
 
 // src/utils/clipboard.ts
@@ -4361,18 +4279,30 @@ var RecoveryFeature = class {
     __publicField(this, "state", "implemented");
   }
   async register(context) {
+    const undoCommand = {
+      commandId: "d1-undo-last-image-manager-transaction",
+      commandName: getDefaultCommandName("d1-undo-last-image-manager-transaction")
+    };
     context.plugin.addCommand({
-      id: "d1-undo-last-image-manager-transaction",
-      name: getDefaultCommandName("d1-undo-last-image-manager-transaction"),
+      id: undoCommand.commandId,
+      name: undoCommand.commandName,
       callback: () => {
-        void this.undoLastTransaction(context);
+        void executeLoggedCommand(context, undoCommand, async () => {
+          await this.undoLastTransaction(context);
+        });
       }
     });
+    const redoCommand = {
+      commandId: "d2-redo-last-image-manager-transaction",
+      commandName: getDefaultCommandName("d2-redo-last-image-manager-transaction")
+    };
     context.plugin.addCommand({
-      id: "d2-redo-last-image-manager-transaction",
-      name: getDefaultCommandName("d2-redo-last-image-manager-transaction"),
+      id: redoCommand.commandId,
+      name: redoCommand.commandName,
       callback: () => {
-        void this.redoLastTransaction(context);
+        void executeLoggedCommand(context, redoCommand, async () => {
+          await this.redoLastTransaction(context);
+        });
       }
     });
   }
@@ -4390,6 +4320,7 @@ var RecoveryFeature = class {
       console.error("Note Image Manager failed to undo the last transaction", error);
       context.services.logger.error("Recovery undo failed", error);
       new import_obsidian15.Notice(error instanceof Error ? error.message : getNoticeCopy(context.services.settings.getSettings().uiLanguage).undoFailed);
+      throw error;
     }
   }
   async redoLastTransaction(context) {
@@ -4406,6 +4337,7 @@ var RecoveryFeature = class {
       console.error("Note Image Manager failed to redo the last transaction", error);
       context.services.logger.error("Recovery redo failed", error);
       new import_obsidian15.Notice(error instanceof Error ? error.message : getNoticeCopy(context.services.settings.getSettings().uiLanguage).redoFailed);
+      throw error;
     }
   }
 };
@@ -4622,21 +4554,18 @@ var CompressionTracker = class {
 
 // src/core/debug/debug-logger.ts
 var DebugLogger = class {
-  constructor(app, prefix = "Note Image Manager") {
-    this.app = app;
+  constructor(isDebugLoggingEnabled, prefix = "Note Image Manager") {
+    this.isDebugLoggingEnabled = isDebugLoggingEnabled;
     this.prefix = prefix;
     __publicField(this, "enabled", false);
     __publicField(this, "initialized", false);
   }
   refreshMode(reason) {
-    const next = detectObsidianDebugMode(this.app);
+    const next = this.isDebugLoggingEnabled();
     const changed = !this.initialized || this.enabled !== next;
     const previous = this.enabled;
     this.initialized = true;
     this.enabled = next;
-    if (!next && !previous && changed) {
-      console.info(`[${this.prefix}] Debug logging inactive`, { reason });
-    }
     if (next && changed) {
       console.info(`[${this.prefix}] Debug logging enabled`, { reason, previous });
     }
@@ -4652,7 +4581,7 @@ var DebugLogger = class {
     if (!this.isEnabled()) {
       return;
     }
-    console.debug(`[${this.prefix}] ${message}`, payload != null ? payload : {});
+    console.log(`[${this.prefix}] ${message}`, payload != null ? payload : {});
   }
   info(message, payload) {
     if (!this.isEnabled()) {
@@ -4670,10 +4599,7 @@ var DebugLogger = class {
     if (!this.isEnabled()) {
       return;
     }
-    console.error(`[${this.prefix}] ${message}`, {
-      ...payload != null ? payload : {},
-      error
-    });
+    console.error(`[${this.prefix}] ${message}`, error, payload != null ? payload : {});
   }
 };
 
@@ -6647,7 +6573,7 @@ var LinkFormatter = class {
     while (commonIndex < fromParts.length && commonIndex < toParts.length && fromParts[commonIndex] === toParts[commonIndex]) {
       commonIndex += 1;
     }
-    return [...Array(fromParts.length - commonIndex).fill(".."), ...toParts.slice(commonIndex)].join("/");
+    return [...new Array(fromParts.length - commonIndex).fill(".."), ...toParts.slice(commonIndex)].join("/");
   }
   formatWikiLink(path, options) {
     const parts = [path];
@@ -6851,7 +6777,7 @@ var VariableResolver = class {
 // src/app/plugin-runtime.ts
 function createPluginServices(app, settingsManager) {
   const eventBus = new EventBus();
-  const logger = new DebugLogger(app);
+  const logger = new DebugLogger(() => settingsManager.getSettings().enableDebugLogging);
   const compressionTracker = new CompressionTracker(app, "note-image-manager");
   const variableResolver = new VariableResolver();
   const linkFormatter = new LinkFormatter(app);
@@ -7233,6 +7159,14 @@ var ImageManagerSettingTab = class extends import_obsidian20.PluginSettingTab {
         });
       })
     );
+    new import_obsidian20.Setting(convertSection).setName(copy.settings.enableDebugLoggingName).setDesc(copy.settings.enableDebugLoggingDesc).addToggle(
+      (toggle) => toggle.setValue(settings.enableDebugLogging).onChange(async (value) => {
+        await this.updateSettings((draft) => {
+          draft.enableDebugLogging = value;
+        });
+        this.display();
+      })
+    );
     const thresholdWrap = convertSection.createDiv({ cls: "image-manager-settings-threshold" });
     new import_obsidian20.Setting(thresholdWrap).setName(copy.settings.compressionThresholdKBName).setDesc(copy.settings.compressionThresholdKBDesc).addText((text) => {
       text.inputEl.addClass("image-manager-settings-threshold__input");
@@ -7579,7 +7513,7 @@ ${example.description}`;
     const copy = this.getCopy();
     const supportedFormats = getSupportedCanvasOutputFormats().map((format) => format.toUpperCase());
     const attachmentFolder = getAttachmentFolderSetting(this.app);
-    const debugModeEnabled = detectObsidianDebugMode(this.app);
+    const debugLoggingEnabled = settings.enableDebugLogging;
     const pluginConflicts = detectPluginConflicts(this.app, settings);
     const cards = [
       {
@@ -7592,8 +7526,8 @@ ${example.description}`;
       },
       {
         title: copy.compatibility.debugTitle,
-        tone: debugModeEnabled ? "warning" : "ok",
-        description: debugModeEnabled ? copy.compatibility.debugEnabled : copy.compatibility.debugDisabled
+        tone: debugLoggingEnabled ? "warning" : "ok",
+        description: debugLoggingEnabled ? copy.compatibility.debugEnabled : copy.compatibility.debugDisabled
       },
       {
         title: copy.compatibility.formatsTitle,

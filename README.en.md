@@ -1,15 +1,14 @@
-[中文](README.md) | [English](README.en.md)
+[中文](README.zh-CN.md) | [English](README.md)
 
 # Note Image Manager
 
-[![CI](https://github.com/DXShelley/obsidian-image-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/DXShelley/obsidian-image-manager/actions/workflows/ci.yml)
 [![Release](https://github.com/DXShelley/obsidian-image-manager/actions/workflows/release.yml/badge.svg)](https://github.com/DXShelley/obsidian-image-manager/actions/workflows/release.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Obsidian](https://img.shields.io/badge/Obsidian-desktop%20only-7c3aed.svg)](manifest.json)
 
 `Note Image Manager` is an image-management plugin for Obsidian. It keeps image import, naming, conversion, compression, lightweight editing, gallery browsing, and recovery in one controlled workflow.
 
-Current version: `4.0.5`<br>
+Current version: `4.0.6`<br>
 Minimum Obsidian version: `1.13.1`<br>
 Release target: desktop plugin, with `isDesktopOnly` set to `true` in `manifest.json`
 
@@ -38,23 +37,16 @@ After marketplace approval, install it from **Settings -> Community plugins** by
 3. Place the files in your vault under `.obsidian/plugins/note-image-manager/`.
 4. Enable **Note Image Manager** in **Settings -> Community plugins**.
 
-## Support The Project
+## Source And Documentation
 
-If `Note Image Manager` saves you time managing images, you can support ongoing maintenance through WeChat Pay or Alipay:
+The `main` branch keeps the release surface small: README files, release notes, plugin install artifacts, version metadata, and the GitHub Pages website. Full source, tests, development configuration, and detailed documentation live on the [`develop`](https://github.com/DXShelley/obsidian-image-manager/tree/develop) branch.
 
-[Support with WeChat Pay / Alipay](https://dxshelley.github.io/obsidian-image-manager/#support)
-
-## Documentation
-
-| Goal | Document |
+| Goal | Link |
 | --- | --- |
-| Browse the full documentation set | [Docs Index](docs/README.en.md) |
-| Learn commands, settings, galleries, and recovery | [User Guide](docs/user-guide.en.md) |
-| Configure naming and folder variables | [Variable Reference](docs/variables.en.md) |
-| Understand layering, runtime flow, and module boundaries | [Architecture](docs/architecture.en.md) |
-| Review core service and batch API summaries | [API Reference](docs/api-reference.en.md) |
-| Run manual validation and regression checks | [Test Cases](docs/test-cases.en.md) |
-| Prepare community submission and GitHub Releases | [Release Checklist](docs/release-checklist.en.md) |
+| Browse the full documentation set | [Docs Index](https://github.com/DXShelley/obsidian-image-manager/blob/develop/docs/README.en.md) |
+| Learn commands, settings, galleries, diagnostic logging, and recovery | [User Guide](https://github.com/DXShelley/obsidian-image-manager/blob/develop/docs/user-guide.en.md) |
+| Configure naming and folder variables | [Variable Reference](https://github.com/DXShelley/obsidian-image-manager/blob/develop/docs/variables.en.md) |
+| Review source code and tests | [develop branch](https://github.com/DXShelley/obsidian-image-manager/tree/develop) |
 | Read version history | [Changelog](CHANGELOG.en.md) |
 
 ## Disclosure And Limits
@@ -66,49 +58,14 @@ If `Note Image Manager` saves you time managing images, you can support ongoing 
 - Compression history and recovery snapshots are stored under `.obsidian/plugins/note-image-manager/` so the plugin can avoid duplicate compression and support undo / redo.
 - Vault-wide conversion, compression, and orphan-image cleanup commands require confirmation before running.
 
-## Development
-
-Node.js `22` is recommended to match the CI and Release workflows.
-
-```bash
-npm install
-npm run validate
-npm run build
-```
-
-Common commands:
-
-- `npm run dev`: development build.
-- `npm run type-check`: TypeScript type check.
-- `npm run lint`: ESLint check.
-- `npm run test`: Vitest unit tests.
-- `npm run validate`: type check, lint, and tests.
-
-See [Contributing](CONTRIBUTING.en.md) for the contribution workflow.
-
-## Repository Layout
-
-```text
-src/app        plugin runtime wiring and feature catalog
-src/core       settings, events, registry, recovery, and compression history
-src/features   rename, compress, convert, preview, editor, gallery, batch, and related modules
-src/services   image processing, file management, variable resolution, and link formatting
-src/ui         settings tab and modals
-src/utils      platform, path, link, validation, and Obsidian compatibility helpers
-docs           user, development, testing, and release documentation
-website        GitHub Pages website
-tests          Vitest unit tests
-```
-
-## Release
-
-- Keep `manifest.json.version`, `package.json.version`, `versions.json`, and the website version copy aligned.
-- The Git tag must exactly match `manifest.json.version`, for example `4.0.4`, without a `v` prefix.
-- GitHub Release assets should include `manifest.json`, `main.js`, `styles.css`, and `note-image-manager.zip`.
-- See the [Release Checklist](docs/release-checklist.en.md) for the full checklist.
-
 ## Acknowledgements
 
 This project is built on the [Obsidian](https://obsidian.md/) plugin API and is developed with [TypeScript](https://www.typescriptlang.org/), [esbuild](https://esbuild.github.io/), [ESLint](https://eslint.org/), and [Vitest](https://vitest.dev/).
 
 Image handling and product boundaries were informed by parts of [piexifjs](https://github.com/hMatoba/piexifjs), [Custom Attachment Location](https://github.com/mnaoumov/obsidian-custom-attachment-location), and [obsidian-image-converter](https://github.com/xRyul/obsidian-image-converter). Mentioning a reference project is not a promise of full compatibility.
+
+## Support The Project
+
+If `Note Image Manager` saves you time managing images, you can support ongoing maintenance through WeChat Pay or Alipay:
+
+[Support with WeChat Pay / Alipay](https://dxshelley.github.io/obsidian-image-manager/#support)
