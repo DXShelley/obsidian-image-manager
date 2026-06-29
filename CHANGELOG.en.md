@@ -2,6 +2,12 @@
 
 # Changelog
 
+## 4.0.7
+
+- Moved "Enable detailed debug logging" out of the "Convert And Compress" settings and into a dedicated "Diagnostic Logging" section so the toggle is no longer buried among compression rules.
+- Added settings-page regression coverage to keep the debug logging toggle in the diagnostics section.
+- Updated `manifest.json`, `package.json`, `versions.json`, README files, task status, and website version copy for the `4.0.7` release.
+
 ## 4.0.6
 
 - Added a plugin-owned detailed debug logging toggle instead of relying on Obsidian debug mode; when enabled, the console records command start, completion, skip, failure, and key processing branches.
