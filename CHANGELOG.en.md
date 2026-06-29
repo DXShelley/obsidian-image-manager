@@ -2,6 +2,13 @@
 
 # Changelog
 
+## 4.0.8
+
+- Aligned the settings tab with the current `minAppVersion` by using `ButtonComponent.setDestructive()` and `PluginSettingTab.update()`, removing leftover deprecated settings API calls.
+- Switched the build script's Node builtin-module import to `node:module`, and cleaned up strict lint warnings in link formatting and website code.
+- Added regression coverage for calling `update()` after settings reset, and corrected stale release-note wording.
+- Updated `manifest.json`, `package.json`, `versions.json`, README files, task status, and website version copy for the `4.0.8` release.
+
 ## 4.0.7
 
 - Moved "Enable detailed debug logging" out of the "Convert And Compress" settings and into a dedicated "Diagnostic Logging" section so the toggle is no longer buried among compression rules.
@@ -23,8 +30,8 @@
 
 ## 4.0.4
 
-- Fixed settings-page rendering on older Obsidian builds where `ButtonComponent.setDestructive()` is unavailable; the reset button now falls back to `setWarning()` or the `mod-warning` class.
-- Added settings-page compatibility regression tests and expanded the test Obsidian mock so release validation covers the older button API path.
+- Fixed a reset-button styling compatibility issue that could interrupt settings-page rendering when button APIs differ.
+- Added settings-page compatibility regression tests and expanded the test Obsidian mock so release validation covers the button styling API path.
 - Updated `manifest.json`, `package.json`, `versions.json`, README, task status, and website version copy for a `4.0.4` tag release.
 
 ## 4.0.3

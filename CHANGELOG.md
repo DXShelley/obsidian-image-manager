@@ -2,6 +2,13 @@
 
 # 更新日志
 
+## 4.0.8
+
+- 按当前 `minAppVersion` 使用 `ButtonComponent.setDestructive()` 和 `PluginSettingTab.update()`，移除已废弃设置页 API 的残留调用。
+- 将构建脚本的 Node 内置模块引用改为 `node:module`，并清理链接格式化与网站代码中的严格 lint 告警。
+- 补充设置页重置后调用 `update()` 的回归测试，并修正过时的发布说明措辞。
+- 同步更新 `manifest.json`、`package.json`、`versions.json`、README、任务状态与网站版本文案，准备以 `4.0.8` 发布。
+
 ## 4.0.7
 
 - 将“启用详细调试日志”从“转换与压缩”配置中移出，新增独立的“诊断日志”设置分组，避免日志开关被压缩规则区域淹没。
@@ -23,8 +30,8 @@
 
 ## 4.0.4
 
-- 修复旧版 Obsidian 中 `ButtonComponent.setDestructive()` 不存在时设置页渲染中断的问题，重置按钮会自动回退到 `setWarning()` 或 `mod-warning` 样式。
-- 补充设置页兼容性回归测试，并扩展测试用 Obsidian mock，使发布前验证覆盖旧版按钮 API 场景。
+- 修复设置页重置按钮样式兼容问题，避免按钮 API 差异导致设置页渲染中断。
+- 补充设置页兼容性回归测试，并扩展测试用 Obsidian mock，使发布前验证覆盖按钮样式 API 场景。
 - 同步更新 `manifest.json`、`package.json`、`versions.json`、README、任务状态与网站版本文案，准备以 `4.0.4` tag 重新发布。
 
 ## 4.0.3

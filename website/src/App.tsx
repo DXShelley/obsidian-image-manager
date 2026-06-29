@@ -1,16 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactElement } from 'react';
 import { getSiteConfig, type SiteLocale } from './config/site';
 
 function getPublicAssetUrl(path: string): string {
   return `${import.meta.env.BASE_URL}${path.replace(/^\/+/, '')}`;
 }
 
-function App(): JSX.Element {
+function getPageDocument(): Document {
+  const { document } = window;
+  return document;
+}
+
+function App(): ReactElement {
   const [locale, setLocale] = useState<SiteLocale>('zh-CN');
   const siteConfig = getSiteConfig(locale);
 
   useEffect(() => {
-    const pageDocument = globalThis.document;
+    const pageDocument = getPageDocument();
     pageDocument.documentElement.lang = locale;
     pageDocument.title = siteConfig.meta.title;
 
@@ -27,7 +32,7 @@ function App(): JSX.Element {
     }
 
     const animationFrame = window.requestAnimationFrame(() => {
-      globalThis.document.getElementById(targetId)?.scrollIntoView();
+      getPageDocument().getElementById(targetId)?.scrollIntoView();
     });
 
     return () => {

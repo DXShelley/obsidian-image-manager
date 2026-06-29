@@ -6581,7 +6581,8 @@ var LinkFormatter = class {
     while (commonIndex < fromParts.length && commonIndex < toParts.length && fromParts[commonIndex] === toParts[commonIndex]) {
       commonIndex += 1;
     }
-    return [...new Array(fromParts.length - commonIndex).fill(".."), ...toParts.slice(commonIndex)].join("/");
+    const parentSegments = Array.from({ length: fromParts.length - commonIndex }, () => "..");
+    return [...parentSegments, ...toParts.slice(commonIndex)].join("/");
   }
   formatWikiLink(path, options) {
     const parts = [path];
@@ -7238,7 +7239,7 @@ var ImageManagerSettingTab = class extends import_obsidian20.PluginSettingTab {
         await this.updateSettings((draft) => {
           draft.enableDebugLogging = value;
         });
-        this.display();
+        this.update();
       })
     );
     const editorSection = this.createSection(
@@ -7251,7 +7252,7 @@ var ImageManagerSettingTab = class extends import_obsidian20.PluginSettingTab {
         await this.updateSettings((draft) => {
           draft.enablePasteHandler = value;
         });
-        this.display();
+        this.update();
       })
     );
     new import_obsidian20.Setting(editorSection).setName(copy.settings.enableAutoDownloadImagesFromTextName).setDesc(copy.settings.enableAutoDownloadImagesFromTextDesc).addToggle(
@@ -7273,7 +7274,7 @@ var ImageManagerSettingTab = class extends import_obsidian20.PluginSettingTab {
         await this.updateSettings((draft) => {
           draft.enableContextMenu = value;
         });
-        this.display();
+        this.update();
       })
     );
     new import_obsidian20.Setting(editorSection).setName(copy.settings.enableImageAlignName).setDesc(copy.settings.enableImageAlignDesc).addToggle(
@@ -7341,32 +7342,18 @@ var ImageManagerSettingTab = class extends import_obsidian20.PluginSettingTab {
         await this.updateSettings((draft) => {
           draft.uiLanguage = value;
         });
-        this.display();
+        this.update();
       })
     );
     new import_obsidian20.Setting(actionWrap).addButton((button) => {
-      button.setButtonText(copy.header.reset);
-      this.styleDestructiveButton(button);
-      button.onClick(async () => {
+      button.setButtonText(copy.header.reset).setDestructive().onClick(async () => {
         await this.updateSettings((draft) => {
           Object.assign(draft, DEFAULT_SETTINGS);
         });
         new import_obsidian20.Notice(copy.header.resetNotice);
-        this.display();
+        this.update();
       });
     });
-  }
-  styleDestructiveButton(button) {
-    const compatibleButton = button;
-    if (typeof compatibleButton.setDestructive === "function") {
-      compatibleButton.setDestructive();
-      return;
-    }
-    if (typeof compatibleButton.setWarning === "function") {
-      compatibleButton.setWarning();
-      return;
-    }
-    button.buttonEl.addClass("mod-warning");
   }
   createSection(containerEl, title, description) {
     const section = containerEl.createDiv({ cls: "image-manager-settings-section" });
@@ -7473,7 +7460,7 @@ ${example.description}`;
         await this.updateSettings((draft) => {
           draft.enableNoteRenameSync = value;
         });
-        this.display();
+        this.update();
       })
     );
     const cards = this.getCompatibilityCards(settings);
@@ -7642,7 +7629,7 @@ ${example.description}`;
   }
   async applySettingValue(mutator) {
     await this.updateSettings(mutator);
-    this.display();
+    this.update();
   }
   getCopy() {
     return getSettingTabCopy(this.plugin.getSettings().uiLanguage);
