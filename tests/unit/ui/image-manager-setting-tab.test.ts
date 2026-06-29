@@ -30,14 +30,13 @@ describe('ImageManagerSettingTab', () => {
     vi.restoreAllMocks();
   });
 
-  it('renders when the Obsidian button API does not expose setDestructive', () => {
-    const setWarning = vi.fn();
+  it('styles the reset button as destructive', () => {
+    const setDestructive = vi.fn();
     vi.spyOn(Setting.prototype, 'addButton').mockImplementation(function (callback) {
       const button = {
-        buttonEl: { addClass: vi.fn() },
         setButtonText: vi.fn(() => button),
-        setWarning: vi.fn(() => {
-          setWarning();
+        setDestructive: vi.fn(() => {
+          setDestructive();
           return button;
         }),
         onClick: vi.fn(() => button)
@@ -48,24 +47,31 @@ describe('ImageManagerSettingTab', () => {
     });
 
     expect(() => createSettingTab().display()).not.toThrow();
-    expect(setWarning).toHaveBeenCalledTimes(1);
+    expect(setDestructive).toHaveBeenCalledTimes(1);
   });
 
-  it('falls back to the warning CSS class when no destructive button helpers exist', () => {
-    const addClass = vi.fn();
+  it('updates the settings tab after resetting settings', async () => {
+    let resetHandler: (() => Promise<void>) | undefined;
     vi.spyOn(Setting.prototype, 'addButton').mockImplementation(function (callback) {
       const button = {
-        buttonEl: { addClass },
         setButtonText: vi.fn(() => button),
-        onClick: vi.fn(() => button)
+        setDestructive: vi.fn(() => button),
+        onClick: vi.fn((handler: () => Promise<void>) => {
+          resetHandler = handler;
+          return button;
+        })
       };
 
       callback(button as never);
       return this;
     });
+    const update = vi.spyOn(ImageManagerSettingTab.prototype, 'update');
 
-    expect(() => createSettingTab().display()).not.toThrow();
-    expect(addClass).toHaveBeenCalledWith('mod-warning');
+    createSettingTab().display();
+
+    expect(resetHandler).toBeDefined();
+    await resetHandler?.();
+    expect(update).toHaveBeenCalledTimes(1);
   });
 
   it('renders debug logging in its own diagnostics section after conversion settings', () => {

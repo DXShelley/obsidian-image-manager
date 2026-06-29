@@ -111,6 +111,8 @@ export class PluginSettingTab {
     this.app = app;
     this.plugin = plugin;
   }
+
+  update(): void {}
 }
 
 export const Platform = {
@@ -177,13 +179,11 @@ export class Setting {
 
   addButton(callback: (button: {
     setButtonText: (text: string) => unknown;
-    setWarning: () => unknown;
     setDestructive: () => unknown;
     onClick: (handler: () => unknown) => unknown;
   }) => unknown): this {
     const button = {
       setButtonText: () => button,
-      setWarning: () => button,
       setDestructive: () => button,
       onClick: () => button
     };

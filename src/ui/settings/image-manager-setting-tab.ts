@@ -1,5 +1,5 @@
 import { Notice, PluginSettingTab, Setting } from 'obsidian';
-import type { App, ButtonComponent, TextAreaComponent } from 'obsidian';
+import type { App, TextAreaComponent } from 'obsidian';
 import { VariableResolver } from '@/services/variable-resolver';
 import type ImageManagerPlugin from '@/main';
 import {
@@ -411,7 +411,7 @@ export class ImageManagerSettingTab extends PluginSettingTab {
           await this.updateSettings((draft) => {
             draft.enableDebugLogging = value;
           });
-          this.display();
+          this.update();
         })
       );
 
@@ -429,7 +429,7 @@ export class ImageManagerSettingTab extends PluginSettingTab {
           await this.updateSettings((draft) => {
             draft.enablePasteHandler = value;
           });
-          this.display();
+          this.update();
         })
       );
 
@@ -467,7 +467,7 @@ export class ImageManagerSettingTab extends PluginSettingTab {
           await this.updateSettings((draft) => {
             draft.enableContextMenu = value;
           });
-          this.display();
+          this.update();
         })
       );
 
@@ -586,40 +586,22 @@ export class ImageManagerSettingTab extends PluginSettingTab {
             await this.updateSettings((draft) => {
               draft.uiLanguage = value as ImageManagerSettings['uiLanguage'];
             });
-            this.display();
+            this.update();
           })
       );
 
     new Setting(actionWrap).addButton((button) => {
-      button.setButtonText(copy.header.reset);
-      this.styleDestructiveButton(button);
-      button.onClick(async () => {
-        await this.updateSettings((draft) => {
-          Object.assign(draft, DEFAULT_SETTINGS);
+      button
+        .setButtonText(copy.header.reset)
+        .setDestructive()
+        .onClick(async () => {
+          await this.updateSettings((draft) => {
+            Object.assign(draft, DEFAULT_SETTINGS);
+          });
+          new Notice(copy.header.resetNotice);
+          this.update();
         });
-        new Notice(copy.header.resetNotice);
-        this.display();
-      });
     });
-  }
-
-  private styleDestructiveButton(button: ButtonComponent): void {
-    const compatibleButton = button as ButtonComponent & {
-      setDestructive?: () => ButtonComponent;
-      setWarning?: () => ButtonComponent;
-    };
-
-    if (typeof compatibleButton.setDestructive === 'function') {
-      compatibleButton.setDestructive();
-      return;
-    }
-
-    if (typeof compatibleButton.setWarning === 'function') {
-      compatibleButton.setWarning();
-      return;
-    }
-
-    button.buttonEl.addClass('mod-warning');
   }
 
   private createSection(containerEl: HTMLElement, title: string, description: string): HTMLElement {
@@ -755,7 +737,7 @@ export class ImageManagerSettingTab extends PluginSettingTab {
           await this.updateSettings((draft) => {
             draft.enableNoteRenameSync = value;
           });
-          this.display();
+          this.update();
         })
       );
 
@@ -963,7 +945,7 @@ export class ImageManagerSettingTab extends PluginSettingTab {
 
   private async applySettingValue(mutator: (draft: ImageManagerSettings) => void): Promise<void> {
     await this.updateSettings(mutator);
-    this.display();
+    this.update();
   }
 
   private getCopy(): ReturnType<typeof getSettingTabCopy> {

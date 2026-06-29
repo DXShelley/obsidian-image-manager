@@ -74,7 +74,8 @@ export class LinkFormatter {
       commonIndex += 1;
     }
 
-    return [...new Array<string>(fromParts.length - commonIndex).fill('..'), ...toParts.slice(commonIndex)].join('/');
+    const parentSegments = Array.from({ length: fromParts.length - commonIndex }, () => '..');
+    return [...parentSegments, ...toParts.slice(commonIndex)].join('/');
   }
 
   private formatWikiLink(path: string, options: LinkFormatOptions): string {

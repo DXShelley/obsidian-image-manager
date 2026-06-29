@@ -1,6 +1,6 @@
 {
   "name": "note-image-manager",
-  "version": "4.0.7",
+  "version": "4.0.8",
   "description": "Import, rename, convert, compress, edit, and recover note images safely.",
   "main": "main.js",
   "scripts": {

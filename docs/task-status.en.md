@@ -4,8 +4,8 @@
 
 ## Release
 
-- `v4.0.7` moves the detailed debug logging toggle into a dedicated "Diagnostic Logging" settings section instead of mixing it with conversion and compression settings.
-- Package metadata, manifest metadata, release workflow, marketing site, and user-facing documentation are aligned for the 4.0.7 release.
+- `v4.0.8` cleans up API, lint, and website typing warnings raised by Obsidian community review, and adds regression coverage for settings reset refresh.
+- Package metadata, manifest metadata, release workflow, marketing site, and user-facing documentation are aligned for the 4.0.8 release.
 
 ## Completed
 
