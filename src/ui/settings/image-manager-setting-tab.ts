@@ -323,18 +323,6 @@ export class ImageManagerSettingTab extends PluginSettingTab {
         })
       );
 
-    new Setting(convertSection)
-      .setName(copy.settings.enableDebugLoggingName)
-      .setDesc(copy.settings.enableDebugLoggingDesc)
-      .addToggle((toggle) =>
-        toggle.setValue(settings.enableDebugLogging).onChange(async (value) => {
-          await this.updateSettings((draft) => {
-            draft.enableDebugLogging = value;
-          });
-          this.display();
-        })
-      );
-
     const thresholdWrap = convertSection.createDiv({ cls: 'image-manager-settings-threshold' });
     new Setting(thresholdWrap)
       .setName(copy.settings.compressionThresholdKBName)
@@ -408,6 +396,24 @@ export class ImageManagerSettingTab extends PluginSettingTab {
         });
       }
     ).addClass('image-manager-settings-rule-examples');
+
+    const diagnosticsSection = this.createSection(
+      containerEl,
+      copy.sections.diagnostics.title,
+      copy.sections.diagnostics.description
+    );
+
+    new Setting(diagnosticsSection)
+      .setName(copy.settings.enableDebugLoggingName)
+      .setDesc(copy.settings.enableDebugLoggingDesc)
+      .addToggle((toggle) =>
+        toggle.setValue(settings.enableDebugLogging).onChange(async (value) => {
+          await this.updateSettings((draft) => {
+            draft.enableDebugLogging = value;
+          });
+          this.display();
+        })
+      );
 
     const editorSection = this.createSection(
       containerEl,

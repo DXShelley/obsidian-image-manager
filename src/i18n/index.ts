@@ -32,6 +32,7 @@ export interface SettingTabCopy {
   readonly sections: {
     readonly naming: { readonly title: string; readonly description: string };
     readonly convert: { readonly title: string; readonly description: string };
+    readonly diagnostics: { readonly title: string; readonly description: string };
     readonly editor: { readonly title: string; readonly description: string };
     readonly gallery: { readonly title: string; readonly description: string };
     readonly compatibility: { readonly title: string; readonly description: string };
@@ -417,6 +418,10 @@ const ZH_SETTINGS_TAB: SettingTabCopy = {
       title: '转换与压缩',
       description: '控制默认输出质量、自动转换与压缩策略。'
     },
+    diagnostics: {
+      title: '诊断日志',
+      description: '控制插件运行日志输出，用于排查命令执行、跳过和失败原因。'
+    },
     editor: {
       title: '粘贴与编辑',
       description: '控制粘贴接管、右键编辑和图片交互行为。'
@@ -642,6 +647,10 @@ const EN_SETTINGS_TAB: SettingTabCopy = {
     convert: {
       title: 'Convert And Compress',
       description: 'Control default output quality, auto-convert behavior, and compression rules.'
+    },
+    diagnostics: {
+      title: 'Diagnostic Logging',
+      description: 'Control plugin runtime logging for command execution, skips, and failures.'
     },
     editor: {
       title: 'Paste And Editing',

@@ -4,8 +4,8 @@
 
 ## Release
 
-- `v4.0.6` builds on the previous release with a plugin-owned detailed debug logging toggle, and command failure logs expose expandable `Error` stacks in the developer console.
-- Package metadata, manifest metadata, release workflow, marketing site, and user-facing documentation are aligned for the 4.0.6 release.
+- `v4.0.7` moves the detailed debug logging toggle into a dedicated "Diagnostic Logging" settings section instead of mixing it with conversion and compression settings.
+- Package metadata, manifest metadata, release workflow, marketing site, and user-facing documentation are aligned for the 4.0.7 release.
 
 ## Completed
 

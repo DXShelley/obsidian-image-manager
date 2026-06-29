@@ -67,4 +67,28 @@ describe('ImageManagerSettingTab', () => {
     expect(() => createSettingTab().display()).not.toThrow();
     expect(addClass).toHaveBeenCalledWith('mod-warning');
   });
+
+  it('renders debug logging in its own diagnostics section after conversion settings', () => {
+    const names: string[] = [];
+    vi.spyOn(Setting.prototype, 'setName').mockImplementation(function (name?: string) {
+      if (typeof name === 'string') {
+        names.push(name);
+      }
+      return this;
+    });
+
+    createSettingTab().display();
+
+    const convertIndex = names.indexOf('转换与压缩');
+    const thresholdIndex = names.indexOf('压缩阈值（KB）');
+    const diagnosticsIndex = names.indexOf('诊断日志');
+    const debugToggleIndex = names.indexOf('启用详细调试日志');
+    const editorIndex = names.indexOf('粘贴与编辑');
+
+    expect(convertIndex).toBeGreaterThanOrEqual(0);
+    expect(thresholdIndex).toBeGreaterThan(convertIndex);
+    expect(diagnosticsIndex).toBeGreaterThan(thresholdIndex);
+    expect(debugToggleIndex).toBeGreaterThan(diagnosticsIndex);
+    expect(editorIndex).toBeGreaterThan(debugToggleIndex);
+  });
 });

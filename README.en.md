@@ -9,7 +9,7 @@
 
 `Note Image Manager` is an image-management plugin for Obsidian. It keeps image import, naming, conversion, compression, lightweight editing, gallery browsing, and recovery in one controlled workflow.
 
-Current version: `4.0.6`<br>
+Current version: `4.0.7`<br>
 Minimum Obsidian version: `1.13.1`<br>
 Release target: desktop plugin, with `isDesktopOnly` set to `true` in `manifest.json`
 

@@ -108,6 +108,10 @@ var ZH_SETTINGS_TAB = {
       title: "\u8F6C\u6362\u4E0E\u538B\u7F29",
       description: "\u63A7\u5236\u9ED8\u8BA4\u8F93\u51FA\u8D28\u91CF\u3001\u81EA\u52A8\u8F6C\u6362\u4E0E\u538B\u7F29\u7B56\u7565\u3002"
     },
+    diagnostics: {
+      title: "\u8BCA\u65AD\u65E5\u5FD7",
+      description: "\u63A7\u5236\u63D2\u4EF6\u8FD0\u884C\u65E5\u5FD7\u8F93\u51FA\uFF0C\u7528\u4E8E\u6392\u67E5\u547D\u4EE4\u6267\u884C\u3001\u8DF3\u8FC7\u548C\u5931\u8D25\u539F\u56E0\u3002"
+    },
     editor: {
       title: "\u7C98\u8D34\u4E0E\u7F16\u8F91",
       description: "\u63A7\u5236\u7C98\u8D34\u63A5\u7BA1\u3001\u53F3\u952E\u7F16\u8F91\u548C\u56FE\u7247\u4EA4\u4E92\u884C\u4E3A\u3002"
@@ -331,6 +335,10 @@ var EN_SETTINGS_TAB = {
     convert: {
       title: "Convert And Compress",
       description: "Control default output quality, auto-convert behavior, and compression rules."
+    },
+    diagnostics: {
+      title: "Diagnostic Logging",
+      description: "Control plugin runtime logging for command execution, skips, and failures."
     },
     editor: {
       title: "Paste And Editing",
@@ -7159,14 +7167,6 @@ var ImageManagerSettingTab = class extends import_obsidian20.PluginSettingTab {
         });
       })
     );
-    new import_obsidian20.Setting(convertSection).setName(copy.settings.enableDebugLoggingName).setDesc(copy.settings.enableDebugLoggingDesc).addToggle(
-      (toggle) => toggle.setValue(settings.enableDebugLogging).onChange(async (value) => {
-        await this.updateSettings((draft) => {
-          draft.enableDebugLogging = value;
-        });
-        this.display();
-      })
-    );
     const thresholdWrap = convertSection.createDiv({ cls: "image-manager-settings-threshold" });
     new import_obsidian20.Setting(thresholdWrap).setName(copy.settings.compressionThresholdKBName).setDesc(copy.settings.compressionThresholdKBDesc).addText((text) => {
       text.inputEl.addClass("image-manager-settings-threshold__input");
@@ -7228,6 +7228,19 @@ var ImageManagerSettingTab = class extends import_obsidian20.PluginSettingTab {
         });
       }
     ).addClass("image-manager-settings-rule-examples");
+    const diagnosticsSection = this.createSection(
+      containerEl,
+      copy.sections.diagnostics.title,
+      copy.sections.diagnostics.description
+    );
+    new import_obsidian20.Setting(diagnosticsSection).setName(copy.settings.enableDebugLoggingName).setDesc(copy.settings.enableDebugLoggingDesc).addToggle(
+      (toggle) => toggle.setValue(settings.enableDebugLogging).onChange(async (value) => {
+        await this.updateSettings((draft) => {
+          draft.enableDebugLogging = value;
+        });
+        this.display();
+      })
+    );
     const editorSection = this.createSection(
       containerEl,
       copy.sections.editor.title,
