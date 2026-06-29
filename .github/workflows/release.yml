@@ -15,6 +15,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Verify tag was created from the full source tree
+        run: |
+          missing=0
+          for file in package.json package-lock.json tsconfig.json esbuild.config.mjs src/main.ts; do
+            if [ ! -f "$file" ]; then
+              echo "::error file=$file::Release tags must point to the develop release commit with the full source tree. Missing $file in this tag checkout."
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            echo "Do not tag the slim main release-surface commit. Create the version tag on develop, then sync release-surface files to main."
+            exit 1
+          fi
       - uses: actions/setup-node@v4
         with:
           node-version: 22
