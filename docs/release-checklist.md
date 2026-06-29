@@ -13,9 +13,13 @@
 
 - `manifest.json.version`、`package.json.version`、`versions.json`、网站版本文案保持一致。
 - Git tag 必须与 `manifest.json.version` 完全一致，例如 `4.0.4`，不要写成 `v4.0.4`。
+- 因为 Release workflow 需要完整源码树和 `package-lock.json`，tag 必须打在 `develop` 的发布提交上；不要把 tag 打在精简的 `main` 发布面提交上。
 - GitHub Release 附件必须包含：`manifest.json`、`main.js`、`styles.css`、`note-image-manager.zip`。
 - Release 前必须重新执行 `npm run validate` 与 `npm run build`。
-- 发布工作流建议自动校验 tag 与 `manifest.json.version` 一致，并自动上传附件。
+- 推送 tag 后必须确认 `gh release view <version>` 能看到公开 Release 和四个附件；只推送 tag 不等于已经发布 GitHub Release。
+- 如果 `gh run list` 显示 Release workflow 失败，先用 `gh run view <run-id> --log-failed` 看失败原因，再修复或手工补发 Release。
+- 从 `develop` 同步发布面文件到 `main` 前，先检查 `main` 是否有尚未回流到 `develop` 的发布面热修复，避免覆盖网站资源路径、稳定 asset 文件名等只在 `main` 修过的问题。
+- 发布工作流应自动校验 tag 与 `manifest.json.version` 一致，并自动上传附件。
 
 ## 支持与付款
 

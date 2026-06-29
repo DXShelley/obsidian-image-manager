@@ -38,9 +38,13 @@
 
 ## 发布与审核
 
-- 发布流程默认在 `develop` 验证并提交，再合并到 `main`，创建 tag，推送 `develop`、`main` 和 tag，最后切回 `develop`。
+- 本项目的 `main` 是精简发布面，不包含 `package-lock.json`、源码、测试和构建配置；Release workflow 会在 tag checkout 后执行 `npm ci`、`npm run validate` 与 `npm run build`，因此发布 tag 必须打在 `develop` 的完整源码提交上，不能打在 `main` 发布面提交上。
+- 发布流程默认在 `develop` 验证并提交，给 `develop` 的发布提交创建 tag，推送 `develop` 和 tag 触发 Release workflow；再把必要发布面文件同步到 `main`、提交并推送，最后切回 `develop`。
 - Git tag 必须等于 `manifest.json.version`，不使用 `v` 前缀。
 - GitHub Release 附件固定为 `manifest.json`、`main.js`、`styles.css`、`note-image-manager.zip`；zip 文件名不带版本号。
+- 发布前必须检查 `gh release view <version>` 和 Release workflow；如果 `manifest.json.version` 已更新但 GitHub Release 不存在，Obsidian 社区后台会提示 “manifest points at version ..., but no GitHub release with that version has been published yet”。
+- 如果 Release workflow 因 tag 打在 `main` 等原因失败，可临时用 `zip -9 note-image-manager.zip manifest.json main.js styles.css` 和 `gh release create <version> manifest.json main.js styles.css note-image-manager.zip --title <version> --generate-notes` 补发 Release；之后仍要修正文档和发布流程，避免下次重复。
+- `main` 上可能存在只影响发布面的热修复；从 `develop` 同步发布文件到 `main` 前，先比较 `git diff main develop -- <发布面文件>`，必要时先把 `main` 的热修复补回 `develop`，避免发布回退，例如网站支持图片 URL 的 `BASE_URL` 处理和 Vite 稳定 asset 文件名配置。
 - `manifest.json.description` 不写 `Obsidian`；避免直接 style 赋值和原生 heading；`minAppVersion` 要与实际 API 使用一致。
 - `isDesktopOnly` 只保留必要标注，必须与 Node / Electron API 依赖保持一致。
 

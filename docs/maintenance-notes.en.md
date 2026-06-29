@@ -38,9 +38,13 @@ This file records durable maintenance decisions distilled from the visible, non-
 
 ## Release And Review
 
-- The default release flow is: validate and commit on `develop`, merge to `main`, create the tag, push `develop`, `main`, and the tag, then switch back to `develop`.
+- In this project, `main` is a slim release surface and does not contain `package-lock.json`, source files, tests, or build configuration. The Release workflow checks out the tag and runs `npm ci`, `npm run validate`, and `npm run build`, so release tags must point to the complete source commit on `develop`, not to the `main` release-surface commit.
+- The default release flow is: validate and commit on `develop`, create the tag on the `develop` release commit, push `develop` and the tag to trigger the Release workflow, then sync the required release-surface files to `main`, commit and push `main`, and switch back to `develop`.
 - The Git tag must exactly equal `manifest.json.version` and must not use a `v` prefix.
 - GitHub Release assets are fixed: `manifest.json`, `main.js`, `styles.css`, and `note-image-manager.zip`; the zip filename does not include the version.
+- Before handing the release back to Obsidian review, check `gh release view <version>` and the Release workflow. If `manifest.json.version` has advanced but the GitHub Release is missing, the Obsidian dashboard reports: "manifest points at version ..., but no GitHub release with that version has been published yet".
+- If the Release workflow fails because the tag was placed on `main` or another incomplete tree, temporarily publish the release with `zip -9 note-image-manager.zip manifest.json main.js styles.css` and `gh release create <version> manifest.json main.js styles.css note-image-manager.zip --title <version> --generate-notes`; then fix the documented release flow so the failure does not repeat.
+- `main` may contain release-surface hotfixes. Before syncing release files from `develop` to `main`, compare `git diff main develop -- <release-surface files>` and backport any `main` hotfixes to `develop` first to avoid regressions, such as website support-image `BASE_URL` handling and stable Vite asset filenames.
 - `manifest.json.description` should not mention `Obsidian`; avoid direct style assignment and native heading creation; keep `minAppVersion` aligned with actual API usage.
 - Keep `isDesktopOnly` only when required, and make it match Node / Electron API dependencies.
 

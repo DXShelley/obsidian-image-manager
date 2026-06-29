@@ -13,8 +13,12 @@
 
 - Keep `manifest.json.version`, `package.json.version`, `versions.json`, and website version copy aligned.
 - The Git tag must exactly match `manifest.json.version`, for example `4.0.4`, without a `v` prefix.
+- Because the Release workflow needs the full source tree and `package-lock.json`, the tag must point to the release commit on `develop`; do not tag the slim `main` release-surface commit.
 - GitHub Release assets must include `manifest.json`, `main.js`, `styles.css`, and `note-image-manager.zip`.
 - Re-run `npm run validate` and `npm run build` before cutting the release.
+- After pushing the tag, confirm that `gh release view <version>` shows a public Release with all four assets; pushing a tag is not the same as publishing a GitHub Release.
+- If `gh run list` shows a failed Release workflow, inspect it with `gh run view <run-id> --log-failed` before deciding whether to fix the workflow or publish the Release manually.
+- Before syncing release-surface files from `develop` to `main`, check whether `main` has release-surface hotfixes that have not been backported to `develop`, so website asset paths, stable asset filenames, or similar fixes are not overwritten.
 - The release workflow should verify tag/version consistency and upload the required assets automatically.
 
 ## Support And Payments
