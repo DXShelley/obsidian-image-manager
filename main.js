@@ -7239,7 +7239,7 @@ var ImageManagerSettingTab = class extends import_obsidian20.PluginSettingTab {
         await this.updateSettings((draft) => {
           draft.enableDebugLogging = value;
         });
-        this.update();
+        this.refreshSettingsTab();
       })
     );
     const editorSection = this.createSection(
@@ -7252,7 +7252,7 @@ var ImageManagerSettingTab = class extends import_obsidian20.PluginSettingTab {
         await this.updateSettings((draft) => {
           draft.enablePasteHandler = value;
         });
-        this.update();
+        this.refreshSettingsTab();
       })
     );
     new import_obsidian20.Setting(editorSection).setName(copy.settings.enableAutoDownloadImagesFromTextName).setDesc(copy.settings.enableAutoDownloadImagesFromTextDesc).addToggle(
@@ -7274,7 +7274,7 @@ var ImageManagerSettingTab = class extends import_obsidian20.PluginSettingTab {
         await this.updateSettings((draft) => {
           draft.enableContextMenu = value;
         });
-        this.update();
+        this.refreshSettingsTab();
       })
     );
     new import_obsidian20.Setting(editorSection).setName(copy.settings.enableImageAlignName).setDesc(copy.settings.enableImageAlignDesc).addToggle(
@@ -7342,18 +7342,35 @@ var ImageManagerSettingTab = class extends import_obsidian20.PluginSettingTab {
         await this.updateSettings((draft) => {
           draft.uiLanguage = value;
         });
-        this.update();
+        this.refreshSettingsTab();
       })
     );
     new import_obsidian20.Setting(actionWrap).addButton((button) => {
-      button.setButtonText(copy.header.reset).setDestructive().onClick(async () => {
+      this.styleDestructiveButton(button);
+      button.setButtonText(copy.header.reset).onClick(async () => {
         await this.updateSettings((draft) => {
           Object.assign(draft, DEFAULT_SETTINGS);
         });
         new import_obsidian20.Notice(copy.header.resetNotice);
-        this.update();
+        this.refreshSettingsTab();
       });
     });
+  }
+  refreshSettingsTab() {
+    const update = Reflect.get(this, "update");
+    if (typeof update === "function") {
+      update.call(this);
+      return;
+    }
+    this.display();
+  }
+  styleDestructiveButton(button) {
+    const setDestructive = Reflect.get(button, "setDestructive");
+    if (typeof setDestructive === "function") {
+      setDestructive.call(button);
+      return;
+    }
+    button.buttonEl.addClass("mod-warning");
   }
   createSection(containerEl, title, description) {
     const section = containerEl.createDiv({ cls: "image-manager-settings-section" });
@@ -7460,7 +7477,7 @@ ${example.description}`;
         await this.updateSettings((draft) => {
           draft.enableNoteRenameSync = value;
         });
-        this.update();
+        this.refreshSettingsTab();
       })
     );
     const cards = this.getCompatibilityCards(settings);
@@ -7504,9 +7521,9 @@ ${example.description}`;
     await this.plugin.updateSettings(mutator);
   }
   setSettingErrorMessage(setting, message) {
-    const settingWithOptionalError = setting;
-    if (typeof settingWithOptionalError.setErrorMessage === "function") {
-      settingWithOptionalError.setErrorMessage(message);
+    const setErrorMessage = Reflect.get(setting, "setErrorMessage");
+    if (typeof setErrorMessage === "function") {
+      setErrorMessage.call(setting, message);
     }
   }
   getCompatibilityCards(settings) {
@@ -7629,7 +7646,7 @@ ${example.description}`;
   }
   async applySettingValue(mutator) {
     await this.updateSettings(mutator);
-    this.update();
+    this.refreshSettingsTab();
   }
   getCopy() {
     return getSettingTabCopy(this.plugin.getSettings().uiLanguage);

@@ -2,6 +2,13 @@
 
 # Changelog
 
+## 4.0.9
+
+- Lowered `minAppVersion` to `1.12.4` so the plugin can install on Obsidian 1.12.4 and newer.
+- Added runtime compatibility fallbacks for `PluginSettingTab.update()`, `ButtonComponent.setDestructive()`, and `Setting.setErrorMessage()`; older Obsidian builds fall back to `display()`, `mod-warning`, or skipping inline error messages.
+- Added settings-page regression coverage for older API paths without `setDestructive()`, `update()`, or `setErrorMessage()`.
+- Updated `manifest.json`, `package.json`, `versions.json`, README files, task status, and website version copy for the `4.0.9` release.
+
 ## 4.0.8
 
 - Aligned the settings tab with the current `minAppVersion` by using `ButtonComponent.setDestructive()` and `PluginSettingTab.update()`, removing leftover deprecated settings API calls.

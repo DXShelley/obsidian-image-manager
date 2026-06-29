@@ -2,6 +2,13 @@
 
 # 更新日志
 
+## 4.0.9
+
+- 将 `minAppVersion` 下调到 `1.12.4`，让插件可安装在 Obsidian 1.12.4 及以上版本。
+- 为设置页的 `PluginSettingTab.update()`、`ButtonComponent.setDestructive()` 和 `Setting.setErrorMessage()` 增加运行时兼容兜底，旧版 Obsidian 会回退到 `display()`、`mod-warning` 样式或跳过内联错误提示。
+- 补充设置页旧版 API fallback 回归测试，覆盖无 `setDestructive()`、无 `update()`、无 `setErrorMessage()` 的场景。
+- 同步更新 `manifest.json`、`package.json`、`versions.json`、README、任务状态与网站版本文案，准备以 `4.0.9` 发布。
+
 ## 4.0.8
 
 - 按当前 `minAppVersion` 使用 `ButtonComponent.setDestructive()` 和 `PluginSettingTab.update()`，移除已废弃设置页 API 的残留调用。
