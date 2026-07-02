@@ -165,9 +165,9 @@ var ZH_SETTINGS_TAB = {
     renameImagesOnRelocateName: "\u7B14\u8BB0\u6539\u540D\u540E\u540C\u6B65\u91CD\u547D\u540D\u56FE\u7247",
     renameImagesOnRelocateDesc: "\u4EC5\u5728\u53D7\u7BA1\u76EE\u5F55\u540C\u6B65\u5F00\u542F\u65F6\u751F\u6548\u3002",
     deleteEmptyFoldersName: "\u5220\u9664\u7A7A\u56FE\u7247\u6587\u4EF6\u5939",
-    deleteEmptyFoldersDesc: "\u53EA\u6E05\u7406\u56FE\u7247\u9644\u4EF6\u76EE\u5F55\u4E2D\u56E0\u8FC1\u79FB\u6216\u5220\u9664\u800C\u7559\u4E0B\u7684\u7A7A\u76EE\u5F55\u3002",
+    deleteEmptyFoldersDesc: "\u6E05\u7406\u8FC1\u79FB\u6216\u5220\u9664\u540E\u7559\u4E0B\u7684\u7A7A\u56FE\u7247\u76EE\u5F55\uFF1B\u5220\u9664 md \u540E\u4EC5\u81EA\u52A8\u6536\u655B\u6309\u7B14\u8BB0\u540D\u72EC\u5360\u7684\u53D7\u7BA1\u76EE\u5F55\u3002",
     deleteOrphanImagesName: "\u5220\u9664\u5B64\u7ACB\u56FE\u7247",
-    deleteOrphanImagesDesc: "\u6267\u884C\u201C\u66F4\u65B0\u56FE\u7247\u94FE\u63A5\u4E0E\u76EE\u5F55\u201D\u65F6\uFF0C\u987A\u5E26\u6E05\u7406\u5F53\u524D\u8303\u56F4\u5185\u672A\u88AB\u5F15\u7528\u7684\u56FE\u7247\u3002",
+    deleteOrphanImagesDesc: "\u6267\u884C\u201C\u66F4\u65B0\u56FE\u7247\u94FE\u63A5\u4E0E\u76EE\u5F55\u201D\u65F6\uFF0C\u6E05\u7406\u5F53\u524D\u8303\u56F4\u5185\u672A\u88AB md \u5F15\u7528\u7684\u56FE\u7247\uFF1B\u56FA\u5B9A\u6216\u5171\u4EAB\u76EE\u5F55\u9700\u8C28\u614E\u5F00\u542F\u3002",
     defaultQualityName: "\u9ED8\u8BA4\u5904\u7406\u8D28\u91CF",
     defaultQualityDesc: "\u7528\u4E8E\u8F6C\u6362\u3001\u65CB\u8F6C\u3001\u7FFB\u8F6C\u548C\u7F29\u653E\u3002",
     compressionQualityName: "\u538B\u7F29\u8D28\u91CF",
@@ -393,9 +393,9 @@ var EN_SETTINGS_TAB = {
     renameImagesOnRelocateName: "Rename images when notes move or rename",
     renameImagesOnRelocateDesc: "Applies only when managed-folder sync is enabled.",
     deleteEmptyFoldersName: "Delete empty image folders",
-    deleteEmptyFoldersDesc: "Only removes empty folders left behind inside managed image directories.",
+    deleteEmptyFoldersDesc: "Removes empty image folders left after moves or deletes; note deletion auto-cleanup only targets note-scoped managed folders.",
     deleteOrphanImagesName: "Delete orphan images",
-    deleteOrphanImagesDesc: "Also removes unreferenced images in scope when running link and directory updates.",
+    deleteOrphanImagesDesc: "Removes images not referenced by Markdown notes when running link and directory updates; use care with fixed or shared folders.",
     defaultQualityName: "Default processing quality",
     defaultQualityDesc: "Used by convert, rotate, flip, and resize operations.",
     compressionQualityName: "Compression quality",
@@ -696,7 +696,8 @@ var ZH_UI = {
     rotateActiveImage: "\u65CB\u8F6C\u5F53\u524D\u56FE\u7247 90 \u5EA6",
     flipActiveImageHorizontal: "\u6C34\u5E73\u7FFB\u8F6C\u5F53\u524D\u56FE\u7247",
     resizeActiveImage: "\u7F29\u653E\u5F53\u524D\u56FE\u7247\u5230 1920px",
-    syncManagedImages: (noteName) => `\u540C\u6B65\u7B14\u8BB0\u8FC1\u79FB\u56FE\u7247 ${noteName}`
+    syncManagedImages: (noteName) => `\u540C\u6B65\u7B14\u8BB0\u8FC1\u79FB\u56FE\u7247 ${noteName}`,
+    cleanupDeletedNoteImages: (noteName) => `\u6E05\u7406\u5DF2\u5220\u9664\u7B14\u8BB0\u56FE\u7247 ${noteName}`
   }
 };
 var EN_UI = {
@@ -801,7 +802,8 @@ var EN_UI = {
     rotateActiveImage: "Rotate current image 90\xB0",
     flipActiveImageHorizontal: "Flip current image horizontally",
     resizeActiveImage: "Resize current image to 1920px",
-    syncManagedImages: (noteName) => `Sync managed images for ${noteName}`
+    syncManagedImages: (noteName) => `Sync managed images for ${noteName}`,
+    cleanupDeletedNoteImages: (noteName) => `Clean up images for deleted note ${noteName}`
   }
 };
 var ZH_NOTICES = {
@@ -3889,6 +3891,8 @@ var GalleryFeature = class {
 
 // src/features/preview/preview-feature.ts
 var import_obsidian14 = require("obsidian");
+var import_state = require("@codemirror/state");
+var import_view = require("@codemirror/view");
 
 // src/utils/link-resolution.ts
 function getParsedLinkResolutionCandidates(parsed) {
@@ -4148,6 +4152,72 @@ var PreviewFeature = class {
         });
       }
     });
+    context.plugin.registerEditorExtension(
+      import_state.Prec.highest(
+        import_view.EditorView.domEventHandlers({
+          click: (event, view) => this.handleEditorImageOpen(context, event, view),
+          dblclick: (event, view) => this.handleEditorImageDoubleClick(context, event, view)
+        })
+      )
+    );
+  }
+  handleEditorImageOpen(context, event, view) {
+    return this.openEditorRenderedImageGallery(context, event, view);
+  }
+  handleEditorImageDoubleClick(context, event, view) {
+    return this.openEditorRenderedImageGallery(context, event, view);
+  }
+  openEditorRenderedImageGallery(context, event, view) {
+    const target = this.resolveEditorImageTarget(context, event, view);
+    if (!target) {
+      return void 0;
+    }
+    const settings = context.services.settings.getSettings();
+    if (!settings.enableGallery) {
+      showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).galleryDisabled);
+      return void 0;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    void openSingleImageGallery(context, target.imageFile, target.sourceNote, {
+      lightboxCloseBehavior: "close-modal"
+    });
+    return true;
+  }
+  resolveEditorImageTarget(context, event, view) {
+    const sourceNote = this.resolveEditorSourceNote(context, view);
+    if (!sourceNote) {
+      return null;
+    }
+    const rawTargets = this.getRenderedEditorImageTargets(event);
+    for (const rawTarget of new Set(rawTargets)) {
+      const imageFile = this.resolveImageFileFromRawTarget(context, rawTarget, sourceNote.path);
+      if (imageFile) {
+        return { imageFile, sourceNote };
+      }
+    }
+    return null;
+  }
+  resolveEditorSourceNote(context, view) {
+    const info = view.state.field(import_obsidian14.editorInfoField, false);
+    const file = this.getMarkdownFileFromInfo(info);
+    if (file) {
+      return file;
+    }
+    const activeView = context.app.workspace.getActiveViewOfType(import_obsidian14.MarkdownView);
+    return this.getMarkdownFileFromInfo(activeView != null ? activeView : void 0);
+  }
+  getMarkdownFileFromInfo(info) {
+    const file = info == null ? void 0 : info.file;
+    return file instanceof import_obsidian14.TFile && file.extension.toLowerCase() === "md" ? file : null;
+  }
+  getRenderedEditorImageTargets(event) {
+    const candidates = getRenderedImageCandidateElements(event);
+    const targets = [];
+    for (const candidate of candidates) {
+      targets.push(...getRenderedImageTargetValues(candidate));
+    }
+    return targets;
   }
   registerExternalImageContextMenu(context, sectionElement, markdownContext, image, sourceNote) {
     const externalSource = this.getImportableExternalImageSource(image);
@@ -4208,9 +4278,12 @@ var PreviewFeature = class {
     if (!rawTarget) {
       return null;
     }
+    return this.resolveImageFileFromRawTarget(context, rawTarget, markdownContext.sourcePath);
+  }
+  resolveImageFileFromRawTarget(context, rawTarget, sourcePath) {
     for (const candidate of getRawLinkResolutionCandidates(rawTarget)) {
-      const target = context.app.metadataCache.getFirstLinkpathDest(candidate, markdownContext.sourcePath);
-      if (target instanceof import_obsidian14.TFile) {
+      const target = context.app.metadataCache.getFirstLinkpathDest(candidate, sourcePath);
+      if (target instanceof import_obsidian14.TFile && context.services.fileManager.isImageFile(target)) {
         return target;
       }
     }
@@ -4276,6 +4349,93 @@ var PreviewFeature = class {
     return 1;
   }
 };
+function getElementAttributeValues(element, attributes) {
+  if (!element) {
+    return [];
+  }
+  return attributes.map((attribute) => {
+    var _a;
+    return (_a = element.getAttribute(attribute)) == null ? void 0 : _a.trim();
+  }).filter((value) => Boolean(value));
+}
+function getRenderedImageCandidateElements(event) {
+  var _a;
+  const candidates = /* @__PURE__ */ new Set();
+  const elements = getEventPathElements(event);
+  const target = (_a = elements[0]) != null ? _a : null;
+  for (const element of elements) {
+    addRenderedImageCandidate(candidates, element);
+    for (const selector of ["img", ".internal-embed", ".image-embed"]) {
+      const closest = element.closest(selector);
+      if (closest) {
+        addRenderedImageCandidate(candidates, closest);
+      }
+    }
+    if (element === target || isImageWidgetContainer(element)) {
+      addRenderedImageDescendants(candidates, element);
+      addRenderedImageSiblingCandidates(candidates, element);
+    }
+  }
+  return [...candidates];
+}
+function getEventPathElements(event) {
+  var _a, _b;
+  const elements = [];
+  const path = (_b = (_a = event.composedPath) == null ? void 0 : _a.call(event)) != null ? _b : [];
+  for (const item of path) {
+    if (item instanceof Element) {
+      elements.push(item);
+    }
+  }
+  if (event.target instanceof Element && !elements.includes(event.target)) {
+    elements.unshift(event.target);
+  }
+  return elements;
+}
+function addRenderedImageCandidate(candidates, element) {
+  if (isRenderedImageElement(element)) {
+    candidates.add(element);
+  }
+}
+function isRenderedImageElement(element) {
+  return element.matches("img, .internal-embed, .image-embed");
+}
+function isImageWidgetContainer(element) {
+  return element.matches(".cm-widgetBuffer, .cm-embed-block, .cm-line, .internal-embed, .image-embed");
+}
+function addRenderedImageDescendants(candidates, element) {
+  for (const descendant of element.querySelectorAll("img, .internal-embed, .image-embed")) {
+    addRenderedImageCandidate(candidates, descendant);
+  }
+}
+function addRenderedImageSiblingCandidates(candidates, element) {
+  for (const sibling of [element.previousElementSibling, element.nextElementSibling]) {
+    if (!sibling) {
+      continue;
+    }
+    addRenderedImageCandidate(candidates, sibling);
+    addRenderedImageDescendants(candidates, sibling);
+  }
+}
+function getRenderedImageTargetValues(element) {
+  if (element.matches("img")) {
+    return [
+      ...getElementAttributeValues(element.closest(".internal-embed, .image-embed"), [
+        "src",
+        "data-src",
+        "data-path",
+        "alt",
+        "aria-label"
+      ]),
+      ...getElementAttributeValues(element, ["data-image-manager-path", "data-path", "alt", "title", "src"])
+    ];
+  }
+  const image = element.querySelector("img");
+  return [
+    ...getElementAttributeValues(element, ["src", "data-src", "data-path", "alt", "aria-label"]),
+    ...getElementAttributeValues(image, ["data-image-manager-path", "data-path", "alt", "title", "src"])
+  ];
+}
 
 // src/features/recovery/recovery-feature.ts
 var import_obsidian15 = require("obsidian");
@@ -4352,20 +4512,37 @@ var RecoveryFeature = class {
 
 // src/features/rename/rename-feature.ts
 var import_obsidian16 = require("obsidian");
+var NOTE_DELETE_CLEANUP_DEBOUNCE_MS = 300;
+var METADATA_RESOLVED_WAIT_TIMEOUT_MS = 1200;
 var RenameFeature = class {
   constructor() {
     __publicField(this, "id", "rename");
     __publicField(this, "name", "Rename and Relocation");
     __publicField(this, "summary", "Name pasted images from variables and sync managed folders when notes move or rename.");
     __publicField(this, "state", "implemented");
+    __publicField(this, "pendingDeletedNoteCleanups", /* @__PURE__ */ new Map());
+    __publicField(this, "cleanupTimer", null);
+    __publicField(this, "cleanupInProgress", false);
   }
   async register(context) {
     context.plugin.registerEvent(
       context.app.vault.on("rename", (file, oldPath) => {
-        if (!(file instanceof import_obsidian16.TFile) || file.extension !== "md") {
+        if (!(file instanceof import_obsidian16.TFile) || file.extension.toLowerCase() !== "md") {
           return;
         }
         void this.syncManagedImagesForNote(context, file, oldPath);
+      })
+    );
+    context.plugin.registerEvent(
+      context.app.vault.on("delete", (file) => {
+        if (!(file instanceof import_obsidian16.TFile) || file.extension.toLowerCase() !== "md") {
+          return;
+        }
+        const target = context.services.fileManager.getDeletedNoteManagedCleanupTarget(file.path);
+        if (!target) {
+          return;
+        }
+        this.scheduleDeletedNoteCleanup(context, target);
       })
     );
   }
@@ -4410,6 +4587,116 @@ var RenameFeature = class {
       });
       new import_obsidian16.Notice(getNoticeCopy(context.services.settings.getSettings().uiLanguage).failedToSyncManagedImages);
     }
+  }
+  scheduleDeletedNoteCleanup(context, target) {
+    context.services.logger.refreshMode("note-delete-cleanup");
+    const settings = context.services.settings.getSettings();
+    if (!settings.deleteOrphanImages && !settings.deleteEmptyFolders) {
+      context.services.logger.debug("Skipped deleted note image cleanup because orphan image and empty folder cleanup are disabled", {
+        notePath: target.notePath,
+        managedFolderPath: target.managedFolderPath
+      });
+      return;
+    }
+    this.pendingDeletedNoteCleanups.set(target.managedFolderPath, target);
+    if (this.cleanupTimer !== null) {
+      window.clearTimeout(this.cleanupTimer);
+    }
+    this.cleanupTimer = window.setTimeout(() => {
+      this.cleanupTimer = null;
+      void this.flushDeletedNoteCleanupQueue(context);
+    }, NOTE_DELETE_CLEANUP_DEBOUNCE_MS);
+  }
+  async flushDeletedNoteCleanupQueue(context) {
+    if (this.cleanupInProgress) {
+      return;
+    }
+    const tasks = [...this.pendingDeletedNoteCleanups.values()];
+    this.pendingDeletedNoteCleanups.clear();
+    if (tasks.length === 0) {
+      return;
+    }
+    this.cleanupInProgress = true;
+    try {
+      const metadataResolved = await this.waitForVaultCleanupSettle(context);
+      const deletedNotePaths = new Set(tasks.map((task) => task.notePath));
+      for (const task of tasks) {
+        await this.cleanupManagedImagesForDeletedNote(context, task, deletedNotePaths, metadataResolved);
+      }
+    } catch (error) {
+      console.error("Note Image Manager failed to cleanup managed images after note delete", error);
+      context.services.logger.error("Deleted note image cleanup failed", error);
+      new import_obsidian16.Notice(getNoticeCopy(context.services.settings.getSettings().uiLanguage).orphanCleanupFailed);
+    } finally {
+      this.cleanupInProgress = false;
+      if (this.pendingDeletedNoteCleanups.size > 0) {
+        this.scheduleFlushDeletedNoteCleanupQueue(context);
+      }
+    }
+  }
+  scheduleFlushDeletedNoteCleanupQueue(context) {
+    if (this.cleanupTimer !== null) {
+      window.clearTimeout(this.cleanupTimer);
+    }
+    this.cleanupTimer = window.setTimeout(() => {
+      this.cleanupTimer = null;
+      void this.flushDeletedNoteCleanupQueue(context);
+    }, NOTE_DELETE_CLEANUP_DEBOUNCE_MS);
+  }
+  async cleanupManagedImagesForDeletedNote(context, task, deletedNotePaths, metadataResolved) {
+    try {
+      context.services.logger.debug("Starting deleted note image cleanup", {
+        notePath: task.notePath,
+        managedFolderPath: task.managedFolderPath
+      });
+      const result = await context.services.recovery.runTransaction(
+        {
+          label: getUiCopy(context.services.settings.getSettings().uiLanguage).transactions.cleanupDeletedNoteImages(
+            task.noteName
+          ),
+          trigger: "note-delete-cleanup",
+          scope: "auto"
+        },
+        async () => context.services.fileManager.cleanupManagedImagesForDeletedNotePath(task.notePath, deletedNotePaths, {
+          allowImageDeletion: metadataResolved
+        })
+      );
+      context.services.logger.debug("Completed deleted note image cleanup", {
+        notePath: task.notePath,
+        managedFolderPath: task.managedFolderPath,
+        metadataResolved,
+        deletedImages: result.deletedImages,
+        deletedFolders: result.deletedFolders,
+        relocatedImages: result.relocatedImages,
+        preservedImages: result.preservedImages
+      });
+    } catch (error) {
+      console.error("Note Image Manager failed to cleanup managed images after note delete", error);
+      context.services.logger.error("Deleted note image cleanup failed", error, {
+        notePath: task.notePath,
+        managedFolderPath: task.managedFolderPath
+      });
+      new import_obsidian16.Notice(getNoticeCopy(context.services.settings.getSettings().uiLanguage).orphanCleanupFailed);
+    }
+  }
+  async waitForVaultCleanupSettle(context) {
+    return new Promise((resolve) => {
+      let resolved = false;
+      let ref = null;
+      const complete = (metadataResolved) => {
+        if (resolved) {
+          return;
+        }
+        resolved = true;
+        if (ref) {
+          context.app.metadataCache.offref(ref);
+        }
+        window.clearTimeout(timeout);
+        resolve(metadataResolved);
+      };
+      const timeout = window.setTimeout(() => complete(false), METADATA_RESOLVED_WAIT_TIMEOUT_MS);
+      ref = context.app.metadataCache.on("resolved", () => complete(true));
+    });
   }
 };
 
@@ -5012,7 +5299,15 @@ var RecoveryManager = class {
         continue;
       }
       const kind = this.inferFileKind(path);
-      const snapshotPath = await this.captureCurrentFileSnapshot(transaction.id, path, kind, abstract);
+      const snapshotPath = await this.tryCaptureCurrentFileSnapshot(transaction.id, path, kind, abstract);
+      if (!snapshotPath) {
+        files.push({
+          path,
+          kind,
+          exists: false
+        });
+        continue;
+      }
       files.push({
         path,
         kind,
@@ -5274,6 +5569,16 @@ var RecoveryManager = class {
     this.history = this.history.filter((transaction) => transaction.status !== "undone");
     await this.saveHistory();
   }
+  async tryCaptureCurrentFileSnapshot(transactionId, path, kind, file) {
+    try {
+      return await this.captureCurrentFileSnapshot(transactionId, path, kind, file);
+    } catch (error) {
+      if (this.isFileNotFoundError(error)) {
+        return null;
+      }
+      throw error;
+    }
+  }
   async captureCurrentFileSnapshot(transactionId, path, kind, file) {
     if (kind === "text") {
       const content = await this.app.vault.read(file);
@@ -5281,6 +5586,13 @@ var RecoveryManager = class {
     }
     const data = await this.app.vault.readBinary(file);
     return this.writeBinarySnapshot(`${transactionId}-after`, path, data);
+  }
+  isFileNotFoundError(error) {
+    if (typeof error !== "object" || error === null) {
+      return false;
+    }
+    const maybeNodeError = error;
+    return maybeNodeError.code === "ENOENT" || typeof maybeNodeError.message === "string" && maybeNodeError.message.includes("ENOENT");
   }
   inferFileKind(path) {
     return path.toLowerCase().endsWith(".md") ? "text" : "binary";
@@ -5506,12 +5818,13 @@ var FileManager = class {
       await this.app.vault.modify(noteFile, movedResult.content);
     }
     const cleanupResult = this.getSettings().deleteOrphanImages ? await this.deleteOrphanImagesForNote(noteFile, allowedNotePaths) : { deletedImages: 0, deletedFolders: 0, relocatedImages: 0, preservedImages: 0 };
+    const emptyManagedFoldersDeleted = this.getSettings().deleteOrphanImages ? 0 : await this.deleteEmptyManagedFolderForNote(noteFile.path);
     return {
       replaced: normalized.replaced + movedResult.replaced,
       downloaded: 0,
       moved: movePlans.filter((move) => move.oldPath !== move.newPath).length,
       deleted: cleanupResult.deletedImages,
-      foldersDeleted: cleanupResult.deletedFolders
+      foldersDeleted: cleanupResult.deletedFolders + emptyManagedFoldersDeleted
     };
   }
   async importExternalImageLinksInNote(noteFile) {
@@ -5634,14 +5947,20 @@ var FileManager = class {
   async deleteOrphanImagesForNote(noteFile, scopeNotePaths = /* @__PURE__ */ new Set([noteFile.path])) {
     const cleanupFolder = this.resolveOrphanCleanupFolderForNote(noteFile);
     if (!(cleanupFolder instanceof import_obsidian19.TFolder)) {
+      const deletedFolders2 = await this.deleteEmptyManagedFolderForNote(noteFile.path);
       return {
         deletedImages: 0,
-        deletedFolders: 0,
+        deletedFolders: deletedFolders2,
         relocatedImages: 0,
         preservedImages: 0
       };
     }
-    return this.deleteOrphanImages(this.getImagesInFolder(cleanupFolder), scopeNotePaths);
+    const cleanupResult = await this.deleteOrphanImages(this.getImagesInFolder(cleanupFolder), scopeNotePaths);
+    const deletedFolders = await this.deleteEmptyManagedFolderForNote(noteFile.path);
+    return {
+      ...cleanupResult,
+      deletedFolders: cleanupResult.deletedFolders + deletedFolders
+    };
   }
   async deleteOrphanImagesInFolder(folder) {
     return this.deleteOrphanImages(
@@ -5653,6 +5972,58 @@ var FileManager = class {
     return this.deleteOrphanImages(
       this.getImagesInVault(),
       new Set(this.getMarkdownFilesInVault().map((file) => file.path))
+    );
+  }
+  async cleanupManagedImagesForDeletedNote(noteFile) {
+    return this.cleanupManagedImagesForDeletedNotePath(noteFile.path);
+  }
+  getDeletedNoteManagedCleanupTarget(notePath) {
+    if (!this.shouldCleanupManagedImagesOnNoteDelete()) {
+      return null;
+    }
+    const managedFolderPath = this.resolveOutputFolderPath(notePath);
+    if (!managedFolderPath) {
+      return null;
+    }
+    return {
+      notePath,
+      noteName: getFileStem(notePath),
+      managedFolderPath,
+      preservePath: this.resolveManagedFolderCleanupBoundary(notePath)
+    };
+  }
+  async cleanupManagedImagesForDeletedNotePath(notePath, scopeNotePaths = /* @__PURE__ */ new Set([notePath]), options = {}) {
+    const target = this.getDeletedNoteManagedCleanupTarget(notePath);
+    if (!target) {
+      return {
+        deletedImages: 0,
+        deletedFolders: 0,
+        relocatedImages: 0,
+        preservedImages: 0
+      };
+    }
+    const cleanupResult = this.getSettings().deleteOrphanImages && options.allowImageDeletion !== false ? await this.deleteUnreferencedImagesInManagedDirectory(target.managedFolderPath, scopeNotePaths) : {
+      deletedImages: 0,
+      deletedFolders: 0,
+      relocatedImages: 0,
+      preservedImages: 0
+    };
+    const deletedEmptyFolders = await this.deleteManagedDirectoryIfEmpty(
+      target.managedFolderPath,
+      target.preservePath
+    );
+    return {
+      ...cleanupResult,
+      deletedFolders: cleanupResult.deletedFolders + deletedEmptyFolders
+    };
+  }
+  async deleteEmptyManagedFolderForNote(notePath) {
+    if (!this.isNoteScopedOutputFolder()) {
+      return 0;
+    }
+    return this.deleteManagedDirectoryIfEmpty(
+      this.resolveOutputFolderPath(notePath),
+      this.resolveManagedFolderCleanupBoundary(notePath)
     );
   }
   async updateLinks(noteFile, oldPath, newPath, sourcePath) {
@@ -5856,6 +6227,10 @@ var FileManager = class {
     const settings = this.getSettings();
     return settings.enableNoteRenameSync && isRelocatableOutputFolderTemplate(settings.outputFolder);
   }
+  shouldCleanupManagedImagesOnNoteDelete() {
+    const settings = this.getSettings();
+    return this.isNoteScopedOutputFolder() && (settings.deleteOrphanImages || settings.deleteEmptyFolders);
+  }
   nextAvailablePath(path, options) {
     return nextAvailablePath(path, (candidate) => this.app.vault.getAbstractFileByPath(candidate) !== null, options);
   }
@@ -5869,15 +6244,23 @@ var FileManager = class {
   renamePatternUsesTimeToken(pattern) {
     return /(?:\{time\}|\$\{time\})/.test(pattern);
   }
-  async deleteOrphanImages(images, scopeNotePaths) {
+  async deleteOrphanImages(images, scopeNotePaths, options = {}) {
     var _a, _b, _c, _d, _e;
+    const preserveScopedReferences = (_a = options.preserveScopedReferences) != null ? _a : true;
     const deletedParents = /* @__PURE__ */ new Set();
     let deletedImages = 0;
     let relocatedImages = 0;
     let preservedImages = 0;
     for (const image of this.deduplicateFilesByPath(images)) {
+      const parentPath = (_c = (_b = image.parent) == null ? void 0 : _b.path) != null ? _c : getParentPath(image.path);
+      if (!await this.vaultPathExists(image.path)) {
+        if (parentPath) {
+          deletedParents.add(parentPath);
+        }
+        continue;
+      }
       const referrers = [...new Set(this.getReferencingNotePaths(image.path))];
-      if (referrers.some((notePath) => scopeNotePaths.has(notePath))) {
+      if (preserveScopedReferences && referrers.some((notePath) => scopeNotePaths.has(notePath))) {
         continue;
       }
       const externalReferrers = referrers.filter((notePath) => !scopeNotePaths.has(notePath));
@@ -5889,7 +6272,7 @@ var FileManager = class {
         }
         const referenceNote = this.app.vault.getAbstractFileByPath(referencePath);
         if (referenceNote instanceof import_obsidian19.TFile && referenceNote.extension.toLowerCase() === "md") {
-          const oldParentPath = (_b = (_a = image.parent) == null ? void 0 : _a.path) != null ? _b : getParentPath(image.path);
+          const oldParentPath = (_e = (_d = image.parent) == null ? void 0 : _d.path) != null ? _e : getParentPath(image.path);
           const moved = await this.reassignImageToReferencingNote(image, referenceNote);
           if (oldParentPath) {
             deletedParents.add(oldParentPath);
@@ -5908,19 +6291,19 @@ var FileManager = class {
         preservedImages += 1;
         continue;
       }
-      const parentPath = (_d = (_c = image.parent) == null ? void 0 : _c.path) != null ? _d : getParentPath(image.path);
       if (parentPath) {
         deletedParents.add(parentPath);
       }
-      await ((_e = this.recoveryManager) == null ? void 0 : _e.captureBinarySnapshot(image));
-      await this.app.fileManager.trashFile(image);
-      deletedImages += 1;
+      const deleted = await this.trashExistingImage(image);
+      if (deleted) {
+        deletedImages += 1;
+      }
     }
     let deletedFolders = 0;
     for (const folderPath of deletedParents) {
       const abstract = this.app.vault.getAbstractFileByPath(folderPath);
       if (abstract instanceof import_obsidian19.TFolder) {
-        deletedFolders += await this.deleteFolderIfEmpty(abstract);
+        deletedFolders += await this.deleteFolderIfEmpty(abstract, options.deleteEmptyFolderOptions);
       }
     }
     return {
@@ -5933,6 +6316,9 @@ var FileManager = class {
   async reassignImageToReferencingNote(image, noteFile) {
     var _a, _b;
     const oldPath = image.path;
+    if (!await this.vaultPathExists(oldPath)) {
+      return false;
+    }
     const targetFolder = this.resolveOutputFolderPath(noteFile.path);
     if (targetFolder) {
       await this.ensureFolder(targetFolder);
@@ -5949,6 +6335,60 @@ var FileManager = class {
     (_b = this.recoveryManager) == null ? void 0 : _b.recordRename(oldPath, newPath);
     await this.updateLinks(noteFile, oldPath, newPath, noteFile.path);
     return true;
+  }
+  async trashExistingImage(image) {
+    var _a;
+    try {
+      await ((_a = this.recoveryManager) == null ? void 0 : _a.captureBinarySnapshot(image));
+      await this.app.fileManager.trashFile(image);
+      return true;
+    } catch (error) {
+      if (this.isFileNotFoundError(error)) {
+        return false;
+      }
+      throw error;
+    }
+  }
+  async deleteUnreferencedImagesInManagedDirectory(folderPath, scopeNotePaths) {
+    const files = await this.collectVaultDirectoryFiles(folderPath);
+    let deletedImages = 0;
+    let preservedImages = 0;
+    for (const filePath of files) {
+      if (!this.isImagePath(filePath)) {
+        continue;
+      }
+      const referrers = [...new Set(this.getReferencingNotePaths(filePath))].filter((notePath) => !scopeNotePaths.has(notePath));
+      if (referrers.length > 0) {
+        preservedImages += 1;
+        continue;
+      }
+      if (await this.trashVaultFileByPath(filePath)) {
+        deletedImages += 1;
+      }
+    }
+    return {
+      deletedImages,
+      deletedFolders: 0,
+      relocatedImages: 0,
+      preservedImages
+    };
+  }
+  async trashVaultFileByPath(path) {
+    var _a;
+    const abstract = this.app.vault.getAbstractFileByPath(path);
+    if (!(abstract instanceof import_obsidian19.TFile)) {
+      return false;
+    }
+    try {
+      await ((_a = this.recoveryManager) == null ? void 0 : _a.captureBinarySnapshot(abstract));
+      await this.app.fileManager.trashFile(abstract);
+      return true;
+    } catch (error) {
+      if (this.isFileNotFoundError(error)) {
+        return false;
+      }
+      throw error;
+    }
   }
   deduplicateFilesByPath(files) {
     const byPath = /* @__PURE__ */ new Map();
@@ -6000,7 +6440,7 @@ var FileManager = class {
   }
   async deleteFolderIfEmpty(folder, options = {}) {
     var _a;
-    if (!this.getSettings().deleteEmptyFolders || folder.children.length > 0 || folder.path === options.preservePath) {
+    if (!this.getSettings().deleteEmptyFolders || !await this.isFolderEffectivelyEmpty(folder) || folder.path === options.preservePath) {
       return 0;
     }
     const parent = folder.parent instanceof import_obsidian19.TFolder ? folder.parent : null;
@@ -6008,6 +6448,90 @@ var FileManager = class {
     await this.app.fileManager.trashFile(folder);
     const parentDeleted = parent ? await this.deleteFolderIfEmpty(parent, options) : 0;
     return 1 + parentDeleted;
+  }
+  async deleteManagedDirectoryIfEmpty(folderPath, preservePath) {
+    if (!this.getSettings().deleteEmptyFolders) {
+      return 0;
+    }
+    const folder = this.app.vault.getAbstractFileByPath(folderPath);
+    if (!(folder instanceof import_obsidian19.TFolder)) {
+      return 0;
+    }
+    const listing = await this.listVaultDirectory(folderPath);
+    if (!listing || listing.files.length > 0 || listing.folders.length > 0) {
+      return 0;
+    }
+    return this.deleteFolderIfEmpty(folder, { preservePath });
+  }
+  async vaultPathExists(path) {
+    const adapter = this.app.vault.adapter;
+    if (typeof (adapter == null ? void 0 : adapter.exists) === "function") {
+      try {
+        return await adapter.exists(path);
+      } catch (e) {
+        return false;
+      }
+    }
+    return true;
+  }
+  isFileNotFoundError(error) {
+    if (typeof error !== "object" || error === null) {
+      return false;
+    }
+    const maybeNodeError = error;
+    return maybeNodeError.code === "ENOENT" || typeof maybeNodeError.message === "string" && maybeNodeError.message.includes("ENOENT");
+  }
+  async collectVaultDirectoryFiles(folderPath) {
+    const listing = await this.listVaultDirectory(folderPath);
+    if (!listing) {
+      return [];
+    }
+    const files = [...listing.files];
+    for (const childFolderPath of listing.folders) {
+      files.push(...await this.collectVaultDirectoryFiles(childFolderPath));
+    }
+    return files;
+  }
+  async listVaultDirectory(folderPath) {
+    const adapter = this.app.vault.adapter;
+    if (typeof (adapter == null ? void 0 : adapter.list) === "function") {
+      try {
+        return await adapter.list(folderPath);
+      } catch (error) {
+        if (this.isFileNotFoundError(error)) {
+          return null;
+        }
+        throw error;
+      }
+    }
+    const folder = this.app.vault.getAbstractFileByPath(folderPath);
+    if (!(folder instanceof import_obsidian19.TFolder)) {
+      return null;
+    }
+    return {
+      files: folder.children.filter((child) => child instanceof import_obsidian19.TFile).map((child) => child.path),
+      folders: folder.children.filter((child) => child instanceof import_obsidian19.TFolder).map((child) => child.path)
+    };
+  }
+  isImagePath(path) {
+    var _a, _b;
+    const extension = (_b = (_a = path.split(".").pop()) == null ? void 0 : _a.toLowerCase()) != null ? _b : "";
+    return IMAGE_EXTENSIONS.has(extension);
+  }
+  async isFolderEffectivelyEmpty(folder) {
+    if (folder.children.length === 0) {
+      return true;
+    }
+    const hasIndexedChildren = folder.children.some((child) => this.app.vault.getAbstractFileByPath(child.path) !== null);
+    if (!hasIndexedChildren) {
+      return true;
+    }
+    try {
+      const listed = await this.app.vault.adapter.list(folder.path);
+      return listed.files.length === 0 && listed.folders.length === 0;
+    } catch (e) {
+      return false;
+    }
   }
   rewriteImageLinks(content, replacer) {
     const imageLinkRegex = /!\[\[[^\]]+\]\]|!\[[^\]]*]\(((?:<[^>]+>|[^)])+)\)/g;
