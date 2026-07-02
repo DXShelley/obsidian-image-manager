@@ -2,6 +2,15 @@
 
 # Changelog
 
+## 4.0.10
+
+- Fixed cleanup for note-owned managed folders after deleting a Markdown note; delete events now enqueue managed-folder targets and converge after Obsidian metadata settles.
+- Batch note deletion now deduplicates by managed folder and passes the whole deleted-note batch as cleanup scope, avoiding missed cleanup or unsafe deletion around cross-referenced images.
+- Metadata timeouts now only remove truly empty folders and never delete images; fixed shared folders, sibling shared folders, and empty output paths are not auto-scanned after deleting one note.
+- Hardened recovery transactions against stale file-object `ENOENT` races so cleanup can continue when Obsidian or the system trash already moved an attachment.
+- Expanded Live Preview image clicks so rendered images and nearby widget areas can open the gallery while source-mode Markdown image links remain owned by Obsidian.
+- Added regression coverage for directory deletion, batch deletion, output-folder examples, preview clicks, and recovery races, with user-guide, setting-copy, task-status, and website version updates.
+
 ## 4.0.9
 
 - Lowered `minAppVersion` to `1.12.4` so the plugin can install on Obsidian 1.12.4 and newer.

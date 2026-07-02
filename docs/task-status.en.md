@@ -4,8 +4,8 @@
 
 ## Release
 
-- `v4.0.9` lowers the minimum supported Obsidian version to 1.12.4 and adds runtime fallbacks for settings-page 1.13 APIs.
-- Package metadata, manifest metadata, release workflow, marketing site, and user-facing documentation are aligned for the 4.0.9 release.
+- `v4.0.10` fixes cleanup for note-owned managed folders after Markdown deletion, batch deletion with cross-references, and stale attachment races.
+- Package metadata, manifest metadata, release workflow, marketing site, and user-facing documentation are aligned for the 4.0.10 release.
 
 ## Completed
 
@@ -33,6 +33,7 @@
 - Reading-view right-click import that pulls in only the selected external image
 - Explicit external-image import that can recognize extensionless or dynamic image endpoints by response `content-type`, while adding `AVIF` to recognition, import, and conversion-input flows
 - Persisted recovery transactions for image rewrites, path moves, note-link rewrites, and paste / import flows
+- Automatic convergence of note-owned managed folders after Markdown deletion, with metadata timeouts limited to truly empty folder deletion
 
 ## Partially Completed
 
@@ -47,6 +48,7 @@
 - Ignore-regex settings match against `file.path`, support one regex per line, and allow comment lines prefixed with `#`.
 - Markdown image path resolution now uses a raw-path-first strategy with decoded-path fallback so the same note can safely mix `%E6...`-encoded Chinese paths and readable Chinese paths.
 - `AVIF` currently uses layered compatibility: recognition, import, and conversion-input support are available, but in-place compress, crop, rotate, flip, and resize should happen only after converting to `PNG`, `JPEG`, or `WebP`.
+- Deleted-note auto-cleanup only targets note-owned folders such as `./assets/${noteFileName}` or `./assets/{noteName}`. Empty output paths, `Attachments/Images`, and `./assets` shared locations should be cleaned through manual scoped commands.
 
 ## Deferred
 

@@ -37,7 +37,8 @@ describe('i18n module', () => {
           return command;
         },
         registerEvent: () => undefined,
-        registerMarkdownPostProcessor: () => undefined
+        registerMarkdownPostProcessor: () => undefined,
+        registerEditorExtension: () => undefined
       },
       services: {
         settings: {

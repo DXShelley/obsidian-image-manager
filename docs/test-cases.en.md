@@ -1278,5 +1278,10 @@ Status mapping:
 - Markdown preview rerenders after image rewrite operations.
 - Link updates, conversion, and preview remain consistent when a single note mixes encoded Chinese paths and readable Chinese paths.
 - `Download external images to local` imports `URL`, `file://`, and `data:image/...;base64,...` sources and rewrites them as local links.
+- With `deleteOrphanImages` enabled, current-note cleanup does not fall back to scanning the note folder when a custom `outputFolder` is missing.
+- After `Remove extra image files` deletes orphan images, empty attachment folders are cleaned up according to the settings.
+- After deleting a Markdown note that uses `./assets/${noteFileName}`, the plugin still removes the now-empty `assets/<note>` folder when attachments were already deleted by Obsidian or by the plugin.
+- When multiple Markdown notes with cross-referenced images are batch-deleted, images are deleted only after metadata resolves and only when no remaining Markdown note references them; metadata timeout only deletes truly empty folders.
+- Deleting a Markdown note that uses an empty save path, `Attachments/Images`, or `./assets` does not make the plugin auto-scan or delete those shared folders.
 - Clicking a gallery thumbnail does not open a blank lightbox preview.
 - When detailed debug logging is enabled, every command writes start / completion / failure logs; after disabling it, detailed command logs stop.

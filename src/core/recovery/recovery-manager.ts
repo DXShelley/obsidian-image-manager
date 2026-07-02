@@ -417,7 +417,16 @@ export class RecoveryManager {
       }
 
       const kind = this.inferFileKind(path);
-      const snapshotPath = await this.captureCurrentFileSnapshot(transaction.id, path, kind, abstract);
+      const snapshotPath = await this.tryCaptureCurrentFileSnapshot(transaction.id, path, kind, abstract);
+      if (!snapshotPath) {
+        files.push({
+          path,
+          kind,
+          exists: false
+        });
+        continue;
+      }
+
       files.push({
         path,
         kind,
@@ -728,6 +737,23 @@ export class RecoveryManager {
     await this.saveHistory();
   }
 
+  private async tryCaptureCurrentFileSnapshot(
+    transactionId: string,
+    path: string,
+    kind: RecoveryFileKind,
+    file: TFile
+  ): Promise<string | null> {
+    try {
+      return await this.captureCurrentFileSnapshot(transactionId, path, kind, file);
+    } catch (error) {
+      if (this.isFileNotFoundError(error)) {
+        return null;
+      }
+
+      throw error;
+    }
+  }
+
   private async captureCurrentFileSnapshot(
     transactionId: string,
     path: string,
@@ -741,6 +767,15 @@ export class RecoveryManager {
 
     const data = await this.app.vault.readBinary(file);
     return this.writeBinarySnapshot(`${transactionId}-after`, path, data);
+  }
+
+  private isFileNotFoundError(error: unknown): boolean {
+    if (typeof error !== 'object' || error === null) {
+      return false;
+    }
+
+    const maybeNodeError = error as { code?: unknown; message?: unknown };
+    return maybeNodeError.code === 'ENOENT' || (typeof maybeNodeError.message === 'string' && maybeNodeError.message.includes('ENOENT'));
   }
 
   private inferFileKind(path: string): RecoveryFileKind {

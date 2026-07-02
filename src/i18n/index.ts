@@ -339,6 +339,7 @@ export interface UiCopy {
     readonly flipActiveImageHorizontal: string;
     readonly resizeActiveImage: string;
     readonly syncManagedImages: (noteName: string) => string;
+    readonly cleanupDeletedNoteImages: (noteName: string) => string;
   };
 }
 
@@ -475,9 +476,9 @@ const ZH_SETTINGS_TAB: SettingTabCopy = {
     renameImagesOnRelocateName: '笔记改名后同步重命名图片',
     renameImagesOnRelocateDesc: '仅在受管目录同步开启时生效。',
     deleteEmptyFoldersName: '删除空图片文件夹',
-    deleteEmptyFoldersDesc: '只清理图片附件目录中因迁移或删除而留下的空目录。',
+    deleteEmptyFoldersDesc: '清理迁移或删除后留下的空图片目录；删除 md 后仅自动收敛按笔记名独占的受管目录。',
     deleteOrphanImagesName: '删除孤立图片',
-    deleteOrphanImagesDesc: '执行“更新图片链接与目录”时，顺带清理当前范围内未被引用的图片。',
+    deleteOrphanImagesDesc: '执行“更新图片链接与目录”时，清理当前范围内未被 md 引用的图片；固定或共享目录需谨慎开启。',
     defaultQualityName: '默认处理质量',
     defaultQualityDesc: '用于转换、旋转、翻转和缩放。',
     compressionQualityName: '压缩质量',
@@ -705,9 +706,9 @@ const EN_SETTINGS_TAB: SettingTabCopy = {
     renameImagesOnRelocateName: 'Rename images when notes move or rename',
     renameImagesOnRelocateDesc: 'Applies only when managed-folder sync is enabled.',
     deleteEmptyFoldersName: 'Delete empty image folders',
-    deleteEmptyFoldersDesc: 'Only removes empty folders left behind inside managed image directories.',
+    deleteEmptyFoldersDesc: 'Removes empty image folders left after moves or deletes; note deletion auto-cleanup only targets note-scoped managed folders.',
     deleteOrphanImagesName: 'Delete orphan images',
-    deleteOrphanImagesDesc: 'Also removes unreferenced images in scope when running link and directory updates.',
+    deleteOrphanImagesDesc: 'Removes images not referenced by Markdown notes when running link and directory updates; use care with fixed or shared folders.',
     defaultQualityName: 'Default processing quality',
     defaultQualityDesc: 'Used by convert, rotate, flip, and resize operations.',
     compressionQualityName: 'Compression quality',
@@ -1012,7 +1013,8 @@ const ZH_UI: UiCopy = {
     rotateActiveImage: '旋转当前图片 90 度',
     flipActiveImageHorizontal: '水平翻转当前图片',
     resizeActiveImage: '缩放当前图片到 1920px',
-    syncManagedImages: (noteName) => `同步笔记迁移图片 ${noteName}`
+    syncManagedImages: (noteName) => `同步笔记迁移图片 ${noteName}`,
+    cleanupDeletedNoteImages: (noteName) => `清理已删除笔记图片 ${noteName}`
   }
 };
 
@@ -1121,7 +1123,8 @@ const EN_UI: UiCopy = {
     rotateActiveImage: 'Rotate current image 90°',
     flipActiveImageHorizontal: 'Flip current image horizontally',
     resizeActiveImage: 'Resize current image to 1920px',
-    syncManagedImages: (noteName) => `Sync managed images for ${noteName}`
+    syncManagedImages: (noteName) => `Sync managed images for ${noteName}`,
+    cleanupDeletedNoteImages: (noteName) => `Clean up images for deleted note ${noteName}`
   }
 };
 

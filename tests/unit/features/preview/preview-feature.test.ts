@@ -1,9 +1,9 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Alignment } from '@/types/index';
 import { PreviewFeature } from '@/features/preview/preview-feature';
 import { getUiCopy } from '@/i18n';
 
-const { openSingleImageGalleryMock, showAtMouseEventMock, latestMenuItemsRef, noticeMock } = vi.hoisted(() => ({
+const { openSingleImageGalleryMock, showAtMouseEventMock, latestMenuItemsRef, noticeMock, domEventHandlersMock, precHighestMock } = vi.hoisted(() => ({
   openSingleImageGalleryMock: vi.fn(async () => undefined),
   showAtMouseEventMock: vi.fn(),
   latestMenuItemsRef: {
@@ -13,10 +13,14 @@ const { openSingleImageGalleryMock, showAtMouseEventMock, latestMenuItemsRef, no
       onClick?: () => void;
     }>
   },
-  noticeMock: vi.fn()
+  noticeMock: vi.fn(),
+  domEventHandlersMock: vi.fn((handlers: unknown) => handlers),
+  precHighestMock: vi.fn((extension: unknown) => extension)
 }));
 
 vi.mock('obsidian', () => ({
+  editorInfoField: {},
+  MarkdownView: class {},
   Menu: class {
     constructor() {
       latestMenuItemsRef.current = [];
@@ -76,7 +80,24 @@ vi.mock('@/features/gallery/gallery-actions', () => ({
   openSingleImageGallery: openSingleImageGalleryMock
 }));
 
+vi.mock('@codemirror/view', () => ({
+  EditorView: {
+    domEventHandlers: domEventHandlersMock
+  }
+}));
+
+vi.mock('@codemirror/state', () => ({
+  Prec: {
+    highest: precHighestMock
+  }
+}));
+
 describe('PreviewFeature', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    latestMenuItemsRef.current = [];
+  });
+
   it('opens the single-image gallery when a rendered markdown image is double-clicked', async () => {
     const { TFile } = await import('obsidian');
     const feature = new PreviewFeature();
@@ -133,7 +154,8 @@ describe('PreviewFeature', () => {
       plugin: {
         registerMarkdownPostProcessor: vi.fn((callback: typeof postProcessor) => {
           postProcessor = callback;
-        })
+        }),
+        registerEditorExtension: vi.fn()
       },
       services: {
         fileManager: {
@@ -181,6 +203,280 @@ describe('PreviewFeature', () => {
     expect(attrs.get('src')).toContain('image-manager-mtime=200');
   });
 
+  it('leaves source-mode markdown image link double-clicks to Obsidian', async () => {
+    const { TFile } = await import('obsidian');
+    const feature = new PreviewFeature();
+    const noteFile = Object.assign(new TFile(), {
+      path: 'notes/demo.md',
+      name: 'demo.md',
+      extension: 'md',
+      stat: {
+        size: 0,
+        mtime: 1
+      }
+    });
+    let editorHandlers:
+      | {
+          click?: (event: MouseEvent, view: unknown) => boolean | void;
+          dblclick?: (event: MouseEvent, view: unknown) => boolean | void;
+        }
+      | undefined;
+    const context = {
+      app: {
+        metadataCache: {
+          getFirstLinkpathDest: vi.fn()
+        },
+        vault: {
+          getAbstractFileByPath: vi.fn((path: string) => (path === noteFile.path ? noteFile : null))
+        }
+      },
+      plugin: {
+        registerMarkdownPostProcessor: vi.fn(),
+        registerEditorExtension: vi.fn((extension: typeof editorHandlers) => {
+          editorHandlers = extension;
+        })
+      },
+      services: {
+        fileManager: {
+          isImageFile: vi.fn(() => true)
+        },
+        settings: {
+          getSettings: vi.fn(() => ({
+            enableGallery: true,
+            enableImageAlign: false,
+            imageAlignmentDefaultAlignment: Alignment.NONE,
+            disableObsidianImageSelectionOnClick: false,
+            showOperationNotifications: true
+          }))
+        }
+      }
+    };
+
+    await feature.register(context as never);
+
+    expect(domEventHandlersMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        dblclick: expect.any(Function)
+      })
+    );
+    expect(precHighestMock).toHaveBeenCalledWith(editorHandlers);
+    expect(editorHandlers?.click).toBeTypeOf('function');
+    expect(editorHandlers?.dblclick).toBeTypeOf('function');
+
+    const event = {
+      clientX: 10,
+      clientY: 20,
+      target: null,
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn()
+    } as unknown as MouseEvent;
+    const view = {
+      state: {
+        field: vi.fn(() => ({ file: noteFile }))
+      }
+    };
+
+    const handled = editorHandlers?.click?.(event, view);
+
+    expect(handled).toBeUndefined();
+    expect(openSingleImageGalleryMock).not.toHaveBeenCalled();
+    expect(event.preventDefault).not.toHaveBeenCalled();
+    expect(event.stopPropagation).not.toHaveBeenCalled();
+  });
+
+  it('opens the gallery when a rendered editor image is clicked', async () => {
+    const { TFile } = await import('obsidian');
+    const feature = new PreviewFeature();
+    const noteFile = Object.assign(new TFile(), {
+      path: 'notes/demo.md',
+      name: 'demo.md',
+      extension: 'md',
+      stat: {
+        size: 0,
+        mtime: 1
+      }
+    });
+    const imageFile = Object.assign(new TFile(), {
+      path: 'assets/rendered-preview.png',
+      name: 'rendered-preview.png',
+      extension: 'png',
+      stat: {
+        size: 100,
+        mtime: 200
+      }
+    });
+    let editorHandlers:
+      | {
+          click?: (event: MouseEvent, view: unknown) => boolean | void;
+          dblclick?: (event: MouseEvent, view: unknown) => boolean | void;
+        }
+      | undefined;
+    const embed = document.createElement('span');
+    embed.className = 'internal-embed image-embed';
+    embed.setAttribute('src', 'assets/rendered-preview.png');
+    const image = document.createElement('img');
+    image.setAttribute('alt', 'assets/rendered-preview.png');
+    embed.appendChild(image);
+    const context = {
+      app: {
+        metadataCache: {
+          getFirstLinkpathDest: vi.fn((candidate: string) =>
+            candidate === 'assets/rendered-preview.png' ? imageFile : null
+          )
+        },
+        vault: {
+          getResourcePath: vi.fn(() => 'app://assets/rendered-preview.png'),
+          getAbstractFileByPath: vi.fn((path: string) => (path === noteFile.path ? noteFile : null))
+        }
+      },
+      plugin: {
+        registerMarkdownPostProcessor: vi.fn(),
+        registerEditorExtension: vi.fn((extension: typeof editorHandlers) => {
+          editorHandlers = extension;
+        })
+      },
+      services: {
+        fileManager: {
+          isImageFile: vi.fn(() => true)
+        },
+        settings: {
+          getSettings: vi.fn(() => ({
+            enableGallery: true,
+            enableImageAlign: false,
+            imageAlignmentDefaultAlignment: Alignment.NONE,
+            disableObsidianImageSelectionOnClick: false,
+            showOperationNotifications: true
+          }))
+        }
+      }
+    };
+
+    await feature.register(context as never);
+
+    const event = {
+      clientX: 10,
+      clientY: 20,
+      target: image,
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn()
+    } as unknown as MouseEvent;
+    const view = {
+      state: {
+        field: vi.fn(() => ({ file: noteFile }))
+      }
+    };
+
+    const handled = editorHandlers?.click?.(event, view);
+
+    expect(handled).toBe(true);
+    await vi.waitFor(() => {
+      expect(openSingleImageGalleryMock).toHaveBeenCalledWith(context, imageFile, noteFile, {
+        lightboxCloseBehavior: 'close-modal'
+      });
+    });
+    expect(event.preventDefault).toHaveBeenCalled();
+    expect(event.stopPropagation).toHaveBeenCalled();
+  });
+
+  it('opens the gallery when a live-preview image widget wrapper is clicked', async () => {
+    const { TFile } = await import('obsidian');
+    const feature = new PreviewFeature();
+    const noteFile = Object.assign(new TFile(), {
+      path: 'notes/demo.md',
+      name: 'demo.md',
+      extension: 'md',
+      stat: {
+        size: 0,
+        mtime: 1
+      }
+    });
+    const imageFile = Object.assign(new TFile(), {
+      path: 'assets/widget-preview.png',
+      name: 'widget-preview.png',
+      extension: 'png',
+      stat: {
+        size: 100,
+        mtime: 200
+      }
+    });
+    let editorHandlers:
+      | {
+          click?: (event: MouseEvent, view: unknown) => boolean | void;
+          dblclick?: (event: MouseEvent, view: unknown) => boolean | void;
+        }
+      | undefined;
+    const line = document.createElement('div');
+    line.className = 'cm-line';
+    const buffer = document.createElement('span');
+    buffer.className = 'cm-widgetBuffer';
+    const embed = document.createElement('span');
+    embed.className = 'image-embed';
+    embed.setAttribute('src', 'assets/widget-preview.png');
+    const image = document.createElement('img');
+    image.setAttribute('src', 'app://assets/widget-preview.png');
+    embed.appendChild(image);
+    line.append(buffer, embed);
+    const context = {
+      app: {
+        metadataCache: {
+          getFirstLinkpathDest: vi.fn((candidate: string) =>
+            candidate === 'assets/widget-preview.png' ? imageFile : null
+          )
+        },
+        vault: {
+          getResourcePath: vi.fn(() => 'app://assets/widget-preview.png'),
+          getAbstractFileByPath: vi.fn((path: string) => (path === noteFile.path ? noteFile : null))
+        }
+      },
+      plugin: {
+        registerMarkdownPostProcessor: vi.fn(),
+        registerEditorExtension: vi.fn((extension: typeof editorHandlers) => {
+          editorHandlers = extension;
+        })
+      },
+      services: {
+        fileManager: {
+          isImageFile: vi.fn(() => true)
+        },
+        settings: {
+          getSettings: vi.fn(() => ({
+            enableGallery: true,
+            enableImageAlign: false,
+            imageAlignmentDefaultAlignment: Alignment.NONE,
+            disableObsidianImageSelectionOnClick: false,
+            showOperationNotifications: true
+          }))
+        }
+      }
+    };
+
+    await feature.register(context as never);
+
+    const event = {
+      clientX: 10,
+      clientY: 20,
+      target: buffer,
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn()
+    } as unknown as MouseEvent;
+    const view = {
+      state: {
+        field: vi.fn(() => ({ file: noteFile }))
+      }
+    };
+
+    const handled = editorHandlers?.click?.(event, view);
+
+    expect(handled).toBe(true);
+    await vi.waitFor(() => {
+      expect(openSingleImageGalleryMock).toHaveBeenCalledWith(context, imageFile, noteFile, {
+        lightboxCloseBehavior: 'close-modal'
+      });
+    });
+    expect(event.preventDefault).toHaveBeenCalled();
+    expect(event.stopPropagation).toHaveBeenCalled();
+  });
+
   it('shows a context-menu entry for rendered external images and imports only the clicked source', async () => {
     const { TFile } = await import('obsidian');
     const feature = new PreviewFeature();
@@ -220,7 +516,8 @@ describe('PreviewFeature', () => {
       plugin: {
         registerMarkdownPostProcessor: vi.fn((callback: typeof postProcessor) => {
           postProcessor = callback;
-        })
+        }),
+        registerEditorExtension: vi.fn()
       },
       services: {
         fileManager: {

@@ -294,4 +294,34 @@ describe('RecoveryManager', () => {
     expect(fileManager.restoreBinaryFile).toHaveBeenCalledWith('assets/photo.webp', expect.any(ArrayBuffer));
     expect(app.fileManager.trashFile).toHaveBeenCalledWith(expect.objectContaining({ path: 'assets/photo.png' }));
   });
+
+  it('records after-state files as missing when stale vault entries cannot be read', async () => {
+    const { app, fileManager, recoveryFiles, vaultFiles } = createApp();
+    const manager = new RecoveryManager(app as never, 'note-image-manager', fileManager as never);
+    const image = new TFile('assets/stale.png');
+    vaultFiles.set(image.path, image);
+    app.vault.readBinary
+      .mockResolvedValueOnce(new Uint8Array([1, 2, 3]).buffer)
+      .mockRejectedValueOnce(Object.assign(new Error(`ENOENT: no such file or directory, open '${image.path}'`), { code: 'ENOENT' }));
+
+    await manager.runTransaction(
+      {
+        label: 'cleanup stale image',
+        trigger: 'note-delete-cleanup',
+        scope: 'auto'
+      },
+      async () => {
+        await manager.captureBinarySnapshot(image);
+      }
+    );
+
+    const historyRaw = recoveryFiles.get('.obsidian/plugins/note-image-manager/recovery/history.json');
+    expect(typeof historyRaw).toBe('string');
+    const history = JSON.parse(historyRaw as string);
+    expect(history.transactions[0].afterState.files).toContainEqual({
+      path: image.path,
+      kind: 'binary',
+      exists: false
+    });
+  });
 });

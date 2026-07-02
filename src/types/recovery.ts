@@ -9,6 +9,7 @@ export type RecoveryTrigger =
   | 'rewrite-links'
   | 'paste-import'
   | 'note-rename-sync'
+  | 'note-delete-cleanup'
   | 'settings-rewrite'
   | 'batch'
   | 'context-menu';

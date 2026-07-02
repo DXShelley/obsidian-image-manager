@@ -280,7 +280,8 @@ describe('FileManager.syncManagedImagesForNote', () => {
       fileManager: {
         renameFile: vi.fn(async (file: TFile, targetPath: string) => {
           file.path = targetPath;
-        })
+        }),
+        trashFile: vi.fn(async () => undefined)
       }
     };
     const manager = new FileManager(
@@ -1387,5 +1388,692 @@ describe('FileManager.rewriteImageLinksInNote', () => {
     const result = await manager.deleteOrphanImagesForNote(note);
 
     expect(result).toEqual({ deletedImages: 0, deletedFolders: 0, relocatedImages: 0, preservedImages: 0 });
+  });
+
+  it.each([
+    ['follow current note', '', null],
+    ['fixed attachment folder', 'Attachments/Images', null],
+    ['sibling assets folder', './assets', null],
+    [
+      'folder per note',
+      './assets/${noteFileName}',
+      {
+        notePath: 'notes/a.md',
+        noteName: 'a',
+        managedFolderPath: 'notes/assets/a',
+        preservePath: 'notes'
+      }
+    ]
+  ])('resolves deleted-note cleanup safely for the %s output-folder example', (_label, outputFolder, expected) => {
+    const manager = new FileManager(
+      {
+        vault: {
+          getAbstractFileByPath: vi.fn(() => null)
+        }
+      } as never,
+      () => ({
+        ...settings,
+        outputFolder,
+        deleteOrphanImages: true,
+        deleteEmptyFolders: true
+      }),
+      new VariableResolver(),
+      {} as never
+    );
+
+    expect(manager.getDeletedNoteManagedCleanupTarget('notes/a.md')).toEqual(expected);
+  });
+
+  it('does not create a deleted-note cleanup target when both cleanup toggles are disabled', () => {
+    const manager = new FileManager(
+      {
+        vault: {
+          getAbstractFileByPath: vi.fn(() => null)
+        }
+      } as never,
+      () => ({
+        ...settings,
+        outputFolder: './assets/${noteFileName}',
+        deleteOrphanImages: false,
+        deleteEmptyFolders: false
+      }),
+      new VariableResolver(),
+      {} as never
+    );
+
+    expect(manager.getDeletedNoteManagedCleanupTarget('notes/a.md')).toBeNull();
+  });
+
+  it('removes an empty note scoped managed folder when rewriting image links', async () => {
+    const note = Object.assign(new TFile(), {
+      path: 'notes/a.md',
+      name: 'a.md',
+      basename: 'a',
+      extension: 'md'
+    });
+    const notesFolder = Object.assign(new TFolder(), {
+      path: 'notes',
+      children: [note]
+    });
+    const assetsFolder = Object.assign(new TFolder(), {
+      path: 'notes/assets',
+      parent: notesFolder,
+      children: []
+    });
+    const managedFolder = Object.assign(new TFolder(), {
+      path: 'notes/assets/a',
+      parent: assetsFolder,
+      children: []
+    });
+    (note as TFile & { parent: TFolder | null }).parent = notesFolder;
+    assetsFolder.children = [managedFolder];
+    notesFolder.children = [note, assetsFolder];
+
+    const folders = new Map<string, TFolder>([
+      [notesFolder.path, notesFolder],
+      [assetsFolder.path, assetsFolder],
+      [managedFolder.path, managedFolder]
+    ]);
+    const app = {
+      vault: {
+        adapter: {
+          list: vi.fn(async () => ({ files: [], folders: [] }))
+        },
+        read: vi.fn(async () => ''),
+        modify: vi.fn(async () => undefined),
+        getFiles: vi.fn(() => [note]),
+        getAbstractFileByPath: vi.fn((path: string) => folders.get(path) ?? (path === note.path ? note : null))
+      },
+      metadataCache: {
+        getFirstLinkpathDest: vi.fn(() => null),
+        resolvedLinks: {}
+      },
+      fileManager: {
+        renameFile: vi.fn(async () => undefined),
+        trashFile: vi.fn(async (target: TFolder) => {
+          folders.delete(target.path);
+          const parent = target.parent;
+          if (parent instanceof TFolder) {
+            parent.children = parent.children.filter((child) => child !== target);
+          }
+        })
+      }
+    };
+    const manager = new FileManager(
+      app as never,
+      () => ({
+        ...settings,
+        outputFolder: './assets/${noteFileName}',
+        deleteOrphanImages: false,
+        deleteEmptyFolders: true
+      }),
+      new VariableResolver(),
+      new LinkFormatter(app as never)
+    );
+
+    const result = await manager.rewriteImageLinksInNote(note);
+
+    expect(result).toEqual({ replaced: 0, moved: 0, downloaded: 0, deleted: 0, foldersDeleted: 2 });
+    expect(app.fileManager.trashFile).toHaveBeenCalledWith(managedFolder);
+    expect(app.fileManager.trashFile).toHaveBeenCalledWith(assetsFolder);
+  });
+
+  it('removes an empty note scoped managed folder during current note orphan cleanup', async () => {
+    const note = Object.assign(new TFile(), {
+      path: 'notes/a.md',
+      name: 'a.md',
+      basename: 'a',
+      extension: 'md'
+    });
+    const notesFolder = Object.assign(new TFolder(), {
+      path: 'notes',
+      children: [note]
+    });
+    const assetsFolder = Object.assign(new TFolder(), {
+      path: 'notes/assets',
+      parent: notesFolder,
+      children: []
+    });
+    const managedFolder = Object.assign(new TFolder(), {
+      path: 'notes/assets/a',
+      parent: assetsFolder,
+      children: []
+    });
+    (note as TFile & { parent: TFolder | null }).parent = notesFolder;
+    assetsFolder.children = [managedFolder];
+    notesFolder.children = [note, assetsFolder];
+
+    const folders = new Map<string, TFolder>([
+      [notesFolder.path, notesFolder],
+      [assetsFolder.path, assetsFolder],
+      [managedFolder.path, managedFolder]
+    ]);
+    const app = {
+      vault: {
+        adapter: {
+          list: vi.fn(async () => ({ files: [], folders: [] }))
+        },
+        getFiles: vi.fn(() => [note]),
+        getAbstractFileByPath: vi.fn((path: string) => folders.get(path) ?? (path === note.path ? note : null))
+      },
+      metadataCache: {
+        resolvedLinks: {}
+      },
+      fileManager: {
+        trashFile: vi.fn(async (target: TFolder) => {
+          folders.delete(target.path);
+          const parent = target.parent;
+          if (parent instanceof TFolder) {
+            parent.children = parent.children.filter((child) => child !== target);
+          }
+        })
+      }
+    };
+    const manager = new FileManager(
+      app as never,
+      () => ({
+        ...settings,
+        outputFolder: './assets/${noteFileName}',
+        deleteOrphanImages: true,
+        deleteEmptyFolders: true
+      }),
+      new VariableResolver(),
+      {} as never
+    );
+
+    const result = await manager.deleteOrphanImagesForNote(note);
+
+    expect(result).toEqual({ deletedImages: 0, deletedFolders: 2, relocatedImages: 0, preservedImages: 0 });
+    expect(app.fileManager.trashFile).toHaveBeenCalledWith(managedFolder);
+    expect(app.fileManager.trashFile).toHaveBeenCalledWith(assetsFolder);
+  });
+
+  it('cleans a deleted note scoped managed image folder while ignoring stale deleted note references', async () => {
+    const note = Object.assign(new TFile(), {
+      path: 'notes/a.md',
+      name: 'a.md',
+      basename: 'a',
+      extension: 'md'
+    });
+    const firstImage = Object.assign(new TFile(), {
+      path: 'notes/assets/a/one.png',
+      name: 'one.png',
+      basename: 'one',
+      extension: 'png'
+    });
+    const secondImage = Object.assign(new TFile(), {
+      path: 'notes/assets/a/two.webp',
+      name: 'two.webp',
+      basename: 'two',
+      extension: 'webp'
+    });
+    const notesFolder = Object.assign(new TFolder(), {
+      path: 'notes',
+      children: []
+    });
+    const assetsFolder = Object.assign(new TFolder(), {
+      path: 'notes/assets',
+      parent: notesFolder,
+      children: []
+    });
+    const managedFolder = Object.assign(new TFolder(), {
+      path: 'notes/assets/a',
+      parent: assetsFolder,
+      children: [firstImage, secondImage]
+    });
+    (firstImage as TFile & { parent: TFolder | null }).parent = managedFolder;
+    (secondImage as TFile & { parent: TFolder | null }).parent = managedFolder;
+    assetsFolder.children = [managedFolder];
+    notesFolder.children = [assetsFolder];
+
+    const folders = new Map<string, TFolder>([
+      [notesFolder.path, notesFolder],
+      [assetsFolder.path, assetsFolder],
+      [managedFolder.path, managedFolder]
+    ]);
+    const app = {
+      vault: {
+        getFiles: vi.fn(() => [firstImage, secondImage]),
+        getAbstractFileByPath: vi.fn((path: string) => {
+          if (path === firstImage.path) {
+            return firstImage;
+          }
+          if (path === secondImage.path) {
+            return secondImage;
+          }
+          return folders.get(path) ?? null;
+        })
+      },
+      metadataCache: {
+        resolvedLinks: {
+          [note.path]: {
+            [firstImage.path]: 1,
+            [secondImage.path]: 1
+          }
+        }
+      },
+      fileManager: {
+        trashFile: vi.fn(async (target: TFile | TFolder) => {
+          if (target instanceof TFile) {
+            const parent = target.parent;
+            if (parent instanceof TFolder) {
+              parent.children = parent.children.filter((child) => child !== target);
+            }
+            return;
+          }
+
+          folders.delete(target.path);
+          const parent = target.parent;
+          if (parent instanceof TFolder) {
+            parent.children = parent.children.filter((child) => child !== target);
+          }
+        })
+      }
+    };
+    const manager = new FileManager(
+      app as never,
+      () => ({
+        ...settings,
+        enableNoteRenameSync: false,
+        outputFolder: './assets/${noteFileName}',
+        deleteOrphanImages: true,
+        deleteEmptyFolders: true
+      }),
+      new VariableResolver(),
+      {} as never
+    );
+
+    const result = await manager.cleanupManagedImagesForDeletedNote(note);
+
+    expect(result).toEqual({ deletedImages: 2, deletedFolders: 2, relocatedImages: 0, preservedImages: 0 });
+    expect(app.fileManager.trashFile).toHaveBeenCalledWith(firstImage);
+    expect(app.fileManager.trashFile).toHaveBeenCalledWith(secondImage);
+    expect(app.fileManager.trashFile).toHaveBeenCalledWith(managedFolder);
+    expect(app.fileManager.trashFile).toHaveBeenCalledWith(assetsFolder);
+    expect(folders.has(managedFolder.path)).toBe(false);
+    expect(folders.has(assetsFolder.path)).toBe(false);
+    expect(folders.has(notesFolder.path)).toBe(true);
+  });
+
+  it('deletes stale empty folders when Obsidian has not refreshed folder children yet', async () => {
+    const note = Object.assign(new TFile(), {
+      path: 'notes/a.md',
+      name: 'a.md',
+      basename: 'a',
+      extension: 'md'
+    });
+    const image = Object.assign(new TFile(), {
+      path: 'notes/assets/a/one.png',
+      name: 'one.png',
+      basename: 'one',
+      extension: 'png'
+    });
+    const notesFolder = Object.assign(new TFolder(), {
+      path: 'notes',
+      children: []
+    });
+    const assetsFolder = Object.assign(new TFolder(), {
+      path: 'notes/assets',
+      parent: notesFolder,
+      children: []
+    });
+    const managedFolder = Object.assign(new TFolder(), {
+      path: 'notes/assets/a',
+      parent: assetsFolder,
+      children: [image]
+    });
+    (image as TFile & { parent: TFolder | null }).parent = managedFolder;
+    assetsFolder.children = [managedFolder];
+    notesFolder.children = [assetsFolder];
+
+    const folders = new Map<string, TFolder>([
+      [notesFolder.path, notesFolder],
+      [assetsFolder.path, assetsFolder],
+      [managedFolder.path, managedFolder]
+    ]);
+    const liveFiles = new Map<string, TFile>([[image.path, image]]);
+    const app = {
+      vault: {
+        adapter: {
+          list: vi.fn(async (path: string) => {
+            if (path === managedFolder.path) {
+              return {
+                files: liveFiles.has(image.path) ? [image.path] : [],
+                folders: []
+              };
+            }
+            return {
+              files: [],
+              folders: folders.has(managedFolder.path) ? [managedFolder.path] : []
+            };
+          })
+        },
+        getFiles: vi.fn(() => [...liveFiles.values()]),
+        getAbstractFileByPath: vi.fn((path: string) => folders.get(path) ?? liveFiles.get(path) ?? null)
+      },
+      metadataCache: {
+        resolvedLinks: {
+          [note.path]: {
+            [image.path]: 1
+          }
+        }
+      },
+      fileManager: {
+        trashFile: vi.fn(async (target: TFile | TFolder) => {
+          if (target instanceof TFile) {
+            liveFiles.delete(target.path);
+            return;
+          }
+
+          folders.delete(target.path);
+        })
+      }
+    };
+    const manager = new FileManager(
+      app as never,
+      () => ({
+        ...settings,
+        enableNoteRenameSync: false,
+        outputFolder: './assets/${noteFileName}',
+        deleteOrphanImages: true,
+        deleteEmptyFolders: true
+      }),
+      new VariableResolver(),
+      {} as never
+    );
+
+    const result = await manager.cleanupManagedImagesForDeletedNote(note);
+
+    expect(result).toEqual({ deletedImages: 1, deletedFolders: 2, relocatedImages: 0, preservedImages: 0 });
+    expect(managedFolder.children).toEqual([image]);
+    expect(assetsFolder.children).toEqual([managedFolder]);
+    expect(app.fileManager.trashFile).toHaveBeenCalledWith(managedFolder);
+    expect(app.fileManager.trashFile).toHaveBeenCalledWith(assetsFolder);
+  });
+
+  it('skips trashing stale image objects that no longer exist on disk', async () => {
+    const note = Object.assign(new TFile(), {
+      path: 'notes/a.md',
+      name: 'a.md',
+      basename: 'a',
+      extension: 'md'
+    });
+    const image = Object.assign(new TFile(), {
+      path: 'notes/assets/a/missing.png',
+      name: 'missing.png',
+      basename: 'missing',
+      extension: 'png'
+    });
+    const notesFolder = Object.assign(new TFolder(), {
+      path: 'notes',
+      children: []
+    });
+    const assetsFolder = Object.assign(new TFolder(), {
+      path: 'notes/assets',
+      parent: notesFolder,
+      children: []
+    });
+    const managedFolder = Object.assign(new TFolder(), {
+      path: 'notes/assets/a',
+      parent: assetsFolder,
+      children: [image]
+    });
+    (image as TFile & { parent: TFolder | null }).parent = managedFolder;
+    assetsFolder.children = [managedFolder];
+    notesFolder.children = [assetsFolder];
+
+    const folders = new Map<string, TFolder>([
+      [notesFolder.path, notesFolder],
+      [assetsFolder.path, assetsFolder],
+      [managedFolder.path, managedFolder]
+    ]);
+    const app = {
+      vault: {
+        adapter: {
+          exists: vi.fn(async (path: string) => path !== image.path),
+          list: vi.fn(async () => ({ files: [], folders: [] }))
+        },
+        getFiles: vi.fn(() => [image]),
+        getAbstractFileByPath: vi.fn((path: string) => folders.get(path) ?? (path === image.path ? image : null))
+      },
+      metadataCache: {
+        resolvedLinks: {
+          [note.path]: {
+            [image.path]: 1
+          }
+        }
+      },
+      fileManager: {
+        trashFile: vi.fn(async (target: TFile | TFolder) => {
+          if (target instanceof TFile) {
+            throw new Error('stale images should not be trashed');
+          }
+
+          folders.delete(target.path);
+          const parent = target.parent;
+          if (parent instanceof TFolder) {
+            parent.children = parent.children.filter((child) => child !== target);
+          }
+        })
+      }
+    };
+    const manager = new FileManager(
+      app as never,
+      () => ({
+        ...settings,
+        outputFolder: './assets/${noteFileName}',
+        deleteOrphanImages: true,
+        deleteEmptyFolders: true
+      }),
+      new VariableResolver(),
+      {} as never
+    );
+
+    const result = await manager.cleanupManagedImagesForDeletedNote(note);
+
+    expect(result).toEqual({ deletedImages: 0, deletedFolders: 2, relocatedImages: 0, preservedImages: 0 });
+    expect(app.fileManager.trashFile).not.toHaveBeenCalledWith(image);
+    expect(app.fileManager.trashFile).toHaveBeenCalledWith(managedFolder);
+    expect(app.fileManager.trashFile).toHaveBeenCalledWith(assetsFolder);
+  });
+
+  it('continues deleted note cleanup when binary snapshot capture hits ENOENT', async () => {
+    const note = Object.assign(new TFile(), {
+      path: 'notes/a.md',
+      name: 'a.md',
+      basename: 'a',
+      extension: 'md'
+    });
+    const image = Object.assign(new TFile(), {
+      path: 'notes/assets/a/raced.png',
+      name: 'raced.png',
+      basename: 'raced',
+      extension: 'png'
+    });
+    const notesFolder = Object.assign(new TFolder(), {
+      path: 'notes',
+      children: []
+    });
+    const assetsFolder = Object.assign(new TFolder(), {
+      path: 'notes/assets',
+      parent: notesFolder,
+      children: []
+    });
+    const managedFolder = Object.assign(new TFolder(), {
+      path: 'notes/assets/a',
+      parent: assetsFolder,
+      children: [image]
+    });
+    (image as TFile & { parent: TFolder | null }).parent = managedFolder;
+    assetsFolder.children = [managedFolder];
+    notesFolder.children = [assetsFolder];
+
+    const folders = new Map<string, TFolder>([
+      [notesFolder.path, notesFolder],
+      [assetsFolder.path, assetsFolder],
+      [managedFolder.path, managedFolder]
+    ]);
+    const app = {
+      vault: {
+        adapter: {
+          exists: vi.fn(async () => true),
+          list: vi.fn(async () => ({ files: [], folders: [] }))
+        },
+        getFiles: vi.fn(() => [image]),
+        getAbstractFileByPath: vi.fn((path: string) => folders.get(path) ?? (path === image.path ? image : null))
+      },
+      metadataCache: {
+        resolvedLinks: {
+          [note.path]: {
+            [image.path]: 1
+          }
+        }
+      },
+      fileManager: {
+        trashFile: vi.fn(async (target: TFile | TFolder) => {
+          if (target instanceof TFile) {
+            throw new Error('stale images should not be trashed after ENOENT snapshot');
+          }
+
+          folders.delete(target.path);
+        })
+      }
+    };
+    const recoveryManager = {
+      captureBinarySnapshot: vi.fn(async () => {
+        const error = new Error(`ENOENT: no such file or directory, open '${image.path}'`);
+        (error as Error & { code: string }).code = 'ENOENT';
+        throw error;
+      }),
+      recordDeletedFolder: vi.fn()
+    };
+    const manager = new FileManager(
+      app as never,
+      () => ({
+        ...settings,
+        outputFolder: './assets/${noteFileName}',
+        deleteOrphanImages: true,
+        deleteEmptyFolders: true
+      }),
+      new VariableResolver(),
+      {} as never
+    );
+    manager.setRecoveryManager(recoveryManager as never);
+
+    const result = await manager.cleanupManagedImagesForDeletedNote(note);
+
+    expect(result).toEqual({ deletedImages: 0, deletedFolders: 2, relocatedImages: 0, preservedImages: 0 });
+    expect(app.fileManager.trashFile).not.toHaveBeenCalledWith(image);
+    expect(app.fileManager.trashFile).toHaveBeenCalledWith(managedFolder);
+    expect(app.fileManager.trashFile).toHaveBeenCalledWith(assetsFolder);
+  });
+
+  it('deletes an empty deleted note scoped managed folder even when orphan image cleanup is disabled', async () => {
+    const note = Object.assign(new TFile(), {
+      path: 'notes/a.md',
+      name: 'a.md',
+      basename: 'a',
+      extension: 'md'
+    });
+    const notesFolder = Object.assign(new TFolder(), {
+      path: 'notes',
+      children: []
+    });
+    const assetsFolder = Object.assign(new TFolder(), {
+      path: 'notes/assets',
+      parent: notesFolder,
+      children: []
+    });
+    const managedFolder = Object.assign(new TFolder(), {
+      path: 'notes/assets/a',
+      parent: assetsFolder,
+      children: []
+    });
+    assetsFolder.children = [managedFolder];
+    notesFolder.children = [assetsFolder];
+
+    const folders = new Map<string, TFolder>([
+      [notesFolder.path, notesFolder],
+      [assetsFolder.path, assetsFolder],
+      [managedFolder.path, managedFolder]
+    ]);
+    const app = {
+      vault: {
+        getFiles: vi.fn(() => []),
+        getAbstractFileByPath: vi.fn((path: string) => folders.get(path) ?? null)
+      },
+      metadataCache: {
+        resolvedLinks: {}
+      },
+      fileManager: {
+        trashFile: vi.fn(async (target: TFolder) => {
+          folders.delete(target.path);
+          const parent = target.parent;
+          if (parent instanceof TFolder) {
+            parent.children = parent.children.filter((child) => child !== target);
+          }
+        })
+      }
+    };
+    const manager = new FileManager(
+      app as never,
+      () => ({
+        ...settings,
+        enableNoteRenameSync: false,
+        outputFolder: './assets/${noteFileName}',
+        deleteOrphanImages: false,
+        deleteEmptyFolders: true
+      }),
+      new VariableResolver(),
+      {} as never
+    );
+
+    const result = await manager.cleanupManagedImagesForDeletedNote(note);
+
+    expect(result).toEqual({ deletedImages: 0, deletedFolders: 2, relocatedImages: 0, preservedImages: 0 });
+    expect(app.fileManager.trashFile).toHaveBeenCalledWith(managedFolder);
+    expect(app.fileManager.trashFile).toHaveBeenCalledWith(assetsFolder);
+  });
+
+  it('does not scan shared relative folders when cleaning up a deleted note', async () => {
+    const note = Object.assign(new TFile(), {
+      path: 'notes/a.md',
+      name: 'a.md',
+      basename: 'a',
+      extension: 'md'
+    });
+    const sharedFolder = Object.assign(new TFolder(), {
+      path: 'notes/assets',
+      children: []
+    });
+    const app = {
+      vault: {
+        getFiles: vi.fn(() => []),
+        getAbstractFileByPath: vi.fn((path: string) => (path === sharedFolder.path ? sharedFolder : null))
+      },
+      metadataCache: {
+        resolvedLinks: {}
+      },
+      fileManager: {
+        trashFile: vi.fn(async () => undefined)
+      }
+    };
+    const manager = new FileManager(
+      app as never,
+      () => ({
+        ...settings,
+        enableNoteRenameSync: false,
+        outputFolder: './assets',
+        deleteOrphanImages: true,
+        deleteEmptyFolders: true
+      }),
+      new VariableResolver(),
+      {} as never
+    );
+
+    const result = await manager.cleanupManagedImagesForDeletedNote(note);
+
+    expect(result).toEqual({ deletedImages: 0, deletedFolders: 0, relocatedImages: 0, preservedImages: 0 });
+    expect(app.fileManager.trashFile).not.toHaveBeenCalled();
   });
 });

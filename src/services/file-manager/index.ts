@@ -76,6 +76,23 @@ interface DeleteEmptyFolderOptions {
   readonly preservePath?: string;
 }
 
+interface OrphanImageCleanupOptions {
+  readonly preserveScopedReferences?: boolean;
+  readonly deleteEmptyFolderOptions?: DeleteEmptyFolderOptions;
+}
+
+export interface DeletedNoteManagedCleanupTarget {
+  readonly notePath: string;
+  readonly noteName: string;
+  readonly managedFolderPath: string;
+  readonly preservePath?: string;
+}
+
+interface VaultDirectoryListing {
+  readonly files: string[];
+  readonly folders: string[];
+}
+
 export class FileManager {
   private recoveryManager: RecoveryManager | null = null;
   private deferredLeafRefreshDepth = 0;
@@ -280,13 +297,16 @@ export class FileManager {
     const cleanupResult = this.getSettings().deleteOrphanImages
       ? await this.deleteOrphanImagesForNote(noteFile, allowedNotePaths)
       : { deletedImages: 0, deletedFolders: 0, relocatedImages: 0, preservedImages: 0 };
+    const emptyManagedFoldersDeleted = this.getSettings().deleteOrphanImages
+      ? 0
+      : await this.deleteEmptyManagedFolderForNote(noteFile.path);
 
     return {
       replaced: normalized.replaced + movedResult.replaced,
       downloaded: 0,
       moved: movePlans.filter((move) => move.oldPath !== move.newPath).length,
       deleted: cleanupResult.deletedImages,
-      foldersDeleted: cleanupResult.deletedFolders
+      foldersDeleted: cleanupResult.deletedFolders + emptyManagedFoldersDeleted
     };
   }
 
@@ -438,15 +458,21 @@ export class FileManager {
   ): Promise<OrphanImageCleanupResult> {
     const cleanupFolder = this.resolveOrphanCleanupFolderForNote(noteFile);
     if (!(cleanupFolder instanceof TFolder)) {
+      const deletedFolders = await this.deleteEmptyManagedFolderForNote(noteFile.path);
       return {
         deletedImages: 0,
-        deletedFolders: 0,
+        deletedFolders,
         relocatedImages: 0,
         preservedImages: 0
       };
     }
 
-    return this.deleteOrphanImages(this.getImagesInFolder(cleanupFolder), scopeNotePaths);
+    const cleanupResult = await this.deleteOrphanImages(this.getImagesInFolder(cleanupFolder), scopeNotePaths);
+    const deletedFolders = await this.deleteEmptyManagedFolderForNote(noteFile.path);
+    return {
+      ...cleanupResult,
+      deletedFolders: cleanupResult.deletedFolders + deletedFolders
+    };
   }
 
   async deleteOrphanImagesInFolder(folder: TFolder): Promise<OrphanImageCleanupResult> {
@@ -460,6 +486,75 @@ export class FileManager {
     return this.deleteOrphanImages(
       this.getImagesInVault(),
       new Set(this.getMarkdownFilesInVault().map((file) => file.path))
+    );
+  }
+
+  async cleanupManagedImagesForDeletedNote(noteFile: TFile): Promise<OrphanImageCleanupResult> {
+    return this.cleanupManagedImagesForDeletedNotePath(noteFile.path);
+  }
+
+  getDeletedNoteManagedCleanupTarget(notePath: string): DeletedNoteManagedCleanupTarget | null {
+    if (!this.shouldCleanupManagedImagesOnNoteDelete()) {
+      return null;
+    }
+
+    const managedFolderPath = this.resolveOutputFolderPath(notePath);
+    if (!managedFolderPath) {
+      return null;
+    }
+
+    return {
+      notePath,
+      noteName: getFileStem(notePath),
+      managedFolderPath,
+      preservePath: this.resolveManagedFolderCleanupBoundary(notePath)
+    };
+  }
+
+  async cleanupManagedImagesForDeletedNotePath(
+    notePath: string,
+    scopeNotePaths: ReadonlySet<string> = new Set([notePath]),
+    options: {
+      readonly allowImageDeletion?: boolean;
+    } = {}
+  ): Promise<OrphanImageCleanupResult> {
+    const target = this.getDeletedNoteManagedCleanupTarget(notePath);
+    if (!target) {
+      return {
+        deletedImages: 0,
+        deletedFolders: 0,
+        relocatedImages: 0,
+        preservedImages: 0
+      };
+    }
+
+    const cleanupResult = this.getSettings().deleteOrphanImages && options.allowImageDeletion !== false
+      ? await this.deleteUnreferencedImagesInManagedDirectory(target.managedFolderPath, scopeNotePaths)
+      : {
+          deletedImages: 0,
+          deletedFolders: 0,
+          relocatedImages: 0,
+          preservedImages: 0
+        };
+    const deletedEmptyFolders = await this.deleteManagedDirectoryIfEmpty(
+      target.managedFolderPath,
+      target.preservePath
+    );
+
+    return {
+      ...cleanupResult,
+      deletedFolders: cleanupResult.deletedFolders + deletedEmptyFolders
+    };
+  }
+
+  async deleteEmptyManagedFolderForNote(notePath: string): Promise<number> {
+    if (!this.isNoteScopedOutputFolder()) {
+      return 0;
+    }
+
+    return this.deleteManagedDirectoryIfEmpty(
+      this.resolveOutputFolderPath(notePath),
+      this.resolveManagedFolderCleanupBoundary(notePath)
     );
   }
 
@@ -735,6 +830,11 @@ export class FileManager {
     return settings.enableNoteRenameSync && isRelocatableOutputFolderTemplate(settings.outputFolder);
   }
 
+  private shouldCleanupManagedImagesOnNoteDelete(): boolean {
+    const settings = this.getSettings();
+    return this.isNoteScopedOutputFolder() && (settings.deleteOrphanImages || settings.deleteEmptyFolders);
+  }
+
   private nextAvailablePath(path: string, options?: NextAvailablePathOptions): string {
     return nextAvailablePath(path, (candidate) => this.app.vault.getAbstractFileByPath(candidate) !== null, options);
   }
@@ -754,16 +854,26 @@ export class FileManager {
 
   private async deleteOrphanImages(
     images: readonly TFile[],
-    scopeNotePaths: ReadonlySet<string>
+    scopeNotePaths: ReadonlySet<string>,
+    options: OrphanImageCleanupOptions = {}
   ): Promise<OrphanImageCleanupResult> {
+    const preserveScopedReferences = options.preserveScopedReferences ?? true;
     const deletedParents = new Set<string>();
     let deletedImages = 0;
     let relocatedImages = 0;
     let preservedImages = 0;
 
     for (const image of this.deduplicateFilesByPath(images)) {
+      const parentPath = image.parent?.path ?? getParentPath(image.path);
+      if (!(await this.vaultPathExists(image.path))) {
+        if (parentPath) {
+          deletedParents.add(parentPath);
+        }
+        continue;
+      }
+
       const referrers = [...new Set(this.getReferencingNotePaths(image.path))];
-      if (referrers.some((notePath) => scopeNotePaths.has(notePath))) {
+      if (preserveScopedReferences && referrers.some((notePath) => scopeNotePaths.has(notePath))) {
         continue;
       }
 
@@ -798,21 +908,21 @@ export class FileManager {
         continue;
       }
 
-      const parentPath = image.parent?.path ?? getParentPath(image.path);
       if (parentPath) {
         deletedParents.add(parentPath);
       }
 
-      await this.recoveryManager?.captureBinarySnapshot(image);
-      await this.app.fileManager.trashFile(image);
-      deletedImages += 1;
+      const deleted = await this.trashExistingImage(image);
+      if (deleted) {
+        deletedImages += 1;
+      }
     }
 
     let deletedFolders = 0;
     for (const folderPath of deletedParents) {
       const abstract = this.app.vault.getAbstractFileByPath(folderPath);
       if (abstract instanceof TFolder) {
-        deletedFolders += await this.deleteFolderIfEmpty(abstract);
+        deletedFolders += await this.deleteFolderIfEmpty(abstract, options.deleteEmptyFolderOptions);
       }
     }
 
@@ -826,6 +936,10 @@ export class FileManager {
 
   private async reassignImageToReferencingNote(image: TFile, noteFile: TFile): Promise<boolean> {
     const oldPath = image.path;
+    if (!(await this.vaultPathExists(oldPath))) {
+      return false;
+    }
+
     const targetFolder = this.resolveOutputFolderPath(noteFile.path);
     if (targetFolder) {
       await this.ensureFolder(targetFolder);
@@ -848,6 +962,71 @@ export class FileManager {
     this.recoveryManager?.recordRename(oldPath, newPath);
     await this.updateLinks(noteFile, oldPath, newPath, noteFile.path);
     return true;
+  }
+
+  private async trashExistingImage(image: TFile): Promise<boolean> {
+    try {
+      await this.recoveryManager?.captureBinarySnapshot(image);
+      await this.app.fileManager.trashFile(image);
+      return true;
+    } catch (error) {
+      if (this.isFileNotFoundError(error)) {
+        return false;
+      }
+
+      throw error;
+    }
+  }
+
+  private async deleteUnreferencedImagesInManagedDirectory(
+    folderPath: string,
+    scopeNotePaths: ReadonlySet<string>
+  ): Promise<OrphanImageCleanupResult> {
+    const files = await this.collectVaultDirectoryFiles(folderPath);
+    let deletedImages = 0;
+    let preservedImages = 0;
+
+    for (const filePath of files) {
+      if (!this.isImagePath(filePath)) {
+        continue;
+      }
+
+      const referrers = [...new Set(this.getReferencingNotePaths(filePath))].filter((notePath) => !scopeNotePaths.has(notePath));
+      if (referrers.length > 0) {
+        preservedImages += 1;
+        continue;
+      }
+
+      if (await this.trashVaultFileByPath(filePath)) {
+        deletedImages += 1;
+      }
+    }
+
+    return {
+      deletedImages,
+      deletedFolders: 0,
+      relocatedImages: 0,
+      preservedImages
+    };
+  }
+
+  private async trashVaultFileByPath(path: string): Promise<boolean> {
+    const abstract = this.app.vault.getAbstractFileByPath(path);
+    if (!(abstract instanceof TFile)) {
+      return false;
+    }
+
+    try {
+      await this.recoveryManager?.captureBinarySnapshot(abstract);
+      await this.app.fileManager.trashFile(abstract);
+      return true;
+    } catch (error) {
+      if (this.isFileNotFoundError(error)) {
+        return false;
+      }
+
+      throw error;
+    }
   }
 
   private deduplicateFilesByPath(files: readonly TFile[]): TFile[] {
@@ -909,7 +1088,7 @@ export class FileManager {
   private async deleteFolderIfEmpty(folder: TFolder, options: DeleteEmptyFolderOptions = {}): Promise<number> {
     if (
       !this.getSettings().deleteEmptyFolders ||
-      folder.children.length > 0 ||
+      !(await this.isFolderEffectivelyEmpty(folder)) ||
       folder.path === options.preservePath
     ) {
       return 0;
@@ -920,6 +1099,111 @@ export class FileManager {
     await this.app.fileManager.trashFile(folder);
     const parentDeleted = parent ? await this.deleteFolderIfEmpty(parent, options) : 0;
     return 1 + parentDeleted;
+  }
+
+  private async deleteManagedDirectoryIfEmpty(folderPath: string, preservePath?: string): Promise<number> {
+    if (!this.getSettings().deleteEmptyFolders) {
+      return 0;
+    }
+
+    const folder = this.app.vault.getAbstractFileByPath(folderPath);
+    if (!(folder instanceof TFolder)) {
+      return 0;
+    }
+
+    const listing = await this.listVaultDirectory(folderPath);
+    if (!listing || listing.files.length > 0 || listing.folders.length > 0) {
+      return 0;
+    }
+
+    return this.deleteFolderIfEmpty(folder, { preservePath });
+  }
+
+  private async vaultPathExists(path: string): Promise<boolean> {
+    const adapter = (this.app.vault as { adapter?: { exists?: (normalizedPath: string) => Promise<boolean> } }).adapter;
+    if (typeof adapter?.exists === 'function') {
+      try {
+        return await adapter.exists(path);
+      } catch {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private isFileNotFoundError(error: unknown): boolean {
+    if (typeof error !== 'object' || error === null) {
+      return false;
+    }
+
+    const maybeNodeError = error as { code?: unknown; message?: unknown };
+    return maybeNodeError.code === 'ENOENT' || (typeof maybeNodeError.message === 'string' && maybeNodeError.message.includes('ENOENT'));
+  }
+
+  private async collectVaultDirectoryFiles(folderPath: string): Promise<string[]> {
+    const listing = await this.listVaultDirectory(folderPath);
+    if (!listing) {
+      return [];
+    }
+
+    const files = [...listing.files];
+    for (const childFolderPath of listing.folders) {
+      files.push(...(await this.collectVaultDirectoryFiles(childFolderPath)));
+    }
+    return files;
+  }
+
+  private async listVaultDirectory(folderPath: string): Promise<VaultDirectoryListing | null> {
+    const adapter = (this.app.vault as {
+      adapter?: {
+        list?: (normalizedPath: string) => Promise<VaultDirectoryListing>;
+      };
+    }).adapter;
+    if (typeof adapter?.list === 'function') {
+      try {
+        return await adapter.list(folderPath);
+      } catch (error) {
+        if (this.isFileNotFoundError(error)) {
+          return null;
+        }
+
+        throw error;
+      }
+    }
+
+    const folder = this.app.vault.getAbstractFileByPath(folderPath);
+    if (!(folder instanceof TFolder)) {
+      return null;
+    }
+
+    return {
+      files: folder.children.filter((child): child is TFile => child instanceof TFile).map((child) => child.path),
+      folders: folder.children.filter((child): child is TFolder => child instanceof TFolder).map((child) => child.path)
+    };
+  }
+
+  private isImagePath(path: string): boolean {
+    const extension = path.split('.').pop()?.toLowerCase() ?? '';
+    return IMAGE_EXTENSIONS.has(extension);
+  }
+
+  private async isFolderEffectivelyEmpty(folder: TFolder): Promise<boolean> {
+    if (folder.children.length === 0) {
+      return true;
+    }
+
+    const hasIndexedChildren = folder.children.some((child) => this.app.vault.getAbstractFileByPath(child.path) !== null);
+    if (!hasIndexedChildren) {
+      return true;
+    }
+
+    try {
+      const listed = await this.app.vault.adapter.list(folder.path);
+      return listed.files.length === 0 && listed.folders.length === 0;
+    } catch {
+      return false;
+    }
   }
 
   private rewriteImageLinks(

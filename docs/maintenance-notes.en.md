@@ -28,6 +28,9 @@ This file records durable maintenance decisions distilled from the visible, non-
 
 - Resolve paths with the raw link text first, then use decoded fallback when needed. Mixed encoded and unencoded Chinese paths must have test coverage.
 - Orphan cleanup must not expand its scope: migrate and relink a single external reference, keep multi-reference files, and delete only files with no references.
+- Deleted-note auto-cleanup only targets note-owned managed folders such as `./assets/${noteFileName}` or `./assets/{noteName}`. Empty output paths, fixed shared folders, and sibling shared folders must not be auto-scanned just because one note was deleted.
+- Delete events should synchronously enqueue managed-folder cleanup targets only. Before deleting images, wait for `metadataCache.resolved`; on timeout, delete only truly empty folders and never delete images.
+- Batch Markdown deletion should pass the whole deleted-note batch as one scope and deduplicate by managed folder so cross-referenced images are neither deleted unsafely nor left behind incorrectly.
 - Deletes, migrations, conversions, and Markdown relinks should enter recovery transactions so batch changes can be undone.
 
 ## Galleries
