@@ -562,6 +562,7 @@ var ZH_COMMANDS = {
   "c3-convert-vault-images-to-default-format": "\u8F6C\u6362\u4E3A\u9ED8\u8BA4\u683C\u5F0F",
   "c4-compress-vault-images": "\u538B\u7F29\u56FE\u7247",
   "c5-delete-vault-extra-images": "\u5220\u9664\u591A\u4F59\u56FE\u7247",
+  "c6-clean-vault-empty-managed-folders": "\u7A7A\u76EE\u5F55\u6E05\u7406",
   "d1-undo-last-image-manager-transaction": "\u64A4\u9500\u56FE\u7247\u4FEE\u6539",
   "d2-redo-last-image-manager-transaction": "\u91CD\u505A\u56FE\u7247\u4FEE\u6539",
   "open-current-folder-gallery": "\u6253\u5F00\u753B\u5ECA",
@@ -586,6 +587,7 @@ var EN_COMMANDS = {
   "c3-convert-vault-images-to-default-format": "Convert images to default format",
   "c4-compress-vault-images": "Compress images",
   "c5-delete-vault-extra-images": "Delete extra image files",
+  "c6-clean-vault-empty-managed-folders": "Clean empty managed folders",
   "d1-undo-last-image-manager-transaction": "Undo last image change",
   "d2-redo-last-image-manager-transaction": "Redo last image change",
   "open-current-folder-gallery": "Open current folder image gallery",
@@ -641,6 +643,7 @@ var ZH_UI = {
     flipHorizontal: "\u6C34\u5E73\u7FFB\u8F6C",
     flipVertical: "\u5782\u76F4\u7FFB\u8F6C",
     downloadExternalImage: "\u4E0B\u8F7D\u8BE5\u5916\u90E8\u56FE\u7247",
+    cleanEmptyManagedFolders: "\u7A7A\u76EE\u5F55\u6E05\u7406",
     cropDialogTitle: (fileName) => `\u88C1\u526A\u56FE\u7247\uFF1A${fileName}`,
     cropDialogDescription: "\u62D6\u62FD\u9009\u62E9\u8981\u4FDD\u7559\u7684\u533A\u57DF\uFF0C\u786E\u8BA4\u540E\u4F1A\u6309\u9009\u533A\u88C1\u526A\u5F53\u524D\u56FE\u7247\u3002",
     cropConfirm: "\u88C1\u526A"
@@ -655,7 +658,8 @@ var ZH_UI = {
       externalImport: "\u6574\u5E93\u5916\u90E8\u56FE\u7247\u4E0B\u8F7D",
       orphanCleanup: "\u6574\u5E93\u591A\u4F59\u56FE\u7247\u5220\u9664",
       formatConversion: "\u6574\u5E93\u683C\u5F0F\u8F6C\u6362",
-      compression: "\u6574\u5E93\u538B\u7F29"
+      compression: "\u6574\u5E93\u538B\u7F29",
+      emptyFolderCleanup: "\u6574\u5E93\u7A7A\u53D7\u63A7\u76EE\u5F55\u6E05\u7406"
     }
   },
   conflicts: {
@@ -686,6 +690,7 @@ var ZH_UI = {
     batchUpdateVaultImageLinks: "\u6279\u91CF\u66F4\u65B0\u6574\u4E2A\u4ED3\u5E93\u56FE\u7247\u94FE\u63A5",
     importVaultExternalImages: "\u4E0B\u8F7D\u6574\u4E2A\u4ED3\u5E93\u5916\u90E8\u56FE\u7247",
     deleteVaultExtraImages: "\u5220\u9664\u6574\u4E2A\u4ED3\u5E93\u591A\u4F59\u56FE\u7247",
+    cleanupVaultEmptyManagedFolders: "\u6E05\u7406\u6574\u4E2A\u4ED3\u5E93\u7A7A\u53D7\u63A7\u76EE\u5F55",
     contextConvertImage: (fileName) => `\u53F3\u952E\u8F6C\u6362\u56FE\u7247 ${fileName}`,
     contextCompressImage: (fileName) => `\u53F3\u952E\u538B\u7F29\u56FE\u7247 ${fileName}`,
     contextCropImage: (fileName) => `\u53F3\u952E\u88C1\u526A\u56FE\u7247 ${fileName}`,
@@ -693,6 +698,7 @@ var ZH_UI = {
     contextFlipHorizontalImage: (fileName) => `\u53F3\u952E\u6C34\u5E73\u7FFB\u8F6C\u56FE\u7247 ${fileName}`,
     contextFlipVerticalImage: (fileName) => `\u53F3\u952E\u5782\u76F4\u7FFB\u8F6C\u56FE\u7247 ${fileName}`,
     contextDownloadExternalImage: (noteName) => `\u53F3\u952E\u4E0B\u8F7D\u5916\u90E8\u56FE\u7247 ${noteName}`,
+    contextCleanupEmptyManagedFolders: (sourcePath) => `\u53F3\u952E\u6E05\u7406\u7A7A\u53D7\u63A7\u76EE\u5F55 ${sourcePath}`,
     rotateActiveImage: "\u65CB\u8F6C\u5F53\u524D\u56FE\u7247 90 \u5EA6",
     flipActiveImageHorizontal: "\u6C34\u5E73\u7FFB\u8F6C\u5F53\u524D\u56FE\u7247",
     resizeActiveImage: "\u7F29\u653E\u5F53\u524D\u56FE\u7247\u5230 1920px",
@@ -747,6 +753,7 @@ var EN_UI = {
     flipHorizontal: "Flip horizontally",
     flipVertical: "Flip vertically",
     downloadExternalImage: "Download this external image locally",
+    cleanEmptyManagedFolders: "Clean empty managed folders",
     cropDialogTitle: (fileName) => `Crop image: ${fileName}`,
     cropDialogDescription: "Drag to select the area to keep, then confirm to crop the current image.",
     cropConfirm: "Crop"
@@ -761,7 +768,8 @@ var EN_UI = {
       externalImport: "Vault-wide external image download",
       orphanCleanup: "Vault-wide extra image cleanup",
       formatConversion: "Vault-wide format conversion",
-      compression: "Vault-wide compression"
+      compression: "Vault-wide compression",
+      emptyFolderCleanup: "Vault-wide empty managed folder cleanup"
     }
   },
   conflicts: {
@@ -792,6 +800,7 @@ var EN_UI = {
     batchUpdateVaultImageLinks: "Batch update vault image links",
     importVaultExternalImages: "Import vault external images",
     deleteVaultExtraImages: "Delete extra vault images",
+    cleanupVaultEmptyManagedFolders: "Clean empty managed folders across the vault",
     contextConvertImage: (fileName) => `Context convert image ${fileName}`,
     contextCompressImage: (fileName) => `Context compress image ${fileName}`,
     contextCropImage: (fileName) => `Context crop image ${fileName}`,
@@ -799,6 +808,7 @@ var EN_UI = {
     contextFlipHorizontalImage: (fileName) => `Context flip image horizontally ${fileName}`,
     contextFlipVerticalImage: (fileName) => `Context flip image vertically ${fileName}`,
     contextDownloadExternalImage: (noteName) => `Context import external image ${noteName}`,
+    contextCleanupEmptyManagedFolders: (sourcePath) => `Context clean empty managed folders ${sourcePath}`,
     rotateActiveImage: "Rotate current image 90\xB0",
     flipActiveImageHorizontal: "Flip current image horizontally",
     resizeActiveImage: "Resize current image to 1920px",
@@ -842,6 +852,7 @@ var ZH_NOTICES = {
   batchLinkRewriteFailed: "\u6279\u91CF\u66F4\u65B0\u56FE\u7247\u94FE\u63A5\u5931\u8D25",
   batchExternalImageImportFailed: "\u6279\u91CF\u4E0B\u8F7D\u5916\u90E8\u56FE\u7247\u5931\u8D25",
   orphanCleanupFailed: "\u6E05\u7406\u591A\u4F59\u56FE\u7247\u5931\u8D25",
+  emptyManagedFolderCleanupFailed: "\u6E05\u7406\u7A7A\u53D7\u63A7\u76EE\u5F55\u5931\u8D25",
   recoveryHistoryReset: "Note Image Manager \u6062\u590D\u5386\u53F2\u635F\u574F\uFF0C\u5DF2\u81EA\u52A8\u91CD\u7F6E",
   selectAreaFirst: "\u8BF7\u5148\u62D6\u62FD\u9009\u62E9\u4E00\u4E2A\u533A\u57DF",
   compressionSummary: (before, after, ratio, direction, label) => `${label}\uFF1A${before} -> ${after}\uFF08${ratio} ${direction}\uFF09`,
@@ -898,6 +909,8 @@ var ZH_NOTICES = {
   orphanCleanupPreservedImages: (count) => `\u4FDD\u7559 ${count} \u5F20\u4ECD\u88AB\u5176\u4ED6\u7B14\u8BB0\u5F15\u7528\u7684\u56FE\u7247`,
   orphanCleanupRemovedFolders: (count) => `\u5220\u9664 ${count} \u4E2A\u7A7A\u6587\u4EF6\u5939`,
   orphanCleanupFinished: (segments) => `\u6E05\u7406\u591A\u4F59\u56FE\u7247\u5B8C\u6210\uFF1A${segments}`,
+  noEmptyManagedFoldersFound: "\u6CA1\u6709\u627E\u5230\u53EF\u6E05\u7406\u7684\u7A7A\u53D7\u63A7\u76EE\u5F55",
+  emptyManagedFolderCleanupFinished: (count) => `\u7A7A\u53D7\u63A7\u76EE\u5F55\u6E05\u7406\u5B8C\u6210\uFF1A\u5220\u9664 ${count} \u4E2A\u7A7A\u6587\u4EF6\u5939`,
   pluginConflictPreviewItem: (featureLabel, pluginName) => `${featureLabel} vs ${pluginName}`,
   pluginConflictMore: (count) => `\uFF1B\u53E6\u6709 ${count} \u9879`,
   pluginConflictSummary: (preview, suffix) => `\u68C0\u6D4B\u5230\u6F5C\u5728\u63D2\u4EF6\u51B2\u7A81\uFF1A${preview}${suffix}\u3002\u53EF\u5728 Note Image Manager \u8BBE\u7F6E\u7684\u201C\u517C\u5BB9\u6027\u4E0E\u51B2\u7A81\u89C4\u907F\u201D\u4E2D\u67E5\u770B\u3002`
@@ -938,6 +951,7 @@ var EN_NOTICES = {
   batchLinkRewriteFailed: "Batch link rewrite failed",
   batchExternalImageImportFailed: "Batch external image import failed",
   orphanCleanupFailed: "Orphan image cleanup failed",
+  emptyManagedFolderCleanupFailed: "Empty managed folder cleanup failed",
   recoveryHistoryReset: "Note Image Manager recovery history is unreadable and has been reset",
   selectAreaFirst: "Drag to select an area first",
   compressionSummary: (before, after, ratio, direction, label) => `${label}: ${before} -> ${after} (${ratio} ${direction})`,
@@ -994,6 +1008,8 @@ var EN_NOTICES = {
   orphanCleanupPreservedImages: (count) => `kept ${count} image(s) still referenced by other notes`,
   orphanCleanupRemovedFolders: (count) => `removed ${count} empty folder(s)`,
   orphanCleanupFinished: (segments) => `Extra image cleanup finished: ${segments}`,
+  noEmptyManagedFoldersFound: "No empty managed folders found",
+  emptyManagedFolderCleanupFinished: (count) => `Empty managed folder cleanup finished: removed ${count} empty folder(s)`,
   pluginConflictPreviewItem: (featureLabel, pluginName) => `${featureLabel} vs ${pluginName}`,
   pluginConflictMore: (count) => `; ${count} more`,
   pluginConflictSummary: (preview, suffix) => `Potential plugin conflicts detected: ${preview}${suffix}. Review them in Note Image Manager settings under Compatibility.`
@@ -1761,6 +1777,32 @@ var BatchFeature = class {
         });
       }
     });
+    const vaultEmptyFolderCleanupCommand = {
+      commandId: "c6-clean-vault-empty-managed-folders",
+      commandName: getDefaultCommandName("c6-clean-vault-empty-managed-folders")
+    };
+    context.plugin.addCommand({
+      id: vaultEmptyFolderCleanupCommand.commandId,
+      name: vaultEmptyFolderCleanupCommand.commandName,
+      callback: () => {
+        void executeLoggedCommand(context, vaultEmptyFolderCleanupCommand, async () => {
+          const ui = getUiCopy(context.services.settings.getSettings().uiLanguage);
+          if (!await confirmVaultScopeOperation(context.app, context.services.settings.getSettings().uiLanguage, ui.vaultOperation.actionNames.emptyFolderCleanup)) {
+            return;
+          }
+          await context.services.recovery.runTransaction(
+            {
+              label: ui.transactions.cleanupVaultEmptyManagedFolders,
+              trigger: "batch",
+              scope: "vault"
+            },
+            async () => {
+              await this.runEmptyManagedFolderCleanup(context, "vault" /* VAULT */);
+            }
+          );
+        });
+      }
+    });
   }
   async runLinkRewriteBatch(context, scope, source) {
     context.services.logger.refreshMode("batch-update-links");
@@ -1982,6 +2024,51 @@ var BatchFeature = class {
         sourcePath: source == null ? void 0 : source.path
       });
       new import_obsidian4.Notice(error instanceof Error ? error.message : getNoticeCopy(context.services.settings.getSettings().uiLanguage).orphanCleanupFailed);
+    }
+  }
+  async runEmptyManagedFolderCleanup(context, scope, source) {
+    context.services.logger.refreshMode("batch-clean-empty-managed-folders");
+    try {
+      let deletedFolders = 0;
+      switch (scope) {
+        case "current-note" /* CURRENT_NOTE */:
+          if (!(source instanceof import_obsidian4.TFile)) {
+            const settings2 = context.services.settings.getSettings();
+            showOperationNotice(settings2, getNoticeCopy(settings2.uiLanguage).noActiveNoteFile);
+            return;
+          }
+          deletedFolders = await context.services.fileManager.deleteEmptyManagedFoldersForNote(source);
+          break;
+        case "folder" /* FOLDER */:
+          if (!(source instanceof import_obsidian4.TFolder)) {
+            const settings2 = context.services.settings.getSettings();
+            showOperationNotice(settings2, getNoticeCopy(settings2.uiLanguage).noActiveFolder);
+            return;
+          }
+          deletedFolders = await context.services.fileManager.deleteEmptyManagedFoldersInFolder(source);
+          break;
+        case "vault" /* VAULT */:
+        default:
+          deletedFolders = await context.services.fileManager.deleteEmptyManagedFoldersInVault();
+          break;
+      }
+      context.services.logger.debug("Completed empty managed folder cleanup", {
+        scope,
+        sourcePath: source == null ? void 0 : source.path,
+        deletedFolders
+      });
+      const settings = context.services.settings.getSettings();
+      showOperationNotice(
+        settings,
+        deletedFolders > 0 ? getNoticeCopy(settings.uiLanguage).emptyManagedFolderCleanupFinished(deletedFolders) : getNoticeCopy(settings.uiLanguage).noEmptyManagedFoldersFound
+      );
+    } catch (error) {
+      console.error("Note Image Manager empty managed folder cleanup failed", error);
+      context.services.logger.error("Empty managed folder cleanup failed", error, {
+        scope,
+        sourcePath: source == null ? void 0 : source.path
+      });
+      new import_obsidian4.Notice(error instanceof Error ? error.message : getNoticeCopy(context.services.settings.getSettings().uiLanguage).emptyManagedFolderCleanupFailed);
     }
   }
   resolveNotes(context, scope, source) {
@@ -3301,12 +3388,37 @@ var ContextMenuFeature = class {
   async register(context) {
     context.plugin.registerEvent(
       context.app.workspace.on("file-menu", (menu, file) => {
-        if (!context.services.settings.getSettings().enableContextMenu || !(file instanceof import_obsidian10.TFile) || !context.services.fileManager.isImageFile(file)) {
+        if (!context.services.settings.getSettings().enableContextMenu) {
           return;
         }
-        this.addImageMenuItems(context, menu, file);
+        if (file instanceof import_obsidian10.TFolder || file instanceof import_obsidian10.TFile && file.extension.toLowerCase() === "md") {
+          this.addEmptyManagedFolderCleanupMenuItem(context, menu, file);
+          return;
+        }
+        if (file instanceof import_obsidian10.TFile && context.services.fileManager.isImageFile(file)) {
+          this.addImageMenuItems(context, menu, file);
+        }
       })
     );
+  }
+  addEmptyManagedFolderCleanupMenuItem(context, menu, file) {
+    const ui = getUiCopy(context.services.settings.getSettings().uiLanguage);
+    menu.addSeparator();
+    menu.addItem((item) => {
+      item.setTitle(ui.contextMenu.cleanEmptyManagedFolders).setIcon("folder-x").onClick(() => {
+        context.services.logger.refreshMode("context-menu-clean-empty-managed-folders");
+        void context.services.recovery.runTransaction(
+          {
+            label: ui.transactions.contextCleanupEmptyManagedFolders(file.path || file.name),
+            trigger: "context-menu",
+            scope: file instanceof import_obsidian10.TFolder ? "folder" : "single-note"
+          },
+          async () => {
+            await this.cleanEmptyManagedFolders(context, file);
+          }
+        );
+      });
+    });
   }
   addImageMenuItems(context, menu, file) {
     const inPlaceRestriction = context.services.imageProcessor.getInPlaceModificationRestriction(file);
@@ -3445,6 +3557,14 @@ var ContextMenuFeature = class {
         );
       });
     });
+  }
+  async cleanEmptyManagedFolders(context, file) {
+    const deletedFolders = file instanceof import_obsidian10.TFolder ? await context.services.fileManager.deleteEmptyManagedFoldersInFolder(file) : await context.services.fileManager.deleteEmptyManagedFoldersForNote(file);
+    const settings = context.services.settings.getSettings();
+    showOperationNotice(
+      settings,
+      deletedFolders > 0 ? getNoticeCopy(settings.uiLanguage).emptyManagedFolderCleanupFinished(deletedFolders) : getNoticeCopy(settings.uiLanguage).noEmptyManagedFoldersFound
+    );
   }
   async openImageGallery(context, file) {
     const settings = context.services.settings.getSettings();
@@ -5974,6 +6094,37 @@ var FileManager = class {
       new Set(this.getMarkdownFilesInVault().map((file) => file.path))
     );
   }
+  async deleteEmptyManagedFoldersForNote(noteFile) {
+    if (noteFile.extension.toLowerCase() !== "md") {
+      return 0;
+    }
+    return this.deleteEmptyManagedFolderForNote(noteFile.path, { force: true });
+  }
+  async deleteEmptyManagedFoldersInFolder(folder) {
+    const candidates = /* @__PURE__ */ new Map();
+    for (const note of this.getMarkdownFilesInFolder(folder)) {
+      candidates.set(note.path, {
+        notePath: note.path,
+        preservePath: this.resolveManagedFolderCleanupBoundary(note.path)
+      });
+    }
+    for (const note of this.getMarkdownFilesInVault()) {
+      const managedFolderPath = this.resolveOutputFolderPath(note.path);
+      if (!managedFolderPath || !this.isPathWithinFolder(managedFolderPath, folder.path)) {
+        continue;
+      }
+      candidates.set(note.path, {
+        notePath: note.path,
+        preservePath: this.resolveManagedFolderCleanupBoundary(note.path)
+      });
+    }
+    const deletedFromResolvedTargets = await this.deleteEmptyManagedFoldersForTargets([...candidates.values()]);
+    const deletedFromSelectedTree = await this.deleteEmptyManagedFoldersInSelectedManagedTree(folder);
+    return deletedFromResolvedTargets + deletedFromSelectedTree;
+  }
+  async deleteEmptyManagedFoldersInVault() {
+    return this.deleteEmptyManagedFoldersForNotes(this.getMarkdownFilesInVault());
+  }
   async cleanupManagedImagesForDeletedNote(noteFile) {
     return this.cleanupManagedImagesForDeletedNotePath(noteFile.path);
   }
@@ -6017,14 +6168,52 @@ var FileManager = class {
       deletedFolders: cleanupResult.deletedFolders + deletedEmptyFolders
     };
   }
-  async deleteEmptyManagedFolderForNote(notePath) {
+  async deleteEmptyManagedFolderForNote(notePath, options = {}) {
     if (!this.isNoteScopedOutputFolder()) {
       return 0;
     }
     return this.deleteManagedDirectoryIfEmpty(
       this.resolveOutputFolderPath(notePath),
-      this.resolveManagedFolderCleanupBoundary(notePath)
+      this.resolveManagedFolderCleanupBoundary(notePath),
+      options
     );
+  }
+  async deleteEmptyManagedFoldersForNotes(notes) {
+    const seenNotePaths = /* @__PURE__ */ new Set();
+    const targets = [];
+    let deletedFolders = 0;
+    for (const note of notes) {
+      if (seenNotePaths.has(note.path)) {
+        continue;
+      }
+      seenNotePaths.add(note.path);
+      targets.push({
+        notePath: note.path,
+        preservePath: this.resolveManagedFolderCleanupBoundary(note.path)
+      });
+    }
+    deletedFolders += await this.deleteEmptyManagedFoldersForTargets(targets);
+    return deletedFolders;
+  }
+  async deleteEmptyManagedFoldersForTargets(targets) {
+    if (!this.isNoteScopedOutputFolder()) {
+      return 0;
+    }
+    const byManagedFolderPath = /* @__PURE__ */ new Map();
+    for (const target of targets) {
+      const managedFolderPath = this.resolveOutputFolderPath(target.notePath);
+      if (managedFolderPath) {
+        byManagedFolderPath.set(managedFolderPath, target);
+      }
+    }
+    let deletedFolders = 0;
+    const orderedTargets = [...byManagedFolderPath.entries()].sort(
+      ([leftPath], [rightPath]) => rightPath.split("/").length - leftPath.split("/").length
+    );
+    for (const [managedFolderPath, target] of orderedTargets) {
+      deletedFolders += await this.deleteManagedDirectoryIfEmpty(managedFolderPath, target.preservePath, { force: true });
+    }
+    return deletedFolders;
   }
   async updateLinks(noteFile, oldPath, newPath, sourcePath) {
     var _a;
@@ -6440,7 +6629,7 @@ var FileManager = class {
   }
   async deleteFolderIfEmpty(folder, options = {}) {
     var _a;
-    if (!this.getSettings().deleteEmptyFolders || !await this.isFolderEffectivelyEmpty(folder) || folder.path === options.preservePath) {
+    if (!options.force && !this.getSettings().deleteEmptyFolders || !await this.isFolderEffectivelyEmpty(folder) || folder.path === options.preservePath) {
       return 0;
     }
     const parent = folder.parent instanceof import_obsidian19.TFolder ? folder.parent : null;
@@ -6449,8 +6638,8 @@ var FileManager = class {
     const parentDeleted = parent ? await this.deleteFolderIfEmpty(parent, options) : 0;
     return 1 + parentDeleted;
   }
-  async deleteManagedDirectoryIfEmpty(folderPath, preservePath) {
-    if (!this.getSettings().deleteEmptyFolders) {
+  async deleteManagedDirectoryIfEmpty(folderPath, preservePath, options = {}) {
+    if (!options.force && !this.getSettings().deleteEmptyFolders) {
       return 0;
     }
     const folder = this.app.vault.getAbstractFileByPath(folderPath);
@@ -6461,7 +6650,99 @@ var FileManager = class {
     if (!listing || listing.files.length > 0 || listing.folders.length > 0) {
       return 0;
     }
-    return this.deleteFolderIfEmpty(folder, { preservePath });
+    return this.deleteFolderIfEmpty(folder, { ...options, preservePath });
+  }
+  async deleteEmptyManagedFoldersInSelectedManagedTree(folder) {
+    if (!this.isConfiguredManagedFolderArea(folder.path)) {
+      return 0;
+    }
+    const folderPaths = [...await this.collectVaultDirectoryFolders(folder.path), folder.path].sort(
+      (left, right) => right.split("/").length - left.split("/").length
+    );
+    const preservePath = getParentPath(folder.path) || void 0;
+    let deletedFolders = 0;
+    for (const folderPath of folderPaths) {
+      deletedFolders += await this.deleteManagedDirectoryIfEmpty(folderPath, preservePath, { force: true });
+    }
+    return deletedFolders;
+  }
+  async collectVaultDirectoryFolders(folderPath) {
+    const listing = await this.listVaultDirectory(folderPath);
+    if (!listing) {
+      return [];
+    }
+    const folders = [...listing.folders];
+    for (const childFolderPath of listing.folders) {
+      folders.push(...await this.collectVaultDirectoryFolders(childFolderPath));
+    }
+    return folders;
+  }
+  isConfiguredManagedFolderArea(folderPath) {
+    const template = this.getSettings().outputFolder.trim();
+    if (!template) {
+      return false;
+    }
+    const normalizedFolderPath = normalizeVaultPath(folderPath);
+    for (const rootPath of this.getConfiguredManagedRootPaths()) {
+      if (this.isPathWithinFolder(normalizedFolderPath, rootPath) || this.isPathWithinFolder(rootPath, normalizedFolderPath)) {
+        return true;
+      }
+    }
+    const staticSegments = this.getOutputFolderStaticPrefixSegments(template);
+    return staticSegments.length > 0 && this.pathContainsSegmentSequence(normalizedFolderPath, staticSegments);
+  }
+  getConfiguredManagedRootPaths() {
+    const rootPaths = /* @__PURE__ */ new Set();
+    for (const note of this.getMarkdownFilesInVault()) {
+      const rootPath = this.resolveManagedRootPath(note.path);
+      if (rootPath) {
+        rootPaths.add(rootPath);
+      }
+    }
+    return [...rootPaths];
+  }
+  resolveManagedRootPath(notePath) {
+    const template = this.getSettings().outputFolder.trim();
+    if (!template) {
+      return getParentPath(notePath);
+    }
+    const noteName = getFileStem(notePath);
+    const resolvedTemplate = normalizeVaultPath(
+      this.variableResolver.resolvePath(template, this.variableResolver.createContext(noteName, noteName))
+    );
+    const resolvedFolder = this.resolveOutputFolderPath(notePath);
+    if (!resolvedTemplate || !resolvedFolder) {
+      return resolvedFolder;
+    }
+    const templateSegments = resolvedTemplate.split("/").filter(Boolean);
+    const resolvedSegments = normalizeVaultPath(resolvedFolder).split("/").filter(Boolean);
+    if (templateSegments.length === 0 || resolvedSegments.length < templateSegments.length) {
+      return resolvedFolder;
+    }
+    const managedRootSegmentCount = resolvedSegments.length - templateSegments.length + 1;
+    return resolvedSegments.slice(0, managedRootSegmentCount).join("/");
+  }
+  getOutputFolderStaticPrefixSegments(template) {
+    const variableIndex = template.search(/\$?\{[^{}]+\}/);
+    const staticPrefix = variableIndex >= 0 ? template.slice(0, variableIndex) : template;
+    return normalizeVaultPath(staticPrefix).split("/").filter((segment) => segment.length > 0);
+  }
+  pathContainsSegmentSequence(path, segments) {
+    const pathSegments = normalizeVaultPath(path).split("/").filter(Boolean);
+    if (segments.length === 0 || segments.length > pathSegments.length) {
+      return false;
+    }
+    for (let index = 0; index <= pathSegments.length - segments.length; index += 1) {
+      if (segments.every((segment, offset) => pathSegments[index + offset] === segment)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  isPathWithinFolder(path, folderPath) {
+    const normalizedPath = normalizeVaultPath(path);
+    const normalizedFolderPath = normalizeVaultPath(folderPath);
+    return !normalizedFolderPath || normalizedPath === normalizedFolderPath || normalizedPath.startsWith(`${normalizedFolderPath}/`);
   }
   async vaultPathExists(path) {
     const adapter = this.app.vault.adapter;

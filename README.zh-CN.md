@@ -2,13 +2,14 @@
 
 # Note Image Manager
 
+[![CI](https://github.com/DXShelley/obsidian-image-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/DXShelley/obsidian-image-manager/actions/workflows/ci.yml)
 [![Release](https://github.com/DXShelley/obsidian-image-manager/actions/workflows/release.yml/badge.svg)](https://github.com/DXShelley/obsidian-image-manager/actions/workflows/release.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Obsidian](https://img.shields.io/badge/Obsidian-desktop%20only-7c3aed.svg)](manifest.json)
 
 `Note Image Manager` 是一个面向 Obsidian 的图片管理插件，用于把笔记图片的导入、命名、转换、压缩、轻量编辑、画廊浏览和恢复回退收敛到一条可控流程。
 
-当前版本：`4.0.10`<br>
+当前版本：`4.0.11`<br>
 最低 Obsidian 版本：`1.12.4`<br>
 发布形态：桌面端插件，`manifest.json` 中 `isDesktopOnly` 为 `true`
 
@@ -37,16 +38,17 @@
 3. 将文件放入你的 vault：`.obsidian/plugins/note-image-manager/`。
 4. 在 **Settings -> Community plugins** 中启用 **Note Image Manager**。
 
-## 源码与文档
+## 文档入口
 
-`main` 分支只保留较小的发布展示面：README、更新日志、插件安装产物、版本元数据和 GitHub Pages 网站。完整源码、测试、开发配置和详细文档位于 [`develop`](https://github.com/DXShelley/obsidian-image-manager/tree/develop) 分支。
-
-| 目标 | 链接 |
+| 目标 | 文档 |
 | --- | --- |
-| 快速了解全部文档 | [文档索引](https://github.com/DXShelley/obsidian-image-manager/blob/develop/docs/README.md) |
-| 安装后如何使用命令、设置、画廊、诊断日志与恢复 | [用户指南](https://github.com/DXShelley/obsidian-image-manager/blob/develop/docs/user-guide.md) |
-| 命名模板和保存路径变量 | [变量参考](https://github.com/DXShelley/obsidian-image-manager/blob/develop/docs/variables.md) |
-| 查看源码与测试 | [develop 分支](https://github.com/DXShelley/obsidian-image-manager/tree/develop) |
+| 快速了解全部文档 | [文档索引](docs/README.md) |
+| 安装后如何使用命令、设置、画廊与恢复 | [用户指南](docs/user-guide.md) |
+| 命名模板和保存路径变量 | [变量参考](docs/variables.md) |
+| 代码分层、运行流程和模块边界 | [架构说明](docs/architecture.md) |
+| 核心服务与批处理接口摘要 | [API 参考](docs/api-reference.md) |
+| 手工验证矩阵和回归范围 | [测试用例](docs/test-cases.md) |
+| 社区提交和 GitHub Release 收口 | [发布前清单](docs/release-checklist.md) |
 | 版本变化 | [更新日志](CHANGELOG.md) |
 
 ## 披露与限制
@@ -57,6 +59,47 @@
 - `GIF`、`SVG`、`TIFF`、`HEIC`、`AVIF` 等格式属于分层兼容：可识别、可导入或可作为转换输入，不代表所有原位编辑和压缩操作都稳定可用。
 - 插件会在 `.obsidian/plugins/note-image-manager/` 下保存压缩历史与恢复快照，用于避免重复压缩并支持撤销 / 重做。
 - 整库转换、整库压缩、整库删除多余图片文件等高风险操作都会先弹出确认。
+
+## 开发
+
+推荐使用 Node.js `22`，与 CI 和 Release workflow 保持一致。
+
+```bash
+npm install
+npm run validate
+npm run build
+```
+
+常用命令：
+
+- `npm run dev`：开发构建。
+- `npm run type-check`：TypeScript 类型检查。
+- `npm run lint`：ESLint 检查。
+- `npm run test`：运行 Vitest 单元测试。
+- `npm run validate`：依次运行类型检查、lint 和测试。
+
+贡献流程见 [贡献指南](CONTRIBUTING.md)。
+
+## 仓库结构
+
+```text
+src/app        插件运行时装配与功能目录
+src/core       设置、事件、注册中心、恢复和压缩历史等基础能力
+src/features   重命名、压缩、转换、预览、编辑、画廊、批处理等功能模块
+src/services   图片处理、文件管理、变量解析与链接格式化服务
+src/ui         设置页与模态框
+src/utils      平台、路径、链接、校验与 Obsidian 兼容工具
+docs           用户、开发、测试和发布文档
+website        GitHub Pages 展示站点
+tests          Vitest 单元测试
+```
+
+## 发布
+
+- `manifest.json.version`、`package.json.version`、`versions.json` 和展示站点版本文案应保持一致。
+- Git tag 必须与 `manifest.json.version` 完全一致，例如 `4.0.4`，不要添加 `v` 前缀。
+- GitHub Release 附件应包含 `manifest.json`、`main.js`、`styles.css` 和 `note-image-manager.zip`。
+- 详细检查项见 [发布前清单](docs/release-checklist.md)。
 
 ## 致谢
 

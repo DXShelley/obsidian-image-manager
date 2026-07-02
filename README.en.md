@@ -2,13 +2,14 @@
 
 # Note Image Manager
 
+[![CI](https://github.com/DXShelley/obsidian-image-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/DXShelley/obsidian-image-manager/actions/workflows/ci.yml)
 [![Release](https://github.com/DXShelley/obsidian-image-manager/actions/workflows/release.yml/badge.svg)](https://github.com/DXShelley/obsidian-image-manager/actions/workflows/release.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Obsidian](https://img.shields.io/badge/Obsidian-desktop%20only-7c3aed.svg)](manifest.json)
 
 `Note Image Manager` is an image-management plugin for Obsidian. It keeps image import, naming, conversion, compression, lightweight editing, gallery browsing, and recovery in one controlled workflow.
 
-Current version: `4.0.10`<br>
+Current version: `4.0.11`<br>
 Minimum Obsidian version: `1.12.4`<br>
 Release target: desktop plugin, with `isDesktopOnly` set to `true` in `manifest.json`
 
@@ -37,16 +38,17 @@ After marketplace approval, install it from **Settings -> Community plugins** by
 3. Place the files in your vault under `.obsidian/plugins/note-image-manager/`.
 4. Enable **Note Image Manager** in **Settings -> Community plugins**.
 
-## Source And Documentation
+## Documentation
 
-The `main` branch keeps the release surface small: README files, release notes, plugin install artifacts, version metadata, and the GitHub Pages website. Full source, tests, development configuration, and detailed documentation live on the [`develop`](https://github.com/DXShelley/obsidian-image-manager/tree/develop) branch.
-
-| Goal | Link |
+| Goal | Document |
 | --- | --- |
-| Browse the full documentation set | [Docs Index](https://github.com/DXShelley/obsidian-image-manager/blob/develop/docs/README.en.md) |
-| Learn commands, settings, galleries, diagnostic logging, and recovery | [User Guide](https://github.com/DXShelley/obsidian-image-manager/blob/develop/docs/user-guide.en.md) |
-| Configure naming and folder variables | [Variable Reference](https://github.com/DXShelley/obsidian-image-manager/blob/develop/docs/variables.en.md) |
-| Review source code and tests | [develop branch](https://github.com/DXShelley/obsidian-image-manager/tree/develop) |
+| Browse the full documentation set | [Docs Index](docs/README.en.md) |
+| Learn commands, settings, galleries, and recovery | [User Guide](docs/user-guide.en.md) |
+| Configure naming and folder variables | [Variable Reference](docs/variables.en.md) |
+| Understand layering, runtime flow, and module boundaries | [Architecture](docs/architecture.en.md) |
+| Review core service and batch API summaries | [API Reference](docs/api-reference.en.md) |
+| Run manual validation and regression checks | [Test Cases](docs/test-cases.en.md) |
+| Prepare community submission and GitHub Releases | [Release Checklist](docs/release-checklist.en.md) |
 | Read version history | [Changelog](CHANGELOG.en.md) |
 
 ## Disclosure And Limits
@@ -57,6 +59,47 @@ The `main` branch keeps the release surface small: README files, release notes, 
 - Formats such as `GIF`, `SVG`, `TIFF`, `HEIC`, and `AVIF` use layered compatibility: they may be recognized, imported, or accepted as conversion input, but that does not guarantee every in-place edit or compression path is stable.
 - Compression history and recovery snapshots are stored under `.obsidian/plugins/note-image-manager/` so the plugin can avoid duplicate compression and support undo / redo.
 - Vault-wide conversion, compression, and orphan-image cleanup commands require confirmation before running.
+
+## Development
+
+Node.js `22` is recommended to match the CI and Release workflows.
+
+```bash
+npm install
+npm run validate
+npm run build
+```
+
+Common commands:
+
+- `npm run dev`: development build.
+- `npm run type-check`: TypeScript type check.
+- `npm run lint`: ESLint check.
+- `npm run test`: Vitest unit tests.
+- `npm run validate`: type check, lint, and tests.
+
+See [Contributing](CONTRIBUTING.en.md) for the contribution workflow.
+
+## Repository Layout
+
+```text
+src/app        plugin runtime wiring and feature catalog
+src/core       settings, events, registry, recovery, and compression history
+src/features   rename, compress, convert, preview, editor, gallery, batch, and related modules
+src/services   image processing, file management, variable resolution, and link formatting
+src/ui         settings tab and modals
+src/utils      platform, path, link, validation, and Obsidian compatibility helpers
+docs           user, development, testing, and release documentation
+website        GitHub Pages website
+tests          Vitest unit tests
+```
+
+## Release
+
+- Keep `manifest.json.version`, `package.json.version`, `versions.json`, and the website version copy aligned.
+- The Git tag must exactly match `manifest.json.version`, for example `4.0.4`, without a `v` prefix.
+- GitHub Release assets should include `manifest.json`, `main.js`, `styles.css`, and `note-image-manager.zip`.
+- See the [Release Checklist](docs/release-checklist.en.md) for the full checklist.
 
 ## Acknowledgements
 
