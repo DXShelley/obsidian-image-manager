@@ -4479,63 +4479,27 @@ function getElementAttributeValues(element, attributes) {
   }).filter((value) => Boolean(value));
 }
 function getRenderedImageCandidateElements(event) {
-  var _a;
-  const candidates = /* @__PURE__ */ new Set();
-  const elements = getEventPathElements(event);
-  const target = (_a = elements[0]) != null ? _a : null;
-  for (const element of elements) {
-    addRenderedImageCandidate(candidates, element);
-    for (const selector of ["img", ".internal-embed", ".image-embed"]) {
-      const closest = element.closest(selector);
-      if (closest) {
-        addRenderedImageCandidate(candidates, closest);
-      }
-    }
-    if (element === target || isImageWidgetContainer(element)) {
-      addRenderedImageDescendants(candidates, element);
-      addRenderedImageSiblingCandidates(candidates, element);
-    }
+  const target = event.target instanceof Element ? event.target : null;
+  const image = target == null ? void 0 : target.closest("img:not(.cm-widgetBuffer)");
+  if (image) {
+    return [image];
   }
-  return [...candidates];
-}
-function getEventPathElements(event) {
-  var _a, _b;
-  const elements = [];
-  const path = (_b = (_a = event.composedPath) == null ? void 0 : _a.call(event)) != null ? _b : [];
-  for (const item of path) {
-    if (item instanceof Element) {
-      elements.push(item);
-    }
+  const embed = target == null ? void 0 : target.closest(".internal-embed, .image-embed");
+  if (embed) {
+    return [embed];
   }
-  if (event.target instanceof Element && !elements.includes(event.target)) {
-    elements.unshift(event.target);
+  const lineEmbed = target ? findLineImageEmbed(target) : null;
+  return lineEmbed ? [lineEmbed] : [];
+}
+function getImageEmbedElement(element) {
+  if (element.matches(".internal-embed, .image-embed")) {
+    return element;
   }
-  return elements;
+  return element.querySelector(".internal-embed, .image-embed");
 }
-function addRenderedImageCandidate(candidates, element) {
-  if (isRenderedImageElement(element)) {
-    candidates.add(element);
-  }
-}
-function isRenderedImageElement(element) {
-  return element.matches("img, .internal-embed, .image-embed");
-}
-function isImageWidgetContainer(element) {
-  return element.matches(".cm-widgetBuffer, .cm-embed-block, .cm-line, .internal-embed, .image-embed");
-}
-function addRenderedImageDescendants(candidates, element) {
-  for (const descendant of element.querySelectorAll("img, .internal-embed, .image-embed")) {
-    addRenderedImageCandidate(candidates, descendant);
-  }
-}
-function addRenderedImageSiblingCandidates(candidates, element) {
-  for (const sibling of [element.previousElementSibling, element.nextElementSibling]) {
-    if (!sibling) {
-      continue;
-    }
-    addRenderedImageCandidate(candidates, sibling);
-    addRenderedImageDescendants(candidates, sibling);
-  }
+function findLineImageEmbed(element) {
+  const line = element.closest(".cm-line");
+  return line ? getImageEmbedElement(line) : null;
 }
 function getRenderedImageTargetValues(element) {
   if (element.matches("img")) {

@@ -325,72 +325,32 @@ function getElementAttributeValues(element: Element | null, attributes: readonly
 }
 
 function getRenderedImageCandidateElements(event: MouseEvent): Element[] {
-  const candidates = new Set<Element>();
-  const elements = getEventPathElements(event);
-  const target = elements[0] ?? null;
-  for (const element of elements) {
-    addRenderedImageCandidate(candidates, element);
-    for (const selector of ['img', '.internal-embed', '.image-embed']) {
-      const closest = element.closest(selector);
-      if (closest) {
-        addRenderedImageCandidate(candidates, closest);
-      }
-    }
-
-    if (element === target || isImageWidgetContainer(element)) {
-      addRenderedImageDescendants(candidates, element);
-      addRenderedImageSiblingCandidates(candidates, element);
-    }
+  const target = event.target instanceof Element ? event.target : null;
+  const image = target?.closest('img:not(.cm-widgetBuffer)');
+  if (image) {
+    return [image];
   }
 
-  return [...candidates];
-}
-
-function getEventPathElements(event: MouseEvent): Element[] {
-  const elements: Element[] = [];
-  const path = event.composedPath?.() ?? [];
-  for (const item of path) {
-    if (item instanceof Element) {
-      elements.push(item);
-    }
+  const embed = target?.closest('.internal-embed, .image-embed');
+  if (embed) {
+    return [embed];
   }
 
-  if (event.target instanceof Element && !elements.includes(event.target)) {
-    elements.unshift(event.target);
+  const lineEmbed = target ? findLineImageEmbed(target) : null;
+  return lineEmbed ? [lineEmbed] : [];
+}
+
+function getImageEmbedElement(element: Element): Element | null {
+  if (element.matches('.internal-embed, .image-embed')) {
+    return element;
   }
 
-  return elements;
+  return element.querySelector('.internal-embed, .image-embed');
 }
 
-function addRenderedImageCandidate(candidates: Set<Element>, element: Element): void {
-  if (isRenderedImageElement(element)) {
-    candidates.add(element);
-  }
-}
-
-function isRenderedImageElement(element: Element): boolean {
-  return element.matches('img, .internal-embed, .image-embed');
-}
-
-function isImageWidgetContainer(element: Element): boolean {
-  return element.matches('.cm-widgetBuffer, .cm-embed-block, .cm-line, .internal-embed, .image-embed');
-}
-
-function addRenderedImageDescendants(candidates: Set<Element>, element: Element): void {
-  for (const descendant of element.querySelectorAll('img, .internal-embed, .image-embed')) {
-    addRenderedImageCandidate(candidates, descendant);
-  }
-}
-
-function addRenderedImageSiblingCandidates(candidates: Set<Element>, element: Element): void {
-  for (const sibling of [element.previousElementSibling, element.nextElementSibling]) {
-    if (!sibling) {
-      continue;
-    }
-
-    addRenderedImageCandidate(candidates, sibling);
-    addRenderedImageDescendants(candidates, sibling);
-  }
+function findLineImageEmbed(element: Element): Element | null {
+  const line = element.closest('.cm-line');
+  return line ? getImageEmbedElement(line) : null;
 }
 
 function getRenderedImageTargetValues(element: Element): string[] {

@@ -4,8 +4,8 @@
 
 ## Release
 
-- `v4.0.11` adds empty managed-folder cleanup entry points: file-list context menus clean by folder or Markdown file, and the command palette can run a vault-wide cleanup with risk confirmation.
-- Package metadata, manifest metadata, release workflow, marketing site, and user-facing documentation are aligned for the 4.0.11 release.
+- `v4.0.12` fixes Live Preview gallery clicks for image-link lines: clicking the concrete image-link line, selected Markdown image syntax, image widget area, or rendered image opens the matching image gallery.
+- Package metadata, manifest metadata, release workflow, marketing site, and user-facing documentation are aligned for the 4.0.12 release.
 
 ## Completed
 
