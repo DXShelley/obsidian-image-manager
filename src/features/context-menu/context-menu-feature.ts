@@ -1,4 +1,4 @@
-import { TFile } from 'obsidian';
+import { TFile, TFolder } from 'obsidian';
 import type { Menu, TAbstractFile } from 'obsidian';
 import { getNoticeCopy, getUiCopy } from '@/i18n';
 import { openSingleImageGallery } from '@/features/gallery/gallery-actions';
@@ -28,13 +28,40 @@ export class ContextMenuFeature implements ImageManagerFeature {
   async register(context: ImageManagerFeatureContext): Promise<void> {
     context.plugin.registerEvent(
       context.app.workspace.on('file-menu', (menu: Menu, file: TAbstractFile) => {
-        if (!context.services.settings.getSettings().enableContextMenu || !(file instanceof TFile) || !context.services.fileManager.isImageFile(file)) {
+        if (!context.services.settings.getSettings().enableContextMenu) {
           return;
         }
 
-        this.addImageMenuItems(context, menu, file);
+        if (file instanceof TFolder || (file instanceof TFile && file.extension.toLowerCase() === 'md')) {
+          this.addEmptyManagedFolderCleanupMenuItem(context, menu, file);
+          return;
+        }
+
+        if (file instanceof TFile && context.services.fileManager.isImageFile(file)) {
+          this.addImageMenuItems(context, menu, file);
+        }
       })
     );
+  }
+
+  private addEmptyManagedFolderCleanupMenuItem(context: ImageManagerFeatureContext, menu: Menu, file: TFile | TFolder): void {
+    const ui = getUiCopy(context.services.settings.getSettings().uiLanguage);
+    menu.addSeparator();
+    menu.addItem((item) => {
+      item.setTitle(ui.contextMenu.cleanEmptyManagedFolders).setIcon('folder-x').onClick(() => {
+        context.services.logger.refreshMode('context-menu-clean-empty-managed-folders');
+        void context.services.recovery.runTransaction(
+          {
+            label: ui.transactions.contextCleanupEmptyManagedFolders(file.path || file.name),
+            trigger: 'context-menu',
+            scope: file instanceof TFolder ? 'folder' : 'single-note'
+          },
+          async () => {
+            await this.cleanEmptyManagedFolders(context, file);
+          }
+        );
+      });
+    });
   }
 
   private addImageMenuItems(context: ImageManagerFeatureContext, menu: Menu, file: TFile): void {
@@ -174,6 +201,20 @@ export class ContextMenuFeature implements ImageManagerFeature {
         );
       });
     });
+  }
+
+  private async cleanEmptyManagedFolders(context: ImageManagerFeatureContext, file: TFile | TFolder): Promise<void> {
+    const deletedFolders =
+      file instanceof TFolder
+        ? await context.services.fileManager.deleteEmptyManagedFoldersInFolder(file)
+        : await context.services.fileManager.deleteEmptyManagedFoldersForNote(file);
+    const settings = context.services.settings.getSettings();
+    showOperationNotice(
+      settings,
+      deletedFolders > 0
+        ? getNoticeCopy(settings.uiLanguage).emptyManagedFolderCleanupFinished(deletedFolders)
+        : getNoticeCopy(settings.uiLanguage).noEmptyManagedFoldersFound
+    );
   }
 
   private async openImageGallery(context: ImageManagerFeatureContext, file: TFile): Promise<void> {

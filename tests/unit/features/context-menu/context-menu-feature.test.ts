@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ContextMenuFeature } from '@/features/context-menu/context-menu-feature';
 
 const { openSingleImageGalleryMock } = vi.hoisted(() => ({
@@ -25,6 +25,11 @@ vi.mock('obsidian', () => ({
       size: 0,
       mtime: 0
     };
+  },
+  TFolder: class {
+    path = '';
+    name = '';
+    children = [];
   }
 }));
 
@@ -83,6 +88,13 @@ function createMenuSpy() {
 }
 
 describe('ContextMenuFeature', () => {
+  beforeEach(() => {
+    noticeMock.mockClear();
+    openSingleImageGalleryMock.mockClear();
+    pickImageSelectionMock.mockReset();
+    pickImageSelectionMock.mockResolvedValue(null);
+  });
+
   it('does not add image actions when the context-menu setting is disabled', async () => {
     const { TFile } = await import('obsidian');
     const feature = new ContextMenuFeature();
@@ -137,6 +149,141 @@ describe('ContextMenuFeature', () => {
 
     expect(menu.addSeparator).not.toHaveBeenCalled();
     expect(addedItems).toHaveLength(0);
+  });
+
+  it('adds empty managed folder cleanup to the folder context menu', async () => {
+    const { TFolder } = await import('obsidian');
+    const feature = new ContextMenuFeature();
+    let fileMenuHandler: ((menu: unknown, file: InstanceType<typeof TFolder>) => void) | undefined;
+    const folder = Object.assign(new TFolder(), {
+      path: 'notes',
+      name: 'notes'
+    });
+    const { menu, addedItems } = createMenuSpy();
+    const recoveryRunTransaction = vi.fn(async (_meta: unknown, run: () => Promise<void>) => run());
+    const deleteEmptyManagedFoldersInFolder = vi.fn(async () => 2);
+    const context = {
+      app: {
+        workspace: {
+          on: vi.fn((_event: string, callback: typeof fileMenuHandler) => {
+            fileMenuHandler = callback;
+            return { event: 'file-menu' };
+          })
+        }
+      },
+      plugin: {
+        registerEvent: vi.fn()
+      },
+      services: {
+        fileManager: {
+          deleteEmptyManagedFoldersInFolder
+        },
+        recovery: {
+          runTransaction: recoveryRunTransaction
+        },
+        settings: {
+          getSettings: vi.fn(() => ({
+            enableContextMenu: true,
+            uiLanguage: 'en',
+            showOperationNotifications: true
+          }))
+        },
+        logger: {
+          refreshMode: vi.fn(),
+          debug: vi.fn(),
+          warn: vi.fn(),
+          error: vi.fn()
+        }
+      }
+    };
+
+    await feature.register(context as never);
+    fileMenuHandler?.(menu as never, folder);
+
+    const cleanupItem = addedItems.find((item) => item.title === 'Clean empty managed folders');
+    expect(cleanupItem?.icon).toBe('folder-x');
+
+    cleanupItem?.onClick?.();
+    await vi.waitFor(() => {
+      expect(recoveryRunTransaction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          label: 'Context clean empty managed folders notes',
+          trigger: 'context-menu',
+          scope: 'folder'
+        }),
+        expect.any(Function)
+      );
+      expect(deleteEmptyManagedFoldersInFolder).toHaveBeenCalledWith(folder);
+      expect(noticeMock).toHaveBeenCalledWith('Empty managed folder cleanup finished: removed 2 empty folder(s)');
+    });
+  });
+
+  it('adds empty managed folder cleanup to the markdown file context menu', async () => {
+    const { TFile } = await import('obsidian');
+    const feature = new ContextMenuFeature();
+    let fileMenuHandler: ((menu: unknown, file: InstanceType<typeof TFile>) => void) | undefined;
+    const file = Object.assign(new TFile(), {
+      path: 'notes/a.md',
+      name: 'a.md',
+      extension: 'md'
+    });
+    const { menu, addedItems } = createMenuSpy();
+    const recoveryRunTransaction = vi.fn(async (_meta: unknown, run: () => Promise<void>) => run());
+    const deleteEmptyManagedFoldersForNote = vi.fn(async () => 0);
+    const context = {
+      app: {
+        workspace: {
+          on: vi.fn((_event: string, callback: typeof fileMenuHandler) => {
+            fileMenuHandler = callback;
+            return { event: 'file-menu' };
+          })
+        }
+      },
+      plugin: {
+        registerEvent: vi.fn()
+      },
+      services: {
+        fileManager: {
+          deleteEmptyManagedFoldersForNote
+        },
+        recovery: {
+          runTransaction: recoveryRunTransaction
+        },
+        settings: {
+          getSettings: vi.fn(() => ({
+            enableContextMenu: true,
+            uiLanguage: 'en',
+            showOperationNotifications: true
+          }))
+        },
+        logger: {
+          refreshMode: vi.fn(),
+          debug: vi.fn(),
+          warn: vi.fn(),
+          error: vi.fn()
+        }
+      }
+    };
+
+    await feature.register(context as never);
+    fileMenuHandler?.(menu as never, file);
+
+    const cleanupItem = addedItems.find((item) => item.title === 'Clean empty managed folders');
+    expect(cleanupItem).toBeDefined();
+
+    cleanupItem?.onClick?.();
+    await vi.waitFor(() => {
+      expect(recoveryRunTransaction).toHaveBeenCalledWith(
+        expect.objectContaining({
+          label: 'Context clean empty managed folders notes/a.md',
+          trigger: 'context-menu',
+          scope: 'single-note'
+        }),
+        expect.any(Function)
+      );
+      expect(deleteEmptyManagedFoldersForNote).toHaveBeenCalledWith(file);
+      expect(noticeMock).toHaveBeenCalledWith('No empty managed folders found');
+    });
   });
 
   it('adds a gallery entry to the image file context menu and opens the single-image gallery', async () => {

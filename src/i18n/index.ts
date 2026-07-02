@@ -206,6 +206,7 @@ export interface NoticeCopy {
   readonly batchLinkRewriteFailed: string;
   readonly batchExternalImageImportFailed: string;
   readonly orphanCleanupFailed: string;
+  readonly emptyManagedFolderCleanupFailed: string;
   readonly recoveryHistoryReset: string;
   readonly selectAreaFirst: string;
   readonly compressionSummary: (before: string, after: string, ratio: string, direction: string, label: string) => string;
@@ -253,6 +254,8 @@ export interface NoticeCopy {
   readonly orphanCleanupPreservedImages: (count: number) => string;
   readonly orphanCleanupRemovedFolders: (count: number) => string;
   readonly orphanCleanupFinished: (segments: string) => string;
+  readonly noEmptyManagedFoldersFound: string;
+  readonly emptyManagedFolderCleanupFinished: (count: number) => string;
   readonly pluginConflictPreviewItem: (featureLabel: string, pluginName: string) => string;
   readonly pluginConflictMore: (count: number) => string;
   readonly pluginConflictSummary: (preview: string, suffix: string) => string;
@@ -293,6 +296,7 @@ export interface UiCopy {
     readonly flipHorizontal: string;
     readonly flipVertical: string;
     readonly downloadExternalImage: string;
+    readonly cleanEmptyManagedFolders: string;
     readonly cropDialogTitle: (fileName: string) => string;
     readonly cropDialogDescription: string;
     readonly cropConfirm: string;
@@ -304,6 +308,7 @@ export interface UiCopy {
     readonly cancelText: string;
     readonly actionNames: Readonly<
       Record<'linkRewrite' | 'externalImport' | 'orphanCleanup' | 'formatConversion' | 'compression', string>
+      & Record<'emptyFolderCleanup', string>
     >;
   };
   readonly conflicts: {
@@ -328,6 +333,7 @@ export interface UiCopy {
     readonly batchUpdateVaultImageLinks: string;
     readonly importVaultExternalImages: string;
     readonly deleteVaultExtraImages: string;
+    readonly cleanupVaultEmptyManagedFolders: string;
     readonly contextConvertImage: (fileName: string) => string;
     readonly contextCompressImage: (fileName: string) => string;
     readonly contextCropImage: (fileName: string) => string;
@@ -335,6 +341,7 @@ export interface UiCopy {
     readonly contextFlipHorizontalImage: (fileName: string) => string;
     readonly contextFlipVerticalImage: (fileName: string) => string;
     readonly contextDownloadExternalImage: (noteName: string) => string;
+    readonly contextCleanupEmptyManagedFolders: (sourcePath: string) => string;
     readonly rotateActiveImage: string;
     readonly flipActiveImageHorizontal: string;
     readonly resizeActiveImage: string;
@@ -366,6 +373,7 @@ export const LOCALIZED_COMMAND_IDS = [
   'c3-convert-vault-images-to-default-format',
   'c4-compress-vault-images',
   'c5-delete-vault-extra-images',
+  'c6-clean-vault-empty-managed-folders',
   'd1-undo-last-image-manager-transaction',
   'd2-redo-last-image-manager-transaction',
   'open-current-folder-gallery',
@@ -877,6 +885,7 @@ const ZH_COMMANDS: Readonly<Record<string, string>> = {
   'c3-convert-vault-images-to-default-format': '转换为默认格式',
   'c4-compress-vault-images': '压缩图片',
   'c5-delete-vault-extra-images': '删除多余图片',
+  'c6-clean-vault-empty-managed-folders': '空目录清理',
   'd1-undo-last-image-manager-transaction': '撤销图片修改',
   'd2-redo-last-image-manager-transaction': '重做图片修改',
   'open-current-folder-gallery': '打开画廊',
@@ -902,6 +911,7 @@ const EN_COMMANDS: Readonly<Record<string, string>> = {
   'c3-convert-vault-images-to-default-format': 'Convert images to default format',
   'c4-compress-vault-images': 'Compress images',
   'c5-delete-vault-extra-images': 'Delete extra image files',
+  'c6-clean-vault-empty-managed-folders': 'Clean empty managed folders',
   'd1-undo-last-image-manager-transaction': 'Undo last image change',
   'd2-redo-last-image-manager-transaction': 'Redo last image change',
   'open-current-folder-gallery': 'Open current folder image gallery',
@@ -958,6 +968,7 @@ const ZH_UI: UiCopy = {
     flipHorizontal: '水平翻转',
     flipVertical: '垂直翻转',
     downloadExternalImage: '下载该外部图片',
+    cleanEmptyManagedFolders: '空目录清理',
     cropDialogTitle: (fileName) => `裁剪图片：${fileName}`,
     cropDialogDescription: '拖拽选择要保留的区域，确认后会按选区裁剪当前图片。',
     cropConfirm: '裁剪'
@@ -972,7 +983,8 @@ const ZH_UI: UiCopy = {
       externalImport: '整库外部图片下载',
       orphanCleanup: '整库多余图片删除',
       formatConversion: '整库格式转换',
-      compression: '整库压缩'
+      compression: '整库压缩',
+      emptyFolderCleanup: '整库空受控目录清理'
     }
   },
   conflicts: {
@@ -1003,6 +1015,7 @@ const ZH_UI: UiCopy = {
     batchUpdateVaultImageLinks: '批量更新整个仓库图片链接',
     importVaultExternalImages: '下载整个仓库外部图片',
     deleteVaultExtraImages: '删除整个仓库多余图片',
+    cleanupVaultEmptyManagedFolders: '清理整个仓库空受控目录',
     contextConvertImage: (fileName) => `右键转换图片 ${fileName}`,
     contextCompressImage: (fileName) => `右键压缩图片 ${fileName}`,
     contextCropImage: (fileName) => `右键裁剪图片 ${fileName}`,
@@ -1010,6 +1023,7 @@ const ZH_UI: UiCopy = {
     contextFlipHorizontalImage: (fileName) => `右键水平翻转图片 ${fileName}`,
     contextFlipVerticalImage: (fileName) => `右键垂直翻转图片 ${fileName}`,
     contextDownloadExternalImage: (noteName) => `右键下载外部图片 ${noteName}`,
+    contextCleanupEmptyManagedFolders: (sourcePath) => `右键清理空受控目录 ${sourcePath}`,
     rotateActiveImage: '旋转当前图片 90 度',
     flipActiveImageHorizontal: '水平翻转当前图片',
     resizeActiveImage: '缩放当前图片到 1920px',
@@ -1065,6 +1079,7 @@ const EN_UI: UiCopy = {
     flipHorizontal: 'Flip horizontally',
     flipVertical: 'Flip vertically',
     downloadExternalImage: 'Download this external image locally',
+    cleanEmptyManagedFolders: 'Clean empty managed folders',
     cropDialogTitle: (fileName) => `Crop image: ${fileName}`,
     cropDialogDescription: 'Drag to select the area to keep, then confirm to crop the current image.',
     cropConfirm: 'Crop'
@@ -1080,7 +1095,8 @@ const EN_UI: UiCopy = {
       externalImport: 'Vault-wide external image download',
       orphanCleanup: 'Vault-wide extra image cleanup',
       formatConversion: 'Vault-wide format conversion',
-      compression: 'Vault-wide compression'
+      compression: 'Vault-wide compression',
+      emptyFolderCleanup: 'Vault-wide empty managed folder cleanup'
     }
   },
   conflicts: {
@@ -1113,6 +1129,7 @@ const EN_UI: UiCopy = {
     batchUpdateVaultImageLinks: 'Batch update vault image links',
     importVaultExternalImages: 'Import vault external images',
     deleteVaultExtraImages: 'Delete extra vault images',
+    cleanupVaultEmptyManagedFolders: 'Clean empty managed folders across the vault',
     contextConvertImage: (fileName) => `Context convert image ${fileName}`,
     contextCompressImage: (fileName) => `Context compress image ${fileName}`,
     contextCropImage: (fileName) => `Context crop image ${fileName}`,
@@ -1120,6 +1137,7 @@ const EN_UI: UiCopy = {
     contextFlipHorizontalImage: (fileName) => `Context flip image horizontally ${fileName}`,
     contextFlipVerticalImage: (fileName) => `Context flip image vertically ${fileName}`,
     contextDownloadExternalImage: (noteName) => `Context import external image ${noteName}`,
+    contextCleanupEmptyManagedFolders: (sourcePath) => `Context clean empty managed folders ${sourcePath}`,
     rotateActiveImage: 'Rotate current image 90°',
     flipActiveImageHorizontal: 'Flip current image horizontally',
     resizeActiveImage: 'Resize current image to 1920px',
@@ -1164,6 +1182,7 @@ const ZH_NOTICES: NoticeCopy = {
   batchLinkRewriteFailed: '批量更新图片链接失败',
   batchExternalImageImportFailed: '批量下载外部图片失败',
   orphanCleanupFailed: '清理多余图片失败',
+  emptyManagedFolderCleanupFailed: '清理空受控目录失败',
   recoveryHistoryReset: 'Note Image Manager 恢复历史损坏，已自动重置',
   selectAreaFirst: '请先拖拽选择一个区域',
   compressionSummary: (before, after, ratio, direction, label) => `${label}：${before} -> ${after}（${ratio} ${direction}）`,
@@ -1224,6 +1243,8 @@ const ZH_NOTICES: NoticeCopy = {
   orphanCleanupPreservedImages: (count) => `保留 ${count} 张仍被其他笔记引用的图片`,
   orphanCleanupRemovedFolders: (count) => `删除 ${count} 个空文件夹`,
   orphanCleanupFinished: (segments) => `清理多余图片完成：${segments}`,
+  noEmptyManagedFoldersFound: '没有找到可清理的空受控目录',
+  emptyManagedFolderCleanupFinished: (count) => `空受控目录清理完成：删除 ${count} 个空文件夹`,
   pluginConflictPreviewItem: (featureLabel, pluginName) => `${featureLabel} vs ${pluginName}`,
   pluginConflictMore: (count) => `；另有 ${count} 项`,
   pluginConflictSummary: (preview, suffix) => `检测到潜在插件冲突：${preview}${suffix}。可在 Note Image Manager 设置的“兼容性与冲突规避”中查看。`
@@ -1265,6 +1286,7 @@ const EN_NOTICES: NoticeCopy = {
   batchLinkRewriteFailed: 'Batch link rewrite failed',
   batchExternalImageImportFailed: 'Batch external image import failed',
   orphanCleanupFailed: 'Orphan image cleanup failed',
+  emptyManagedFolderCleanupFailed: 'Empty managed folder cleanup failed',
   recoveryHistoryReset: 'Note Image Manager recovery history is unreadable and has been reset',
   selectAreaFirst: 'Drag to select an area first',
   compressionSummary: (before, after, ratio, direction, label) => `${label}: ${before} -> ${after} (${ratio} ${direction})`,
@@ -1328,6 +1350,8 @@ const EN_NOTICES: NoticeCopy = {
   orphanCleanupPreservedImages: (count) => `kept ${count} image(s) still referenced by other notes`,
   orphanCleanupRemovedFolders: (count) => `removed ${count} empty folder(s)`,
   orphanCleanupFinished: (segments) => `Extra image cleanup finished: ${segments}`,
+  noEmptyManagedFoldersFound: 'No empty managed folders found',
+  emptyManagedFolderCleanupFinished: (count) => `Empty managed folder cleanup finished: removed ${count} empty folder(s)`,
   pluginConflictPreviewItem: (featureLabel, pluginName) => `${featureLabel} vs ${pluginName}`,
   pluginConflictMore: (count) => `; ${count} more`,
   pluginConflictSummary: (preview, suffix) =>

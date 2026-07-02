@@ -4,8 +4,8 @@
 
 ## Release
 
-- `v4.0.10` fixes cleanup for note-owned managed folders after Markdown deletion, batch deletion with cross-references, and stale attachment races.
-- Package metadata, manifest metadata, release workflow, marketing site, and user-facing documentation are aligned for the 4.0.10 release.
+- `v4.0.11` adds empty managed-folder cleanup entry points: file-list context menus clean by folder or Markdown file, and the command palette can run a vault-wide cleanup with risk confirmation.
+- Package metadata, manifest metadata, release workflow, marketing site, and user-facing documentation are aligned for the 4.0.11 release.
 
 ## Completed
 
@@ -48,7 +48,7 @@
 - Ignore-regex settings match against `file.path`, support one regex per line, and allow comment lines prefixed with `#`.
 - Markdown image path resolution now uses a raw-path-first strategy with decoded-path fallback so the same note can safely mix `%E6...`-encoded Chinese paths and readable Chinese paths.
 - `AVIF` currently uses layered compatibility: recognition, import, and conversion-input support are available, but in-place compress, crop, rotate, flip, and resize should happen only after converting to `PNG`, `JPEG`, or `WebP`.
-- Deleted-note auto-cleanup only targets note-owned folders such as `./assets/${noteFileName}` or `./assets/{noteName}`. Empty output paths, `Attachments/Images`, and `./assets` shared locations should be cleaned through manual scoped commands.
+- Deleted-note auto-cleanup only targets note-owned folders such as `./assets/${noteFileName}` or `./assets/{noteName}`. Empty output paths, `Attachments/Images`, and `./assets` shared locations should be cleaned through the file-list context menu or the vault-wide command.
 
 ## Deferred
 

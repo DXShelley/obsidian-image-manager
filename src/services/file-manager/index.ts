@@ -74,6 +74,7 @@ interface OrphanImageCleanupResult {
 
 interface DeleteEmptyFolderOptions {
   readonly preservePath?: string;
+  readonly force?: boolean;
 }
 
 interface OrphanImageCleanupOptions {
@@ -489,6 +490,44 @@ export class FileManager {
     );
   }
 
+  async deleteEmptyManagedFoldersForNote(noteFile: TFile): Promise<number> {
+    if (noteFile.extension.toLowerCase() !== 'md') {
+      return 0;
+    }
+
+    return this.deleteEmptyManagedFolderForNote(noteFile.path, { force: true });
+  }
+
+  async deleteEmptyManagedFoldersInFolder(folder: TFolder): Promise<number> {
+    const candidates = new Map<string, { notePath: string; preservePath?: string }>();
+    for (const note of this.getMarkdownFilesInFolder(folder)) {
+      candidates.set(note.path, {
+        notePath: note.path,
+        preservePath: this.resolveManagedFolderCleanupBoundary(note.path)
+      });
+    }
+
+    for (const note of this.getMarkdownFilesInVault()) {
+      const managedFolderPath = this.resolveOutputFolderPath(note.path);
+      if (!managedFolderPath || !this.isPathWithinFolder(managedFolderPath, folder.path)) {
+        continue;
+      }
+
+      candidates.set(note.path, {
+        notePath: note.path,
+        preservePath: this.resolveManagedFolderCleanupBoundary(note.path)
+      });
+    }
+
+    const deletedFromResolvedTargets = await this.deleteEmptyManagedFoldersForTargets([...candidates.values()]);
+    const deletedFromSelectedTree = await this.deleteEmptyManagedFoldersInSelectedManagedTree(folder);
+    return deletedFromResolvedTargets + deletedFromSelectedTree;
+  }
+
+  async deleteEmptyManagedFoldersInVault(): Promise<number> {
+    return this.deleteEmptyManagedFoldersForNotes(this.getMarkdownFilesInVault());
+  }
+
   async cleanupManagedImagesForDeletedNote(noteFile: TFile): Promise<OrphanImageCleanupResult> {
     return this.cleanupManagedImagesForDeletedNotePath(noteFile.path);
   }
@@ -547,15 +586,60 @@ export class FileManager {
     };
   }
 
-  async deleteEmptyManagedFolderForNote(notePath: string): Promise<number> {
+  async deleteEmptyManagedFolderForNote(notePath: string, options: DeleteEmptyFolderOptions = {}): Promise<number> {
     if (!this.isNoteScopedOutputFolder()) {
       return 0;
     }
 
     return this.deleteManagedDirectoryIfEmpty(
       this.resolveOutputFolderPath(notePath),
-      this.resolveManagedFolderCleanupBoundary(notePath)
+      this.resolveManagedFolderCleanupBoundary(notePath),
+      options
     );
+  }
+
+  private async deleteEmptyManagedFoldersForNotes(notes: readonly TFile[]): Promise<number> {
+    const seenNotePaths = new Set<string>();
+    const targets: { notePath: string; preservePath?: string }[] = [];
+    let deletedFolders = 0;
+    for (const note of notes) {
+      if (seenNotePaths.has(note.path)) {
+        continue;
+      }
+
+      seenNotePaths.add(note.path);
+      targets.push({
+        notePath: note.path,
+        preservePath: this.resolveManagedFolderCleanupBoundary(note.path)
+      });
+    }
+    deletedFolders += await this.deleteEmptyManagedFoldersForTargets(targets);
+    return deletedFolders;
+  }
+
+  private async deleteEmptyManagedFoldersForTargets(
+    targets: readonly { notePath: string; preservePath?: string }[]
+  ): Promise<number> {
+    if (!this.isNoteScopedOutputFolder()) {
+      return 0;
+    }
+
+    const byManagedFolderPath = new Map<string, { notePath: string; preservePath?: string }>();
+    for (const target of targets) {
+      const managedFolderPath = this.resolveOutputFolderPath(target.notePath);
+      if (managedFolderPath) {
+        byManagedFolderPath.set(managedFolderPath, target);
+      }
+    }
+
+    let deletedFolders = 0;
+    const orderedTargets = [...byManagedFolderPath.entries()].sort(
+      ([leftPath], [rightPath]) => rightPath.split('/').length - leftPath.split('/').length
+    );
+    for (const [managedFolderPath, target] of orderedTargets) {
+      deletedFolders += await this.deleteManagedDirectoryIfEmpty(managedFolderPath, target.preservePath, { force: true });
+    }
+    return deletedFolders;
   }
 
   private async updateLinks(noteFile: TFile, oldPath: string, newPath: string, sourcePath: string): Promise<void> {
@@ -1087,7 +1171,7 @@ export class FileManager {
 
   private async deleteFolderIfEmpty(folder: TFolder, options: DeleteEmptyFolderOptions = {}): Promise<number> {
     if (
-      !this.getSettings().deleteEmptyFolders ||
+      (!options.force && !this.getSettings().deleteEmptyFolders) ||
       !(await this.isFolderEffectivelyEmpty(folder)) ||
       folder.path === options.preservePath
     ) {
@@ -1101,8 +1185,12 @@ export class FileManager {
     return 1 + parentDeleted;
   }
 
-  private async deleteManagedDirectoryIfEmpty(folderPath: string, preservePath?: string): Promise<number> {
-    if (!this.getSettings().deleteEmptyFolders) {
+  private async deleteManagedDirectoryIfEmpty(
+    folderPath: string,
+    preservePath?: string,
+    options: DeleteEmptyFolderOptions = {}
+  ): Promise<number> {
+    if (!options.force && !this.getSettings().deleteEmptyFolders) {
       return 0;
     }
 
@@ -1116,7 +1204,115 @@ export class FileManager {
       return 0;
     }
 
-    return this.deleteFolderIfEmpty(folder, { preservePath });
+    return this.deleteFolderIfEmpty(folder, { ...options, preservePath });
+  }
+
+  private async deleteEmptyManagedFoldersInSelectedManagedTree(folder: TFolder): Promise<number> {
+    if (!this.isConfiguredManagedFolderArea(folder.path)) {
+      return 0;
+    }
+
+    const folderPaths = [...(await this.collectVaultDirectoryFolders(folder.path)), folder.path].sort(
+      (left, right) => right.split('/').length - left.split('/').length
+    );
+    const preservePath = getParentPath(folder.path) || undefined;
+    let deletedFolders = 0;
+    for (const folderPath of folderPaths) {
+      deletedFolders += await this.deleteManagedDirectoryIfEmpty(folderPath, preservePath, { force: true });
+    }
+    return deletedFolders;
+  }
+
+  private async collectVaultDirectoryFolders(folderPath: string): Promise<string[]> {
+    const listing = await this.listVaultDirectory(folderPath);
+    if (!listing) {
+      return [];
+    }
+
+    const folders = [...listing.folders];
+    for (const childFolderPath of listing.folders) {
+      folders.push(...(await this.collectVaultDirectoryFolders(childFolderPath)));
+    }
+    return folders;
+  }
+
+  private isConfiguredManagedFolderArea(folderPath: string): boolean {
+    const template = this.getSettings().outputFolder.trim();
+    if (!template) {
+      return false;
+    }
+
+    const normalizedFolderPath = normalizeVaultPath(folderPath);
+    for (const rootPath of this.getConfiguredManagedRootPaths()) {
+      if (this.isPathWithinFolder(normalizedFolderPath, rootPath) || this.isPathWithinFolder(rootPath, normalizedFolderPath)) {
+        return true;
+      }
+    }
+
+    const staticSegments = this.getOutputFolderStaticPrefixSegments(template);
+    return staticSegments.length > 0 && this.pathContainsSegmentSequence(normalizedFolderPath, staticSegments);
+  }
+
+  private getConfiguredManagedRootPaths(): string[] {
+    const rootPaths = new Set<string>();
+    for (const note of this.getMarkdownFilesInVault()) {
+      const rootPath = this.resolveManagedRootPath(note.path);
+      if (rootPath) {
+        rootPaths.add(rootPath);
+      }
+    }
+    return [...rootPaths];
+  }
+
+  private resolveManagedRootPath(notePath: string): string {
+    const template = this.getSettings().outputFolder.trim();
+    if (!template) {
+      return getParentPath(notePath);
+    }
+
+    const noteName = getFileStem(notePath);
+    const resolvedTemplate = normalizeVaultPath(
+      this.variableResolver.resolvePath(template, this.variableResolver.createContext(noteName, noteName))
+    );
+    const resolvedFolder = this.resolveOutputFolderPath(notePath);
+    if (!resolvedTemplate || !resolvedFolder) {
+      return resolvedFolder;
+    }
+
+    const templateSegments = resolvedTemplate.split('/').filter(Boolean);
+    const resolvedSegments = normalizeVaultPath(resolvedFolder).split('/').filter(Boolean);
+    if (templateSegments.length === 0 || resolvedSegments.length < templateSegments.length) {
+      return resolvedFolder;
+    }
+
+    const managedRootSegmentCount = resolvedSegments.length - templateSegments.length + 1;
+    return resolvedSegments.slice(0, managedRootSegmentCount).join('/');
+  }
+
+  private getOutputFolderStaticPrefixSegments(template: string): string[] {
+    const variableIndex = template.search(/\$?\{[^{}]+\}/);
+    const staticPrefix = variableIndex >= 0 ? template.slice(0, variableIndex) : template;
+    return normalizeVaultPath(staticPrefix).split('/').filter((segment) => segment.length > 0);
+  }
+
+  private pathContainsSegmentSequence(path: string, segments: readonly string[]): boolean {
+    const pathSegments = normalizeVaultPath(path).split('/').filter(Boolean);
+    if (segments.length === 0 || segments.length > pathSegments.length) {
+      return false;
+    }
+
+    for (let index = 0; index <= pathSegments.length - segments.length; index += 1) {
+      if (segments.every((segment, offset) => pathSegments[index + offset] === segment)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private isPathWithinFolder(path: string, folderPath: string): boolean {
+    const normalizedPath = normalizeVaultPath(path);
+    const normalizedFolderPath = normalizeVaultPath(folderPath);
+    return !normalizedFolderPath || normalizedPath === normalizedFolderPath || normalizedPath.startsWith(`${normalizedFolderPath}/`);
   }
 
   private async vaultPathExists(path: string): Promise<boolean> {

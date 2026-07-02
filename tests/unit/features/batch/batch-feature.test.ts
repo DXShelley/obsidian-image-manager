@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TFolder } from 'obsidian';
 import { BatchFeature } from '@/features/batch/batch-feature';
 import { BatchExecutionStatus, BatchScope } from '@/types/index';
+import { confirmVaultScopeOperation } from '@/utils/vault-operation';
 
 const noticeMock = vi.fn();
 
@@ -23,6 +24,7 @@ vi.mock('obsidian', () => ({
 describe('BatchFeature', () => {
   beforeEach(() => {
     noticeMock.mockClear();
+    vi.mocked(confirmVaultScopeOperation).mockClear();
   });
 
   it('does not start a new batch while another job is active', async () => {
@@ -233,5 +235,56 @@ describe('BatchFeature', () => {
     ).runOrphanCleanupBatch(context, BatchScope.FOLDER, folder);
 
     expect(noticeMock).toHaveBeenCalledWith('Extra image cleanup finished: removed 2 image(s); removed 1 empty folder(s)');
+  });
+
+  it('confirms risk before vault empty managed folder cleanup', async () => {
+    const feature = new BatchFeature();
+    const commands = new Map<string, { callback: () => void }>();
+    const deleteEmptyManagedFoldersInVault = vi.fn(async () => 0);
+    const context = {
+      app: {},
+      plugin: {
+        addCommand: vi.fn((command: { id: string; callback: () => void }) => {
+          commands.set(command.id, command);
+        })
+      },
+      services: {
+        logger: {
+          refreshMode: vi.fn(),
+          debug: vi.fn(),
+          warn: vi.fn(),
+          error: vi.fn()
+        },
+        recovery: {
+          runTransaction: vi.fn(async (_meta: unknown, run: () => Promise<void>) => {
+            await run();
+          })
+        },
+        fileManager: {
+          deleteEmptyManagedFoldersInVault
+        },
+        settings: {
+          getSettings: vi.fn(() => ({
+            uiLanguage: 'en',
+            showOperationNotifications: true
+          }))
+        },
+        batchProcessor: {
+          getReport: vi.fn(() => null)
+        }
+      }
+    };
+
+    await feature.register(context as never);
+    commands.get('c6-clean-vault-empty-managed-folders')?.callback();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(confirmVaultScopeOperation).toHaveBeenCalledWith(
+      context.app,
+      'en',
+      'Vault-wide empty managed folder cleanup'
+    );
+    expect(deleteEmptyManagedFoldersInVault).toHaveBeenCalled();
+    expect(noticeMock).toHaveBeenCalledWith('No empty managed folders found');
   });
 });

@@ -2,6 +2,13 @@
 
 # Changelog
 
+## 4.0.11
+
+- Added empty managed-folder cleanup entry points: file-list context menus can clean by folder or Markdown file, while the command palette keeps a vault-wide cleanup with risk confirmation.
+- Empty-folder cleanup now handles stale managed folders left by deleted or renamed notes instead of only relying on currently existing Markdown files to infer candidates.
+- Added regression coverage for file-list context menus, vault-wide command cleanup, stale empty managed folders, and explicit cleanup bypassing the automatic-cleanup setting.
+- Updated `manifest.json`, `package.json`, `versions.json`, README files, task status, and website version copy for the `4.0.11` release.
+
 ## 4.0.10
 
 - Fixed cleanup for note-owned managed folders after deleting a Markdown note; delete events now enqueue managed-folder targets and converge after Obsidian metadata settles.

@@ -2076,4 +2076,203 @@ describe('FileManager.rewriteImageLinksInNote', () => {
     expect(result).toEqual({ deletedImages: 0, deletedFolders: 0, relocatedImages: 0, preservedImages: 0 });
     expect(app.fileManager.trashFile).not.toHaveBeenCalled();
   });
+
+  it('explicitly removes empty managed folders even when automatic empty folder cleanup is disabled', async () => {
+    const note = Object.assign(new TFile(), {
+      path: 'notes/a.md',
+      name: 'a.md',
+      basename: 'a',
+      extension: 'md'
+    });
+    const notesFolder = Object.assign(new TFolder(), {
+      path: 'notes',
+      children: [note]
+    });
+    const assetsFolder = Object.assign(new TFolder(), {
+      path: 'notes/assets',
+      parent: notesFolder,
+      children: []
+    });
+    const managedFolder = Object.assign(new TFolder(), {
+      path: 'notes/assets/a',
+      parent: assetsFolder,
+      children: []
+    });
+    (note as TFile & { parent: TFolder | null }).parent = notesFolder;
+    assetsFolder.children = [managedFolder];
+    notesFolder.children = [note, assetsFolder];
+
+    const folders = new Map<string, TFolder>([
+      [notesFolder.path, notesFolder],
+      [assetsFolder.path, assetsFolder],
+      [managedFolder.path, managedFolder]
+    ]);
+    const app = {
+      vault: {
+        adapter: {
+          list: vi.fn(async () => ({ files: [], folders: [] }))
+        },
+        getFiles: vi.fn(() => [note]),
+        getAbstractFileByPath: vi.fn((path: string) => folders.get(path) ?? (path === note.path ? note : null))
+      },
+      fileManager: {
+        trashFile: vi.fn(async (target: TFolder) => {
+          folders.delete(target.path);
+          const parent = target.parent;
+          if (parent instanceof TFolder) {
+            parent.children = parent.children.filter((child) => child !== target);
+          }
+        })
+      }
+    };
+    const manager = new FileManager(
+      app as never,
+      () => ({
+        ...settings,
+        outputFolder: './assets/${noteFileName}',
+        deleteOrphanImages: false,
+        deleteEmptyFolders: false
+      }),
+      new VariableResolver(),
+      {} as never
+    );
+
+    const result = await manager.deleteEmptyManagedFoldersForNote(note);
+
+    expect(result).toBe(2);
+    expect(app.fileManager.trashFile).toHaveBeenCalledWith(managedFolder);
+    expect(app.fileManager.trashFile).toHaveBeenCalledWith(assetsFolder);
+  });
+
+  it('cleans empty managed folders inside a selected managed root even when the note is outside that folder', async () => {
+    const note = Object.assign(new TFile(), {
+      path: 'notes/a.md',
+      name: 'a.md',
+      basename: 'a',
+      extension: 'md'
+    });
+    const notesFolder = Object.assign(new TFolder(), {
+      path: 'notes',
+      children: [note]
+    });
+    const assetsFolder = Object.assign(new TFolder(), {
+      path: 'notes/assets',
+      parent: notesFolder,
+      children: []
+    });
+    const managedFolder = Object.assign(new TFolder(), {
+      path: 'notes/assets/a',
+      parent: assetsFolder,
+      children: []
+    });
+    (note as TFile & { parent: TFolder | null }).parent = notesFolder;
+    assetsFolder.children = [managedFolder];
+    notesFolder.children = [note, assetsFolder];
+
+    const folders = new Map<string, TFolder>([
+      [notesFolder.path, notesFolder],
+      [assetsFolder.path, assetsFolder],
+      [managedFolder.path, managedFolder]
+    ]);
+    const app = {
+      vault: {
+        adapter: {
+          list: vi.fn(async () => ({ files: [], folders: [] }))
+        },
+        getFiles: vi.fn(() => [note]),
+        getAbstractFileByPath: vi.fn((path: string) => folders.get(path) ?? (path === note.path ? note : null))
+      },
+      fileManager: {
+        trashFile: vi.fn(async (target: TFolder) => {
+          folders.delete(target.path);
+          const parent = target.parent;
+          if (parent instanceof TFolder) {
+            parent.children = parent.children.filter((child) => child !== target);
+          }
+        })
+      }
+    };
+    const manager = new FileManager(
+      app as never,
+      () => ({
+        ...settings,
+        outputFolder: './assets/${noteFileName}',
+        deleteOrphanImages: false,
+        deleteEmptyFolders: false
+      }),
+      new VariableResolver(),
+      {} as never
+    );
+
+    const result = await manager.deleteEmptyManagedFoldersInFolder(assetsFolder);
+
+    expect(result).toBe(2);
+    expect(app.fileManager.trashFile).toHaveBeenCalledWith(managedFolder);
+    expect(app.fileManager.trashFile).toHaveBeenCalledWith(assetsFolder);
+  });
+
+  it('cleans a selected stale empty managed folder when its source note no longer exists', async () => {
+    const notesFolder = Object.assign(new TFolder(), {
+      path: 'notes',
+      children: []
+    });
+    const assetsFolder = Object.assign(new TFolder(), {
+      path: 'notes/assets',
+      parent: notesFolder,
+      children: []
+    });
+    const staleManagedFolder = Object.assign(new TFolder(), {
+      path: 'notes/assets/deleted-note',
+      parent: assetsFolder,
+      children: []
+    });
+    assetsFolder.children = [staleManagedFolder];
+    notesFolder.children = [assetsFolder];
+
+    const folders = new Map<string, TFolder>([
+      [notesFolder.path, notesFolder],
+      [assetsFolder.path, assetsFolder],
+      [staleManagedFolder.path, staleManagedFolder]
+    ]);
+    const app = {
+      vault: {
+        adapter: {
+          list: vi.fn(async (path: string) => {
+            if (path === assetsFolder.path && folders.has(staleManagedFolder.path)) {
+              return { files: [], folders: [staleManagedFolder.path] };
+            }
+            return { files: [], folders: [] };
+          })
+        },
+        getFiles: vi.fn(() => []),
+        getAbstractFileByPath: vi.fn((path: string) => folders.get(path) ?? null)
+      },
+      fileManager: {
+        trashFile: vi.fn(async (target: TFolder) => {
+          folders.delete(target.path);
+          const parent = target.parent;
+          if (parent instanceof TFolder) {
+            parent.children = parent.children.filter((child) => child !== target);
+          }
+        })
+      }
+    };
+    const manager = new FileManager(
+      app as never,
+      () => ({
+        ...settings,
+        outputFolder: './assets/${noteFileName}',
+        deleteOrphanImages: false,
+        deleteEmptyFolders: false
+      }),
+      new VariableResolver(),
+      {} as never
+    );
+
+    const result = await manager.deleteEmptyManagedFoldersInFolder(assetsFolder);
+
+    expect(result).toBe(2);
+    expect(app.fileManager.trashFile).toHaveBeenCalledWith(staleManagedFolder);
+    expect(app.fileManager.trashFile).toHaveBeenCalledWith(assetsFolder);
+  });
 });

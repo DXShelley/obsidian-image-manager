@@ -322,6 +322,34 @@ export class BatchFeature implements ImageManagerFeature {
         });
       }
     });
+
+    const vaultEmptyFolderCleanupCommand = {
+      commandId: 'c6-clean-vault-empty-managed-folders',
+      commandName: getDefaultCommandName('c6-clean-vault-empty-managed-folders')
+    } as const;
+    context.plugin.addCommand({
+      id: vaultEmptyFolderCleanupCommand.commandId,
+      name: vaultEmptyFolderCleanupCommand.commandName,
+      callback: () => {
+        void executeLoggedCommand(context, vaultEmptyFolderCleanupCommand, async () => {
+          const ui = getUiCopy(context.services.settings.getSettings().uiLanguage);
+          if (!(await confirmVaultScopeOperation(context.app, context.services.settings.getSettings().uiLanguage, ui.vaultOperation.actionNames.emptyFolderCleanup))) {
+            return;
+          }
+
+          await context.services.recovery.runTransaction(
+            {
+              label: ui.transactions.cleanupVaultEmptyManagedFolders,
+              trigger: 'batch',
+              scope: 'vault'
+            },
+            async () => {
+              await this.runEmptyManagedFolderCleanup(context, BatchScope.VAULT);
+            }
+          );
+        });
+      }
+    });
   }
 
   private async runLinkRewriteBatch(
@@ -571,6 +599,60 @@ export class BatchFeature implements ImageManagerFeature {
         sourcePath: source?.path
       });
       new Notice(error instanceof Error ? error.message : getNoticeCopy(context.services.settings.getSettings().uiLanguage).orphanCleanupFailed);
+    }
+  }
+
+  private async runEmptyManagedFolderCleanup(
+    context: ImageManagerFeatureContext,
+    scope: BatchScope,
+    source?: TFile | TFolder
+  ): Promise<void> {
+    context.services.logger.refreshMode('batch-clean-empty-managed-folders');
+
+    try {
+      let deletedFolders = 0;
+      switch (scope) {
+        case BatchScope.CURRENT_NOTE:
+          if (!(source instanceof TFile)) {
+            const settings = context.services.settings.getSettings();
+            showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noActiveNoteFile);
+            return;
+          }
+          deletedFolders = await context.services.fileManager.deleteEmptyManagedFoldersForNote(source);
+          break;
+        case BatchScope.FOLDER:
+          if (!(source instanceof TFolder)) {
+            const settings = context.services.settings.getSettings();
+            showOperationNotice(settings, getNoticeCopy(settings.uiLanguage).noActiveFolder);
+            return;
+          }
+          deletedFolders = await context.services.fileManager.deleteEmptyManagedFoldersInFolder(source);
+          break;
+        case BatchScope.VAULT:
+        default:
+          deletedFolders = await context.services.fileManager.deleteEmptyManagedFoldersInVault();
+          break;
+      }
+
+      context.services.logger.debug('Completed empty managed folder cleanup', {
+        scope,
+        sourcePath: source?.path,
+        deletedFolders
+      });
+      const settings = context.services.settings.getSettings();
+      showOperationNotice(
+        settings,
+        deletedFolders > 0
+          ? getNoticeCopy(settings.uiLanguage).emptyManagedFolderCleanupFinished(deletedFolders)
+          : getNoticeCopy(settings.uiLanguage).noEmptyManagedFoldersFound
+      );
+    } catch (error) {
+      console.error('Note Image Manager empty managed folder cleanup failed', error);
+      context.services.logger.error('Empty managed folder cleanup failed', error, {
+        scope,
+        sourcePath: source?.path
+      });
+      new Notice(error instanceof Error ? error.message : getNoticeCopy(context.services.settings.getSettings().uiLanguage).emptyManagedFolderCleanupFailed);
     }
   }
 
