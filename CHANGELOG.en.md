@@ -2,6 +2,14 @@
 
 # Changelog
 
+## 4.0.12
+
+- Fixed Live Preview gallery targeting for image-link lines: clicking anywhere on a line that contains a concrete image embed now opens the matching image gallery.
+- Supports clicks on selected Markdown image syntax, image widget areas, image containers, and the rendered image itself.
+- Preserves blank-line, non-image widget line, and source-mode Markdown image-link behavior to avoid opening galleries from document-bottom whitespace.
+- Added regression coverage for Live Preview image-link lines, selected image syntax, blank lines, and non-image widgets.
+- Updated `manifest.json`, `package.json`, `versions.json`, README files, task status, and website version copy for the `4.0.12` release.
+
 ## 4.0.11
 
 - Added empty managed-folder cleanup entry points: file-list context menus can clean by folder or Markdown file, while the command palette keeps a vault-wide cleanup with risk confirmation.
